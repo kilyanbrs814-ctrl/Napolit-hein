@@ -1,0 +1,159 @@
+/* ============ SCENE 08 - AMBIANCE ALBI ============ */
+.nh-amb {
+  position: relative;
+  background: linear-gradient(180deg, var(--bg), #090d1c);
+  padding: 120px 0;
+}
+.nh-amb__inner {
+  max-width: var(--max-w);
+  margin: 0 auto;
+  padding: 0 40px;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 56px;
+  align-items: center;
+}
+.nh-amb__text {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 22px;
+}
+.nh-amb__eyebrow {
+  color: var(--orange);
+}
+.nh-amb__title {
+  font-family: var(--display);
+  font-size: 62px;
+  line-height: 0.98;
+  color: #fff;
+  text-transform: uppercase;
+  max-width: 520px;
+}
+.nh-amb__p {
+  font-family: var(--body);
+  font-size: 18px;
+  line-height: 1.6;
+  color: var(--mute);
+  max-width: 480px;
+}
+.nh-amb__info-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 32px;
+  margin-top: 4px;
+}
+.nh-amb__info {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.nh-amb__info-k {
+  font-family: var(--body);
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.24em;
+  text-transform: uppercase;
+  color: var(--gold);
+}
+.nh-amb__info-v {
+  font-family: var(--body);
+  font-weight: 600;
+  font-size: 16px;
+  color: #fff;
+  line-height: 1.45;
+}
+
+.nh-amb__visual {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+.nh-amb__photo {
+  height: 380px;
+  border-radius: 20px;
+  background-size: cover;
+  background-position: center;
+  background-color: var(--bg-2);
+  box-shadow: 0 40px 80px -34px rgba(0, 0, 0, 0.9);
+  border: 1px solid var(--line);
+}
+.nh-amb__map {
+  position: relative;
+  height: 180px;
+  border-radius: 20px;
+  overflow: hidden;
+  display: block;
+  text-decoration: none;
+  background: #0b1430;
+  border: 1px solid var(--line);
+  box-shadow: 0 30px 60px -34px rgba(0, 0, 0, 0.9);
+}
+.nh-amb__map-grid {
+  position: absolute;
+  inset: 0;
+  opacity: 0.5;
+  background-image: linear-gradient(rgba(255, 255, 255, 0.06) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255, 255, 255, 0.06) 1px, transparent 1px);
+  background-size: 34px 34px;
+}
+.nh-amb__map-pin {
+  position: absolute;
+  left: 50%;
+  top: 46%;
+  transform: translate(-50%, -50%);
+  width: 54px;
+  height: 54px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(255, 90, 31, 0.35), transparent 70%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.nh-amb__map-dot {
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: var(--orange);
+  box-shadow: 0 0 0 4px rgba(255, 90, 31, 0.3), 0 0 20px var(--orange);
+}
+.nh-amb__map-label {
+  position: absolute;
+  left: 14px;
+  bottom: 12px;
+  font-family: var(--body);
+  font-weight: 700;
+  font-size: 12px;
+  color: #fff;
+  background: rgba(7, 11, 22, 0.7);
+  padding: 7px 12px;
+  border-radius: 999px;
+  border: 1px solid var(--line);
+}
+
+@media (max-width: 860px) {
+  .nh-amb {
+    padding: 70px 0 80px;
+  }
+  .nh-amb__inner {
+    grid-template-columns: 1fr;
+    gap: 28px;
+    padding: 0 18px;
+  }
+  .nh-amb__title {
+    font-size: 38px;
+  }
+  .nh-amb__p {
+    font-size: 16px;
+  }
+  .nh-amb__info-row {
+    gap: 20px;
+  }
+  .nh-amb__photo {
+    height: 240px;
+  }
+  .nh-amb__map {
+    height: 140px;
+  }
+}

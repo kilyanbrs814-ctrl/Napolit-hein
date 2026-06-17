@@ -1,0 +1,177 @@
+/* ============ SCENE 06 - COMMANDER (3 PORTES) ============ */
+.nh-doors {
+  position: relative;
+  background: radial-gradient(120% 90% at 50% 0%, #0e1836 0%, var(--bg) 58%);
+  padding: 120px 0;
+}
+.nh-doors__inner {
+  max-width: var(--max-w);
+  margin: 0 auto;
+  padding: 0 40px;
+}
+.nh-doors__head {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: 16px;
+  margin-bottom: 54px;
+}
+.nh-doors__eyebrow {
+  color: var(--orange);
+}
+.nh-doors__title {
+  font-family: var(--display);
+  font-size: 68px;
+  line-height: 0.98;
+  color: #fff;
+  text-transform: uppercase;
+}
+.nh-doors__grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 24px;
+  align-items: stretch;
+}
+
+.nh-door {
+  position: relative;
+  overflow: hidden;
+  background: linear-gradient(175deg, rgba(255, 255, 255, 0.05), rgba(255, 255, 255, 0.015));
+  border: 1px solid var(--line);
+  border-radius: 20px;
+  padding: 38px 32px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  min-height: 300px;
+  transition: transform 0.3s ease, border-color 0.3s ease, box-shadow 0.3s ease;
+}
+.nh-door:hover {
+  transform: translateY(-6px);
+  border-color: rgba(255, 255, 255, 0.28);
+  box-shadow: 0 36px 70px -34px rgba(0, 0, 0, 0.8);
+}
+.nh-door__glow {
+  position: absolute;
+  top: -50px;
+  right: -50px;
+  width: 160px;
+  height: 160px;
+  border-radius: 50%;
+  opacity: 0.22;
+  filter: blur(50px);
+  pointer-events: none;
+}
+.nh-door__num {
+  font-family: var(--display);
+  font-size: 50px;
+  line-height: 0.9;
+}
+.nh-door__kicker {
+  color: var(--mute);
+  margin-top: 8px;
+}
+.nh-door__title {
+  font-family: var(--display);
+  font-size: 46px;
+  color: #fff;
+  text-transform: uppercase;
+  line-height: 0.95;
+}
+.nh-door__desc {
+  font-family: var(--body);
+  font-size: 16px;
+  line-height: 1.55;
+  color: var(--mute);
+  flex: 1;
+}
+.nh-door__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 8px;
+}
+.nh-door__action {
+  display: inline-flex;
+  align-items: center;
+  gap: 9px;
+  text-decoration: none;
+  font-family: var(--body);
+  font-weight: 800;
+  font-size: 14px;
+  color: #fff;
+  padding: 12px 18px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  transition: transform 0.2s ease, background 0.2s ease;
+}
+.nh-door__action:hover {
+  transform: translateY(-2px);
+  background: rgba(255, 255, 255, 0.13);
+}
+.nh-door__action.is-emph {
+  background: var(--orange);
+  border-color: var(--orange);
+  box-shadow: 0 16px 38px -16px var(--orange);
+}
+.nh-door__action.is-emph:hover {
+  background: var(--orange-hi);
+}
+.nh-door__action-ico {
+  width: 22px;
+  height: 22px;
+  border-radius: 6px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--body);
+  font-weight: 900;
+  font-size: 11px;
+  background: rgba(255, 255, 255, 0.2);
+  color: #fff;
+  flex-shrink: 0;
+}
+.nh-door__action.is-emph .nh-door__action-ico {
+  background: rgba(255, 255, 255, 0.95);
+  color: var(--orange);
+}
+.nh-door__action-logo {
+  height: 18px;
+  width: auto;
+  object-fit: contain;
+  flex-shrink: 0;
+}
+
+@media (max-width: 860px) {
+  .nh-doors {
+    padding: 70px 0 80px;
+  }
+  .nh-doors__inner {
+    padding: 0 18px;
+  }
+  .nh-doors__head {
+    margin-bottom: 34px;
+  }
+  .nh-doors__title {
+    font-size: 38px;
+  }
+  .nh-doors__grid {
+    grid-template-columns: 1fr;
+    gap: 16px;
+  }
+  .nh-door {
+    padding: 28px 24px;
+    min-height: 0;
+  }
+  .nh-door__num {
+    font-size: 38px;
+  }
+  .nh-door__title {
+    font-size: 34px;
+  }
+  .nh-door__desc {
+    font-size: 15px;
+  }
+}

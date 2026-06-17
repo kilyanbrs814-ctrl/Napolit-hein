@@ -1,0 +1,21 @@
+{
+  "name": "napolithein-crousty",
+  "private": true,
+  "version": "1.0.0",
+  "type": "module",
+  "description": "Site vitrine Napolit'hein Crousty - street food premium a Albi",
+  "scripts": {
+    "dev": "vite --host 0.0.0.0",
+    "build": "vite build",
+    "preview": "vite preview"
+  },
+  "dependencies": {
+    "framer-motion": "^11.3.19",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1"
+  },
+  "devDependencies": {
+    "@vitejs/plugin-react": "^4.3.1",
+    "vite": "^5.4.2"
+  }
+}

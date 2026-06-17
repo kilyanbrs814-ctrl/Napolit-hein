@@ -1,0 +1,56 @@
+/* ---- Boutons partages ---- */
+.nh-btn {
+  font-family: var(--body);
+  font-weight: 800;
+  font-size: 16px;
+  text-decoration: none;
+  padding: 16px 32px;
+  border-radius: 999px;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+  border: 1px solid transparent;
+  transition: transform 0.2s ease, filter 0.2s ease, background 0.2s ease, border-color 0.2s ease;
+}
+
+.nh-btn--primary {
+  color: #fff;
+  background: var(--orange);
+  box-shadow: 0 20px 44px -16px var(--orange);
+}
+.nh-btn--primary:hover {
+  transform: translateY(-2px);
+  filter: brightness(1.08);
+}
+
+.nh-btn--ghost {
+  color: #fff;
+  font-weight: 700;
+  border-color: rgba(255, 255, 255, 0.4);
+}
+.nh-btn--ghost:hover {
+  background: rgba(255, 255, 255, 0.12);
+}
+
+/* ---- Chips ---- */
+.nh-chip {
+  font-family: var(--body);
+  font-weight: 700;
+  font-size: 14px;
+  color: var(--cream);
+  padding: 9px 16px;
+  border-radius: 999px;
+  border: 1px solid var(--line);
+  background: rgba(255, 255, 255, 0.05);
+}
+
+@media (max-width: 860px) {
+  .nh-btn {
+    font-size: 14px;
+    padding: 13px 20px;
+  }
+  .nh-chip {
+    font-size: 12px;
+  }
+}

@@ -1,0 +1,311 @@
+/* ============ SCENE 05 - LA CARTE ============ */
+.nh-menu {
+  position: relative;
+  background: linear-gradient(180deg, #090d1c, #060912);
+  padding: 120px 0;
+  overflow: hidden;
+}
+
+.nh-menu__glow-a,
+.nh-menu__glow-b {
+  position: absolute;
+  border-radius: 50%;
+  pointer-events: none;
+}
+.nh-menu__glow-a {
+  top: 8%;
+  left: -10%;
+  width: 45vw;
+  height: 45vw;
+  background: radial-gradient(circle, rgba(255, 90, 31, 0.18), transparent 65%);
+}
+.nh-menu__glow-b {
+  bottom: 4%;
+  right: -12%;
+  width: 48vw;
+  height: 48vw;
+  background: radial-gradient(circle, rgba(255, 180, 38, 0.12), transparent 65%);
+}
+
+.nh-menu__inner {
+  position: relative;
+  z-index: 2;
+  max-width: var(--max-w);
+  margin: 0 auto;
+  padding: 0 40px;
+}
+
+.nh-menu__head {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: 24px;
+  margin-bottom: 48px;
+}
+.nh-menu__eyebrow {
+  color: var(--gold);
+}
+.nh-menu__title {
+  font-family: var(--display);
+  font-size: 136px;
+  line-height: 0.92;
+  color: #fff;
+  text-transform: uppercase;
+  text-shadow: 0 0 60px rgba(255, 90, 31, 0.25);
+}
+.nh-menu__sub {
+  font-family: var(--body);
+  font-size: 18px;
+  line-height: 1.55;
+  color: var(--mute);
+  max-width: 520px;
+}
+
+.nh-menu__groups {
+  display: flex;
+  flex-direction: column;
+  border-top: 1px solid var(--line);
+}
+.nh-menu__group {
+  border-bottom: 1px solid var(--line);
+}
+
+.nh-menu__group-head {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  cursor: pointer;
+  padding: 22px 6px;
+  background: none;
+  border: none;
+  color: inherit;
+  text-align: left;
+  -webkit-tap-highlight-color: transparent;
+}
+.nh-menu__group-left {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  min-width: 0;
+}
+.nh-menu__emoji {
+  font-size: 26px;
+  line-height: 1;
+  flex-shrink: 0;
+}
+.nh-menu__group-title {
+  font-family: var(--display);
+  font-size: 34px;
+  color: var(--cream);
+  text-transform: uppercase;
+  letter-spacing: 0.01em;
+  line-height: 1;
+  transition: color 0.25s ease;
+}
+.nh-menu__group-title.is-open {
+  color: #fff;
+}
+.nh-menu__count {
+  font-family: var(--body);
+  font-weight: 800;
+  font-size: 12px;
+  color: var(--faint);
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  padding: 3px 10px;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+.nh-menu__chev {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid var(--line);
+  background: rgba(255, 255, 255, 0.04);
+  color: var(--cream);
+  font-size: 18px;
+  line-height: 1;
+  transition: background 0.25s ease, border-color 0.25s ease, color 0.25s ease, transform 0.25s ease;
+}
+.nh-menu__chev.is-open {
+  border-color: var(--orange);
+  background: rgba(255, 90, 31, 0.14);
+  color: var(--orange);
+  transform: rotate(180deg);
+}
+
+.nh-menu__panel {
+  overflow: hidden;
+}
+.nh-menu__grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 16px;
+  padding: 8px 2px 30px;
+}
+.nh-menu__grid--drink {
+  grid-template-columns: repeat(3, 1fr);
+}
+
+.nh-menu__item {
+  position: relative;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  background: linear-gradient(170deg, rgba(255, 255, 255, 0.05), rgba(255, 255, 255, 0.018));
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  padding: 18px 20px;
+  transition: border-color 0.25s ease, transform 0.25s ease, box-shadow 0.25s ease;
+}
+.nh-menu__item:hover {
+  border-color: rgba(255, 180, 38, 0.4);
+  transform: translateY(-3px);
+  box-shadow: 0 24px 48px -28px rgba(0, 0, 0, 0.9);
+}
+.nh-menu__item-top {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 10px;
+}
+.nh-menu__item-name {
+  font-family: var(--display);
+  font-size: 21px;
+  color: #fff;
+  text-transform: uppercase;
+  letter-spacing: 0.01em;
+  line-height: 1.06;
+}
+.nh-menu__item-price {
+  font-family: var(--display);
+  font-size: 23px;
+  color: var(--gold);
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+.nh-menu__item-meta {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.nh-menu__rating {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 5px;
+  font-family: var(--body);
+  font-weight: 700;
+  font-size: 13px;
+  color: var(--gold);
+  background: rgba(255, 180, 38, 0.1);
+  border: 1px solid rgba(255, 180, 38, 0.28);
+  border-radius: 999px;
+  padding: 4px 10px;
+  white-space: nowrap;
+}
+.nh-menu__reviews {
+  color: var(--faint);
+  font-weight: 600;
+}
+.nh-menu__badge {
+  font-family: var(--body);
+  font-weight: 800;
+  font-size: 11px;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+  border-radius: 6px;
+  padding: 4px 9px;
+  white-space: nowrap;
+}
+.nh-menu__item-desc {
+  font-family: var(--body);
+  font-size: 14px;
+  line-height: 1.5;
+  color: var(--mute);
+}
+
+.nh-menu__toggle-wrap {
+  display: flex;
+  justify-content: center;
+  margin-top: 44px;
+}
+.nh-menu__toggle {
+  font-family: var(--body);
+  font-weight: 800;
+  font-size: 15px;
+  letter-spacing: 0.03em;
+  color: #fff;
+  cursor: pointer;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  padding: 15px 36px;
+  transition: background 0.25s ease, border-color 0.25s ease, transform 0.2s ease;
+}
+.nh-menu__toggle:hover {
+  background: rgba(255, 90, 31, 0.14);
+  border-color: var(--orange);
+  transform: translateY(-2px);
+}
+
+@media (max-width: 860px) {
+  .nh-menu {
+    padding: 70px 0 80px;
+  }
+  .nh-menu__inner {
+    padding: 0 18px;
+  }
+  .nh-menu__head {
+    gap: 16px;
+    margin-bottom: 32px;
+  }
+  .nh-menu__title {
+    font-size: 18vw;
+  }
+  .nh-menu__sub {
+    font-size: 15px;
+  }
+  .nh-menu__group-head {
+    padding: 18px 4px;
+  }
+  .nh-menu__group-left {
+    gap: 12px;
+  }
+  .nh-menu__emoji {
+    font-size: 22px;
+  }
+  .nh-menu__group-title {
+    font-size: 23px;
+  }
+  .nh-menu__chev {
+    width: 34px;
+    height: 34px;
+    font-size: 16px;
+  }
+  .nh-menu__grid {
+    grid-template-columns: 1fr;
+    gap: 12px;
+    padding: 4px 0 20px;
+  }
+  .nh-menu__grid--drink {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  .nh-menu__item {
+    padding: 15px 16px;
+  }
+  .nh-menu__item-name {
+    font-size: 18px;
+  }
+  .nh-menu__item-price {
+    font-size: 19px;
+  }
+}

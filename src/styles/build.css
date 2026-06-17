@@ -1,0 +1,210 @@
+/* ============ SCENE 03 - CONSTRUCTION DU PLAT ============ */
+.nh-build {
+  position: relative;
+  height: 300vh;
+  background: linear-gradient(180deg, var(--bg), #0a1024, var(--bg));
+}
+
+.nh-build__stage {
+  position: sticky;
+  top: 0;
+  height: 100vh;
+  width: 100%;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+
+.nh-build__eyebrow {
+  color: var(--gold);
+  position: absolute;
+  top: 60px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 5;
+}
+
+.nh-build__grid {
+  position: relative;
+  z-index: 3;
+  width: 100%;
+  max-width: var(--max-w);
+  margin: 0 auto;
+  padding: 0 40px;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 40px;
+  align-items: center;
+}
+
+.nh-build__bowl-wrap {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 1 / 1;
+  max-width: 440px;
+  margin: 0 auto;
+  justify-self: center;
+}
+
+.nh-build__glow {
+  position: absolute;
+  inset: -12%;
+  border-radius: 50%;
+  background: radial-gradient(
+    circle,
+    rgba(255, 90, 31, 0.4) 0%,
+    rgba(255, 90, 31, 0.1) 40%,
+    transparent 66%
+  );
+  pointer-events: none;
+}
+
+.nh-build__img {
+  position: absolute;
+  inset: 0;
+  background-size: contain;
+  background-repeat: no-repeat;
+  background-position: center;
+  filter: drop-shadow(0 26px 42px rgba(0, 0, 0, 0.55));
+  will-change: opacity;
+}
+
+.nh-build__ring {
+  position: absolute;
+  inset: -3%;
+  border-radius: 50%;
+  border: 1px solid rgba(255, 180, 38, 0.25);
+  pointer-events: none;
+}
+
+.nh-build__side {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  text-align: left;
+  gap: 20px;
+  min-height: 220px;
+  justify-content: center;
+}
+
+.nh-build__num {
+  font-family: var(--display);
+  font-size: 120px;
+  line-height: 0.8;
+  color: transparent;
+  -webkit-text-stroke: 2px var(--orange);
+}
+
+.nh-build__txt-stack {
+  position: relative;
+  width: 100%;
+  height: 165px;
+}
+
+.nh-build__txt {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  justify-content: flex-start;
+  align-items: flex-start;
+  will-change: opacity;
+}
+
+.nh-build__txt-title {
+  font-family: var(--display);
+  font-size: 46px;
+  line-height: 1;
+  color: #fff;
+  text-transform: uppercase;
+}
+
+.nh-build__txt-lead {
+  font-family: var(--body);
+  font-weight: 800;
+  font-size: 15px;
+  letter-spacing: 0.03em;
+  color: var(--mute);
+}
+
+.nh-build__txt-logo {
+  height: 56px;
+  width: auto;
+  max-width: 330px;
+  object-fit: contain;
+  filter: drop-shadow(0 10px 26px rgba(0, 0, 0, 0.45));
+}
+
+.nh-build__txt-desc {
+  font-family: var(--body);
+  font-size: 18px;
+  line-height: 1.5;
+  color: var(--mute);
+  max-width: 380px;
+}
+
+.nh-build__dots {
+  display: flex;
+  gap: 12px;
+  margin-top: 4px;
+}
+
+.nh-build__dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.18);
+  transition: background 0.25s ease, transform 0.25s ease;
+}
+.nh-build__dot.is-on {
+  background: var(--orange);
+}
+.nh-build__dot.is-active {
+  transform: scale(1.4);
+}
+
+@media (max-width: 860px) {
+  .nh-build {
+    height: 250vh;
+  }
+  .nh-build__eyebrow {
+    top: 90px;
+  }
+  .nh-build__grid {
+    grid-template-columns: 1fr;
+    gap: 20px;
+    padding: 0 22px;
+  }
+  .nh-build__bowl-wrap {
+    max-width: 300px;
+  }
+  .nh-build__side {
+    align-items: center;
+    text-align: center;
+    min-height: 170px;
+    gap: 14px;
+  }
+  .nh-build__txt {
+    align-items: center;
+  }
+  .nh-build__num {
+    font-size: 60px;
+  }
+  .nh-build__txt-stack {
+    height: 150px;
+  }
+  .nh-build__txt-title {
+    font-size: 28px;
+  }
+  .nh-build__txt-logo {
+    height: 40px;
+    max-width: 74vw;
+  }
+  .nh-build__txt-desc {
+    font-size: 15px;
+  }
+}

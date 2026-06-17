@@ -1,0 +1,29 @@
+:root {
+  /* ---- Palette (reprise du design source Napolit'hein) ---- */
+  --bg: #070b16;
+  --bg-2: #0a1024;
+  --panel: #0e1630;
+  --panel-hi: #13204a;
+
+  --orange: #ff5a1f;
+  --orange-hi: #ff6e33;
+  --gold: #ffb426;
+  --cream: #fbf4e8;
+
+  --uber: #06c167;
+  --deliv: #00ccbc;
+  --google: #ffc400;
+
+  --mute: rgba(255, 255, 255, 0.62);
+  --faint: rgba(255, 255, 255, 0.4);
+  --line: rgba(255, 255, 255, 0.12);
+
+  /* ---- Typographies ---- */
+  --display: "Anton", system-ui, sans-serif;
+  --body: "Archivo", system-ui, sans-serif;
+
+  /* ---- Layout ---- */
+  --max-w: 1200px;
+  --radius: 16px;
+  --radius-lg: 20px;
+}

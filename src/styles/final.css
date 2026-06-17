@@ -1,0 +1,169 @@
+/* ============ SCENE 09 - FINAL CTA ============ */
+.nh-final {
+  position: relative;
+  overflow: hidden;
+  min-height: 88vh;
+  background: radial-gradient(120% 110% at 50% 60%, #122046 0%, var(--bg) 62%);
+  padding: 110px 0;
+  display: flex;
+  align-items: center;
+}
+.nh-final__glow {
+  position: absolute;
+  left: 50%;
+  top: 58%;
+  width: 70vw;
+  height: 70vw;
+  transform: translate(-50%, -50%);
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(255, 90, 31, 0.28), transparent 60%);
+  pointer-events: none;
+  z-index: 0;
+}
+.nh-final__bowl {
+  position: absolute;
+  left: 50%;
+  bottom: -16vh;
+  transform: translateX(-50%);
+  width: 46vh;
+  height: 46vh;
+  max-width: 520px;
+  max-height: 520px;
+  z-index: 1;
+  opacity: 0.9;
+  border-radius: 50%;
+  background-size: 150%;
+  background-position: center;
+  background-color: #06060a;
+  box-shadow: 0 50px 130px -34px rgba(0, 0, 0, 0.95), inset 0 0 70px rgba(0, 0, 0, 0.55);
+  will-change: transform;
+}
+.nh-final__bowl-vig {
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  pointer-events: none;
+  background: radial-gradient(circle, rgba(7, 11, 22, 0) 52%, rgba(7, 11, 22, 0.55) 78%, var(--bg) 100%);
+}
+.nh-final__inner {
+  position: relative;
+  z-index: 2;
+  width: 100%;
+  max-width: 900px;
+  margin: 0 auto;
+  padding: 0 40px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: 24px;
+}
+.nh-final__logo {
+  height: 72px;
+  width: auto;
+  max-width: 440px;
+  object-fit: contain;
+  filter: drop-shadow(0 14px 36px rgba(0, 0, 0, 0.5));
+}
+.nh-final__h2 {
+  font-family: var(--display);
+  font-size: 128px;
+  line-height: 0.86;
+  color: #fff;
+  text-transform: uppercase;
+  text-shadow: 0 10px 60px rgba(0, 0, 0, 0.6);
+}
+.nh-final__h2-accent {
+  color: var(--orange);
+  text-shadow: 0 0 50px rgba(255, 90, 31, 0.5);
+}
+.nh-final__btn-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 14px;
+  justify-content: center;
+  margin-top: 8px;
+}
+.nh-final__btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 11px;
+  text-decoration: none;
+  padding: 17px 28px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.07);
+  border: 1px solid rgba(255, 255, 255, 0.22);
+  transition: transform 0.2s ease, background 0.2s ease;
+}
+.nh-final__btn:hover {
+  transform: translateY(-3px);
+  background: rgba(255, 255, 255, 0.14);
+}
+.nh-final__btn.is-emph {
+  background: var(--orange);
+  border-color: var(--orange);
+  box-shadow: 0 20px 46px -18px var(--orange);
+}
+.nh-final__btn.is-emph:hover {
+  background: var(--orange-hi);
+}
+.nh-final__btn-ico {
+  width: 26px;
+  height: 26px;
+  border-radius: 7px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--body);
+  font-weight: 900;
+  font-size: 12px;
+  color: #fff;
+  flex-shrink: 0;
+}
+.nh-final__btn.is-emph .nh-final__btn-ico {
+  background: rgba(255, 255, 255, 0.95);
+  color: var(--orange);
+}
+.nh-final__btn-logo {
+  height: 22px;
+  width: auto;
+  object-fit: contain;
+  flex-shrink: 0;
+}
+.nh-final__btn-label {
+  font-family: var(--body);
+  font-weight: 800;
+  font-size: 16px;
+  color: #fff;
+}
+.nh-final__btn-arrow {
+  font-family: var(--body);
+  font-size: 16px;
+  color: rgba(255, 255, 255, 0.85);
+}
+
+@media (max-width: 860px) {
+  .nh-final {
+    min-height: 0;
+    padding: 80px 0 90px;
+  }
+  .nh-final__inner {
+    padding: 0 22px;
+    gap: 18px;
+  }
+  .nh-final__bowl {
+    width: 80vw;
+    height: 80vw;
+    bottom: -22vw;
+  }
+  .nh-final__logo {
+    height: 52px;
+    max-width: 80vw;
+  }
+  .nh-final__h2 {
+    font-size: 17vw;
+  }
+  .nh-final__btn-label {
+    font-size: 15px;
+  }
+}
