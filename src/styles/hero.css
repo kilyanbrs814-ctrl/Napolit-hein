@@ -16,7 +16,13 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  background: radial-gradient(120% 100% at 74% 34%, #11193a 0%, #0a1024 46%, var(--bg) 72%);
+  background-image:
+    linear-gradient(90deg, rgba(4, 7, 16, 0.76) 0%, rgba(4, 7, 16, 0.42) 42%, rgba(4, 7, 16, 0.12) 72%),
+    linear-gradient(180deg, rgba(4, 7, 16, 0.1) 55%, rgba(4, 7, 16, 0.46) 100%),
+    url("../assets/images/hero-bg-desktop.png");
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
 }
 
 .nh-hero__glow {
@@ -159,6 +165,14 @@
   margin: 26px 0 0;
 }
 
+.nh-hero__cta-mobile {
+  display: none;
+}
+
+.nh-hero__ctas .nh-hero__cta-mobile {
+  display: none;
+}
+
 /* ---- Couche croustillant ---- */
 .nh-hero__cr-layer {
   position: absolute;
@@ -280,6 +294,7 @@
 }
 .nh-widget__logo {
   height: 26px;
+  max-width: 108px;
   width: auto;
   object-fit: contain;
 }
@@ -458,15 +473,18 @@
   .nh-hero__stage {
     height: 100vh;
     height: 100svh;
-    background: radial-gradient(120% 84% at 72% 43%, #11193a 0%, #0a1024 48%, var(--bg) 76%);
+    background-image:
+      linear-gradient(180deg, rgba(4, 7, 16, 0.3) 0%, rgba(4, 7, 16, 0.44) 72%, rgba(4, 7, 16, 0.62) 100%),
+      url("../assets/images/hero-bg-mobile.png");
+    background-position: center;
   }
 
   .nh-hero__glow {
     display: block;
-    left: 70%;
+    left: 64%;
     top: 45%;
-    width: 116vw;
-    height: 116vw;
+    width: 108vw;
+    height: 108vw;
     opacity: 0.9;
   }
 
@@ -478,43 +496,29 @@
     -webkit-text-stroke-color: rgba(255, 255, 255, 0.34);
   }
 
-  .nh-hero__bowls {
-    left: 70%;
-    top: 47%;
-    width: 300px;
-    height: 300px;
-    max-width: 76vw;
-    max-height: 76vw;
-  }
-
-  .nh-hero__bowl--pasta {
-    display: block;
-    background-size: 168%;
-    background-position: 70% 48%;
-  }
-
+  .nh-hero__bowls,
+  .nh-hero__bowl--pasta,
   .nh-hero__bowl--crousty {
-    background-size: 96%;
-    background-position: center bottom;
-    transform: translate(20%, 5%) scale(0.88);
-    transform-origin: center bottom;
+    display: none;
   }
 
   .nh-hero__content,
   .nh-hero__cr-text {
     max-width: none;
     padding: 0 18px;
-    align-items: flex-start;
-    text-align: left;
   }
 
   .nh-hero__content {
+    align-items: center;
+    text-align: center;
+    padding: 0 22px;
     transform: translateY(-2svh);
   }
 
   .nh-hero__logo {
     height: 112px;
     max-width: 76vw;
+    margin: 0 auto;
   }
 
   .nh-hero__h1 {
@@ -528,21 +532,36 @@
 
   .nh-hero__lede {
     display: block;
-    max-width: 275px;
+    max-width: 300px;
     margin-top: 14px;
+    margin-left: auto;
+    margin-right: auto;
     font-size: 14px;
     line-height: 1.45;
     color: rgba(255, 255, 255, 0.74);
   }
 
   .nh-hero__ctas {
-    justify-content: flex-start;
+    justify-content: center;
     margin-top: 18px;
-    max-width: 330px;
+    width: 100%;
+    max-width: none;
+  }
+
+  .nh-hero__ctas .nh-hero__cta-desktop {
+    display: none;
+  }
+
+  .nh-hero__ctas .nh-hero__cta-mobile {
+    display: inline-flex;
+    justify-content: center;
+    min-width: 178px;
   }
 
   .nh-hero__cr-text {
-    transform: translateY(3svh);
+    align-items: flex-start;
+    text-align: left;
+    transform: translateY(1svh);
   }
 
   .nh-hero__cr-h2 {
@@ -607,6 +626,7 @@
 
   .nh-widget__logo {
     height: 20px;
+    max-width: 92px;
   }
 
   .nh-widget__brand {
@@ -645,13 +665,6 @@
     height: 235svh;
   }
 
-  .nh-hero__bowls {
-    left: 72%;
-    top: 48%;
-    width: 270px;
-    height: 270px;
-  }
-
   .nh-hero__logo {
     height: 94px;
     max-width: 74vw;
@@ -669,10 +682,6 @@
   .nh-hero__cr-h2 {
     font-size: 43px;
     max-width: 292px;
-  }
-
-  .nh-hero__bowl--crousty {
-    transform: translate(24%, 7%) scale(0.84);
   }
 
   .nh-hero__cr-p {

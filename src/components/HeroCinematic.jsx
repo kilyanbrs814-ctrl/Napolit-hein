@@ -20,8 +20,15 @@ function HeroContent() {
         ou livre chez toi.
       </p>
       <div className="nh-hero__ctas">
-        <a href="#commander" className="nh-btn nh-btn--primary">Commander maintenant</a>
-        <a href="#carte" className="nh-btn nh-btn--ghost">Voir la carte</a>
+        <a href="#commander" className="nh-btn nh-btn--primary nh-hero__cta-desktop">
+          Commander maintenant
+        </a>
+        <a href="#carte" className="nh-btn nh-btn--ghost nh-hero__cta-desktop">
+          Voir la carte
+        </a>
+        <a href="#carte" className="nh-btn nh-btn--primary nh-hero__cta-mobile">
+          Voir la carte
+        </a>
       </div>
     </div>
   );

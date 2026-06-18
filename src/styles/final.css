@@ -126,6 +126,7 @@
 }
 .nh-final__btn-logo {
   height: 22px;
+  max-width: 108px;
   width: auto;
   object-fit: contain;
   flex-shrink: 0;

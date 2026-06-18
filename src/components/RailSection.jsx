@@ -1,20 +1,21 @@
-import { useRef } from "react";
-import { motion, useScroll, useTransform } from "framer-motion";
+import { useEffect, useRef, useState } from "react";
+import { motion } from "framer-motion";
 import { DISHES, LINKS } from "../data/content.js";
 import "../styles/rail.css";
 
-function RailCard({ dish, index, count, progress }) {
-  const center = count > 1 ? index / (count - 1) : 0;
-  const span = count > 1 ? 1 / (count - 1) : 1;
-  const opacity = useTransform(
-    progress,
-    [center - span, center, center + span],
-    [0.3, 1, 0.3]
-  );
-  const scale = useTransform(progress, [center - span, center, center + span], [0.93, 1, 0.93]);
+const SNAP_DURATION = 720;
+const WHEEL_THRESHOLD = 28;
+const SWIPE_THRESHOLD = 48;
+const INPUT_IDLE_DELAY = 180;
 
+function RailCard({ dish, index, count, isActive }) {
   return (
-    <motion.div className="nh-rail__card" style={{ opacity, scale }}>
+    <motion.div
+      className="nh-rail__card"
+      initial={false}
+      animate={{ opacity: isActive ? 1 : 0.3, scale: isActive ? 1 : 0.93 }}
+      transition={{ duration: SNAP_DURATION / 1000, ease: [0.22, 1, 0.36, 1] }}
+    >
       <div className="nh-rail__glow" style={{ "--glow": dish.glow }} />
       <div className="nh-rail__big">{dish.big}</div>
       <div
@@ -24,7 +25,9 @@ function RailCard({ dish, index, count, progress }) {
         <span className="nh-rail__bowl-vig" />
       </div>
       <div className="nh-rail__info">
-        <div className="nh-rail__cat" style={{ color: dish.glow }}>{dish.cat}</div>
+        <div className="nh-rail__cat" style={{ color: dish.glow }}>
+          {dish.cat}
+        </div>
         <div className="nh-rail__name">{dish.name}</div>
         <p className="nh-rail__desc">{dish.desc}</p>
         <div className="nh-rail__row">
@@ -48,32 +51,258 @@ function RailCard({ dish, index, count, progress }) {
 
 export default function RailSection() {
   const sectionRef = useRef(null);
-  const { scrollYProgress } = useScroll({
-    target: sectionRef,
-    offset: ["start start", "end end"],
-  });
-
   const count = DISHES.length;
-  const trackTransform = useTransform(
-    scrollYProgress,
-    (v) => `translateX(${-v * (count - 1) * 100}vw)`
-  );
+  const [activeIndex, setActiveIndex] = useState(0);
+  const activeIndexRef = useRef(0);
+  const isAnimatingRef = useRef(false);
+
+  useEffect(() => {
+    const section = sectionRef.current;
+    if (!section || count < 2) return undefined;
+
+    let animationTimer;
+    let inputIdleTimer;
+    let wheelResetTimer;
+    let animationFinished = true;
+    let inputIdle = true;
+    let wheelAccumulator = 0;
+    let touchStartY = null;
+    let touchCaptured = false;
+    let touchStartedWhileActive = false;
+    let wasSectionActive = false;
+    let lastScrollY = window.scrollY;
+
+    const prefersReducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    const lockDuration = prefersReducedMotion ? 100 : SNAP_DURATION;
+
+    const isSectionActive = () => {
+      const rect = section.getBoundingClientRect();
+      return rect.top <= 2 && rect.bottom >= window.innerHeight - 2;
+    };
+
+    const updateIndex = (nextIndex) => {
+      activeIndexRef.current = nextIndex;
+      setActiveIndex(nextIndex);
+    };
+
+    const releaseLockIfReady = () => {
+      if (animationFinished && inputIdle) {
+        isAnimatingRef.current = false;
+      }
+    };
+
+    const markInputActivity = () => {
+      inputIdle = false;
+      window.clearTimeout(inputIdleTimer);
+      inputIdleTimer = window.setTimeout(() => {
+        inputIdle = true;
+        releaseLockIfReady();
+      }, INPUT_IDLE_DELAY);
+    };
+
+    const beginLock = () => {
+      isAnimatingRef.current = true;
+      animationFinished = false;
+      markInputActivity();
+      window.clearTimeout(animationTimer);
+      animationTimer = window.setTimeout(() => {
+        animationFinished = true;
+        releaseLockIfReady();
+      }, lockDuration);
+    };
+
+    const scrollToIndexAnchor = (nextIndex) => {
+      const rect = section.getBoundingClientRect();
+      const sectionTop = window.scrollY + rect.top;
+      const scrollableDistance = Math.max(0, section.offsetHeight - window.innerHeight);
+      const target = sectionTop + (nextIndex / (count - 1)) * scrollableDistance;
+
+      window.scrollTo({
+        top: target,
+        behavior: prefersReducedMotion ? "auto" : "smooth",
+      });
+    };
+
+    const goToIndex = (nextIndex) => {
+      beginLock();
+      updateIndex(nextIndex);
+      scrollToIndexAnchor(nextIndex);
+    };
+
+    const handleWheel = (event) => {
+      if (event.ctrlKey || !isSectionActive()) return;
+
+      const multiplier =
+        event.deltaMode === WheelEvent.DOM_DELTA_LINE
+          ? 16
+          : event.deltaMode === WheelEvent.DOM_DELTA_PAGE
+            ? window.innerHeight
+            : 1;
+      const delta = event.deltaY * multiplier;
+      if (delta === 0) return;
+
+      if (isAnimatingRef.current) {
+        if (event.cancelable) event.preventDefault();
+        markInputActivity();
+        return;
+      }
+
+      const direction = delta > 0 ? 1 : -1;
+      const nextIndex = activeIndexRef.current + direction;
+
+      if (nextIndex < 0 || nextIndex >= count) {
+        wheelAccumulator = 0;
+        return;
+      }
+
+      if (event.cancelable) event.preventDefault();
+      markInputActivity();
+
+      if (Math.sign(wheelAccumulator) !== direction) {
+        wheelAccumulator = 0;
+      }
+      wheelAccumulator += delta;
+
+      window.clearTimeout(wheelResetTimer);
+      wheelResetTimer = window.setTimeout(() => {
+        wheelAccumulator = 0;
+      }, INPUT_IDLE_DELAY);
+
+      if (Math.abs(wheelAccumulator) < WHEEL_THRESHOLD) return;
+
+      wheelAccumulator = 0;
+      goToIndex(nextIndex);
+    };
+
+    const handleTouchStart = (event) => {
+      if (event.touches.length !== 1) return;
+      touchStartY = event.touches[0].clientY;
+      touchCaptured = false;
+      touchStartedWhileActive = isSectionActive();
+    };
+
+    const handleTouchMove = (event) => {
+      if (
+        touchStartY === null ||
+        event.touches.length !== 1 ||
+        !touchStartedWhileActive ||
+        !isSectionActive()
+      ) {
+        return;
+      }
+
+      if (isAnimatingRef.current) {
+        if (event.cancelable) event.preventDefault();
+        markInputActivity();
+        return;
+      }
+
+      const delta = touchStartY - event.touches[0].clientY;
+      if (Math.abs(delta) < 8) return;
+
+      const direction = delta > 0 ? 1 : -1;
+      const nextIndex = activeIndexRef.current + direction;
+
+      if (nextIndex < 0 || nextIndex >= count) return;
+
+      if (event.cancelable) event.preventDefault();
+      markInputActivity();
+
+      if (touchCaptured || Math.abs(delta) < SWIPE_THRESHOLD) return;
+
+      touchCaptured = true;
+      goToIndex(nextIndex);
+    };
+
+    const resetTouch = () => {
+      touchStartY = null;
+      touchCaptured = false;
+      touchStartedWhileActive = false;
+    };
+
+    const handleScroll = () => {
+      const currentScrollY = window.scrollY;
+      const sectionActive = isSectionActive();
+
+      if (sectionActive && !wasSectionActive && !isAnimatingRef.current) {
+        const direction = currentScrollY - lastScrollY;
+        const rect = section.getBoundingClientRect();
+        const sectionTop = currentScrollY + rect.top;
+        const scrollableDistance = Math.max(1, section.offsetHeight - window.innerHeight);
+        const progress = Math.min(
+          1,
+          Math.max(0, (currentScrollY - sectionTop) / scrollableDistance)
+        );
+        const entryIndex =
+          direction > 0 ? 0 : direction < 0 ? count - 1 : Math.round(progress * (count - 1));
+
+        updateIndex(entryIndex);
+        beginLock();
+        scrollToIndexAnchor(entryIndex);
+      }
+
+      wasSectionActive = sectionActive;
+      lastScrollY = currentScrollY;
+    };
+
+    const initialRect = section.getBoundingClientRect();
+    wasSectionActive = isSectionActive();
+    if (wasSectionActive) {
+      const sectionTop = window.scrollY + initialRect.top;
+      const scrollableDistance = Math.max(1, section.offsetHeight - window.innerHeight);
+      const progress = Math.min(
+        1,
+        Math.max(0, (window.scrollY - sectionTop) / scrollableDistance)
+      );
+      updateIndex(Math.round(progress * (count - 1)));
+    }
+
+    window.addEventListener("wheel", handleWheel, { passive: false });
+    window.addEventListener("scroll", handleScroll, { passive: true });
+    section.addEventListener("touchstart", handleTouchStart, { passive: true });
+    section.addEventListener("touchmove", handleTouchMove, { passive: false });
+    section.addEventListener("touchend", resetTouch, { passive: true });
+    section.addEventListener("touchcancel", resetTouch, { passive: true });
+
+    return () => {
+      window.clearTimeout(animationTimer);
+      window.clearTimeout(inputIdleTimer);
+      window.clearTimeout(wheelResetTimer);
+      window.removeEventListener("wheel", handleWheel);
+      window.removeEventListener("scroll", handleScroll);
+      section.removeEventListener("touchstart", handleTouchStart);
+      section.removeEventListener("touchmove", handleTouchMove);
+      section.removeEventListener("touchend", resetTouch);
+      section.removeEventListener("touchcancel", resetTouch);
+    };
+  }, [count]);
 
   return (
-    <section id="carte" ref={sectionRef} className="nh-rail" data-screen-label="04 Incontournables">
+    <section
+      id="carte"
+      ref={sectionRef}
+      className="nh-rail"
+      data-screen-label="04 Incontournables"
+      data-active-index={activeIndex}
+    >
       <div className="nh-rail__stage">
         <div className="nh-rail__header">
           <div className="nh-eyebrow nh-rail__eyebrow">04 · Les incontournables</div>
           <div className="nh-eyebrow nh-rail__hint">Scroll →</div>
         </div>
-        <motion.div className="nh-rail__track" style={{ transform: trackTransform }}>
-          {DISHES.map((dish, i) => (
+        <motion.div
+          className="nh-rail__track"
+          initial={false}
+          animate={{ x: `${-activeIndex * 100}vw` }}
+          transition={{ duration: SNAP_DURATION / 1000, ease: [0.22, 1, 0.36, 1] }}
+        >
+          {DISHES.map((dish, index) => (
             <RailCard
               key={dish.name}
               dish={dish}
-              index={i}
+              index={index}
               count={count}
-              progress={scrollYProgress}
+              isActive={index === activeIndex}
             />
           ))}
         </motion.div>

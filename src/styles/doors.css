@@ -139,6 +139,7 @@
 }
 .nh-door__action-logo {
   height: 18px;
+  max-width: 96px;
   width: auto;
   object-fit: contain;
   flex-shrink: 0;

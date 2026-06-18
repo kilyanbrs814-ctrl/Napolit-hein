@@ -3,8 +3,9 @@
 // Centralisees ici pour garder les composants lisibles.
 // =============================================================
 
-import logoUber from "../assets/images/logo-ubereats.png";
-import logoDeliveroo from "../assets/images/logo-deliveroo.png";
+import logoUber from "../assets/logos/Uber-Eats-Logo.png";
+import logoDeliveroo from "../assets/logos/Deliveroo_logo.svg.png";
+import googleLogo from "../assets/images/google-logo.png";
 
 import newCreamy from "../assets/images/new-creamy.png";
 import newCurry from "../assets/images/new-curry.png";
@@ -44,7 +45,7 @@ export const HERO_WIDGETS = [
     href: LINKS.deliveroo,
     logo: logoDeliveroo,
     glow: "var(--deliv)",
-    showBrand: true,
+    showBrand: false,
   },
 ];
 
@@ -286,7 +287,7 @@ export const CHANNELS = [
 
 // ---- Avis / preuve sociale ----
 export const PLATFORMS = [
-  { name: "Google", rate: "4,7", reviews: "130 avis", isText: true },
+  { name: "Google", rate: "4,7", reviews: "130 avis", logo: googleLogo },
   { name: "Uber Eats", rate: "4,3", reviews: "500+ avis", logo: logoUber },
   { name: "Deliveroo", rate: "4,4", reviews: "71 avis", logo: logoDeliveroo },
 ];
@@ -294,7 +295,7 @@ export const PLATFORMS = [
 export const TICKETS = [
   { src: "Uber Eats", mono: "UE", rate: "4,3 ★", body: "500+ commandes notees. Livraison rapide, portions au top.", col: "var(--uber)", depth: 1.0, x: "6%", y: "14%", rot: -5, z: 3 },
   { src: "Deliveroo", mono: "D", rate: "4,4 ★", body: "« Tres bien » · 71 avis. Toujours chaud a l'arrivee.", col: "var(--deliv)", depth: -0.8, x: "70%", y: "10%", rot: 4, z: 3 },
-  { src: "Google", mono: "G", rate: "4,7 ★", body: "« Le riz crousty, une tuerie. Genereux et croustillant. »", col: "var(--google)", depth: 0.6, x: "12%", y: "62%", rot: 3, z: 4 },
+  { src: "Google", logo: googleLogo, rate: "4,7 ★", body: "« Le riz crousty, une tuerie. Genereux et croustillant. »", col: "var(--google)", depth: 0.6, x: "12%", y: "62%", rot: 3, z: 4 },
   { src: "Avis client", mono: "★", rate: "5,0 ★", body: "« Portions enormes, sauce maison, on revient direct. »", col: "var(--orange)", depth: -1.2, x: "66%", y: "66%", rot: -4, z: 4 },
   { src: "Avis client", mono: "★", rate: "5,0 ★", body: "« Le meilleur spot street food d'Albi le soir. »", col: "var(--gold)", depth: 1.4, x: "40%", y: "40%", rot: 2, z: 2 },
 ];

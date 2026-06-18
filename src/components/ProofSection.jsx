@@ -1,12 +1,20 @@
 import { useRef } from "react";
 import { motion, useScroll, useTransform } from "framer-motion";
-import { PLATFORMS, TICKETS } from "../data/content.js";
+import { DELIVERY_LOGOS, PLATFORMS, TICKETS } from "../data/content.js";
 import "../styles/proof.css";
 
 function Ticket({ ticket, progress }) {
   // parallaxe verticale stable, pilotee par le scroll (jamais par un hijack).
   const y = useTransform(progress, [0, 1], [-110 * ticket.depth, 110 * ticket.depth]);
   const hideMobile = !(ticket.depth > 0.5 || ticket.z > 3);
+  const isGoogle = ticket.src === "Google";
+  const ticketLogo =
+    ticket.logo ||
+    (ticket.src === "Uber Eats"
+      ? DELIVERY_LOGOS.uber
+      : ticket.src === "Deliveroo"
+        ? DELIVERY_LOGOS.deliveroo
+        : null);
 
   return (
     <motion.div
@@ -14,8 +22,17 @@ function Ticket({ ticket, progress }) {
       style={{ left: ticket.x, top: ticket.y, zIndex: ticket.z, rotate: ticket.rot, y }}
     >
       <div className="nh-proof__ticket-top">
-        <span className="nh-proof__ticket-badge" style={{ background: ticket.col }}>
-          {ticket.mono}
+        <span
+          className={`nh-proof__ticket-badge${ticketLogo ? " is-logo" : ""}${
+            isGoogle ? " is-google" : ""
+          }`}
+          style={ticketLogo ? undefined : { background: ticket.col }}
+        >
+          {ticketLogo ? (
+            <img src={ticketLogo} alt={ticket.src} className="nh-proof__ticket-badge-logo" />
+          ) : (
+            ticket.mono
+          )}
         </span>
         <span className="nh-proof__ticket-src">{ticket.src}</span>
         <span className="nh-proof__ticket-rate">{ticket.rate}</span>
@@ -44,7 +61,13 @@ export default function ProofSection() {
             {PLATFORMS.map((p) => (
               <div key={p.name} className="nh-proof__platform">
                 {p.logo ? (
-                  <img src={p.logo} alt={p.name} className="nh-proof__platform-logo" />
+                  <img
+                    src={p.logo}
+                    alt={p.name}
+                    className={`nh-proof__platform-logo${
+                      p.name === "Google" ? " is-google" : ""
+                    }`}
+                  />
                 ) : (
                   <span className="nh-proof__platform-name">{p.name}</span>
                 )}
