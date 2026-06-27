@@ -1,8 +1,6 @@
 import { useRef } from "react";
 import { motion, useScroll, useTransform, useReducedMotion } from "framer-motion";
 import logo from "../assets/images/logo-napolithein.png";
-import pastaBowl from "../assets/images/hero-pasta.jpg";
-import croustyBowl from "../assets/images/crousty-hero.png";
 import { HERO_WIDGETS, CROUSTY_CHIPS } from "../data/content.js";
 import "../styles/hero.css";
 
@@ -104,12 +102,6 @@ export default function HeroCinematic() {
 
   const cueOpacity = useTransform(scrollYProgress, [0, 0.12], [1, 0]);
 
-  const pastaOpacity = useTransform(scrollYProgress, [0.18, 0.55], [1, 0]);
-  const croustyOpacity = useTransform(scrollYProgress, [0.4, 0.82], [0, 1]);
-  const bowlRotate = useTransform(scrollYProgress, [0.2, 0.9], [0, 12]);
-  const bowlScale = useTransform(scrollYProgress, [0, 1], [1, 1.08]);
-  const bowlX = useTransform(scrollYProgress, [0.2, 0.9], ["0%", "-6%"]);
-
   const glowScale = useTransform(scrollYProgress, [0, 1], [1, 1.5]);
   const wordOpacity = useTransform(scrollYProgress, [0.4, 0.95], [0, 0.14]);
   const wordScale = useTransform(scrollYProgress, [0.4, 1], [0.85, 1.1]);
@@ -130,20 +122,6 @@ export default function HeroCinematic() {
             CRROUSTY
           </motion.div>
         )}
-
-        <motion.div
-          className="nh-hero__bowls"
-          style={s({ rotate: bowlRotate, scale: bowlScale, x: bowlX })}
-        >
-          <motion.div
-            className="nh-hero__bowl nh-hero__bowl--pasta"
-            style={{ backgroundImage: `url(${pastaBowl})`, ...s({ opacity: pastaOpacity }) }}
-          />
-          <motion.div
-            className="nh-hero__bowl nh-hero__bowl--crousty"
-            style={{ backgroundImage: `url(${croustyBowl})`, ...s({ opacity: croustyOpacity }) }}
-          />
-        </motion.div>
 
         <motion.div
           className="nh-hero__layer"

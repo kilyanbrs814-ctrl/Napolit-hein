@@ -71,7 +71,7 @@
   font-size: 18vw;
   line-height: 0.8;
   color: transparent;
-  -webkit-text-stroke: 1.5px color-mix(in srgb, var(--glow) 27%, transparent);
+  -webkit-text-stroke: 1.5px color-mix(in srgb, var(--dish-color) 27%, transparent);
   letter-spacing: 0.01em;
   white-space: nowrap;
   pointer-events: none;
@@ -100,9 +100,9 @@
   transform: translate(-50%, -50%) rotate(-8deg);
   background: radial-gradient(
     ellipse at center,
-    color-mix(in srgb, var(--glow) 44%, transparent) 0%,
-    rgba(255, 91, 31, 0.24) 34%,
-    rgba(99, 39, 25, 0.18) 52%,
+    color-mix(in srgb, var(--dish-color) 44%, transparent) 0%,
+    color-mix(in srgb, var(--dish-color) 24%, transparent) 34%,
+    color-mix(in srgb, var(--dish-color) 14%, transparent) 52%,
     transparent 78%
   );
   filter: blur(34px);
@@ -136,6 +136,7 @@
   font-weight: 800;
   letter-spacing: 0.24em;
   text-transform: uppercase;
+  color: var(--dish-color);
 }
 .nh-rail__name {
   font-family: var(--display);
@@ -161,7 +162,7 @@
 .nh-rail__price {
   font-family: var(--display);
   font-size: 38px;
-  color: var(--gold);
+  color: var(--dish-color);
   white-space: nowrap;
 }
 .nh-rail__btn {

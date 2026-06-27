@@ -4,26 +4,24 @@ import { DISHES, LINKS } from "../data/content.js";
 import "../styles/rail.css";
 
 const SNAP_DURATION = 720;
-const WHEEL_THRESHOLD = 28;
 const SWIPE_THRESHOLD = 48;
-const INPUT_IDLE_DELAY = 180;
+const WHEEL_COOLDOWN = 480;
 
 function RailCard({ dish, index, count, isActive }) {
   return (
     <motion.div
       className="nh-rail__card"
+      style={{ "--dish-color": dish.glow }}
       initial={false}
       animate={{ opacity: isActive ? 1 : 0.3, scale: isActive ? 1 : 0.93 }}
       transition={{ duration: SNAP_DURATION / 1000, ease: [0.22, 1, 0.36, 1] }}
     >
       <div className="nh-rail__big">{dish.big}</div>
-      <div className="nh-rail__media" style={{ "--glow": dish.glow }}>
+      <div className="nh-rail__media">
         <img className="nh-rail__dish" src={dish.img} alt={dish.name} />
       </div>
       <div className="nh-rail__info">
-        <div className="nh-rail__cat" style={{ color: dish.glow }}>
-          {dish.cat}
-        </div>
+        <div className="nh-rail__cat">{dish.cat}</div>
         <div className="nh-rail__name">{dish.name}</div>
         <p className="nh-rail__desc">{dish.desc}</p>
         <div className="nh-rail__row">
@@ -50,26 +48,18 @@ export default function RailSection() {
   const count = DISHES.length;
   const [activeIndex, setActiveIndex] = useState(0);
   const activeIndexRef = useRef(0);
-  const isAnimatingRef = useRef(false);
+  const lastWheelAtRef = useRef(0);
 
   useEffect(() => {
     const section = sectionRef.current;
     if (!section || count < 2) return undefined;
 
-    let animationTimer;
-    let inputIdleTimer;
-    let wheelResetTimer;
-    let animationFinished = true;
-    let inputIdle = true;
-    let wheelAccumulator = 0;
     let touchStartY = null;
     let touchCaptured = false;
     let touchStartedWhileActive = false;
+    let lastTouchAt = 0;
     let wasSectionActive = false;
     let lastScrollY = window.scrollY;
-
-    const prefersReducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-    const lockDuration = prefersReducedMotion ? 100 : SNAP_DURATION;
 
     const isSectionActive = () => {
       const rect = section.getBoundingClientRect();
@@ -81,48 +71,12 @@ export default function RailSection() {
       setActiveIndex(nextIndex);
     };
 
-    const releaseLockIfReady = () => {
-      if (animationFinished && inputIdle) {
-        isAnimatingRef.current = false;
-      }
-    };
-
-    const markInputActivity = () => {
-      inputIdle = false;
-      window.clearTimeout(inputIdleTimer);
-      inputIdleTimer = window.setTimeout(() => {
-        inputIdle = true;
-        releaseLockIfReady();
-      }, INPUT_IDLE_DELAY);
-    };
-
-    const beginLock = () => {
-      isAnimatingRef.current = true;
-      animationFinished = false;
-      markInputActivity();
-      window.clearTimeout(animationTimer);
-      animationTimer = window.setTimeout(() => {
-        animationFinished = true;
-        releaseLockIfReady();
-      }, lockDuration);
-    };
-
     const scrollToIndexAnchor = (nextIndex) => {
       const rect = section.getBoundingClientRect();
       const sectionTop = window.scrollY + rect.top;
       const scrollableDistance = Math.max(0, section.offsetHeight - window.innerHeight);
       const target = sectionTop + (nextIndex / (count - 1)) * scrollableDistance;
-
-      window.scrollTo({
-        top: target,
-        behavior: prefersReducedMotion ? "auto" : "smooth",
-      });
-    };
-
-    const goToIndex = (nextIndex) => {
-      beginLock();
-      updateIndex(nextIndex);
-      scrollToIndexAnchor(nextIndex);
+      window.scrollTo({ top: target, behavior: "auto" });
     };
 
     const handleWheel = (event) => {
@@ -135,39 +89,22 @@ export default function RailSection() {
             ? window.innerHeight
             : 1;
       const delta = event.deltaY * multiplier;
-      if (delta === 0) return;
-
-      if (isAnimatingRef.current) {
-        if (event.cancelable) event.preventDefault();
-        markInputActivity();
-        return;
-      }
+      if (Math.abs(delta) < 1) return;
 
       const direction = delta > 0 ? 1 : -1;
       const nextIndex = activeIndexRef.current + direction;
 
-      if (nextIndex < 0 || nextIndex >= count) {
-        wheelAccumulator = 0;
-        return;
-      }
+      // At limits: let natural scroll exit the section
+      if (nextIndex < 0 || nextIndex >= count) return;
 
       if (event.cancelable) event.preventDefault();
-      markInputActivity();
 
-      if (Math.sign(wheelAccumulator) !== direction) {
-        wheelAccumulator = 0;
-      }
-      wheelAccumulator += delta;
+      const now = Date.now();
+      if (now - lastWheelAtRef.current < WHEEL_COOLDOWN) return;
+      lastWheelAtRef.current = now;
 
-      window.clearTimeout(wheelResetTimer);
-      wheelResetTimer = window.setTimeout(() => {
-        wheelAccumulator = 0;
-      }, INPUT_IDLE_DELAY);
-
-      if (Math.abs(wheelAccumulator) < WHEEL_THRESHOLD) return;
-
-      wheelAccumulator = 0;
-      goToIndex(nextIndex);
+      updateIndex(nextIndex);
+      scrollToIndexAnchor(nextIndex);
     };
 
     const handleTouchStart = (event) => {
@@ -187,12 +124,6 @@ export default function RailSection() {
         return;
       }
 
-      if (isAnimatingRef.current) {
-        if (event.cancelable) event.preventDefault();
-        markInputActivity();
-        return;
-      }
-
       const delta = touchStartY - event.touches[0].clientY;
       if (Math.abs(delta) < 8) return;
 
@@ -202,12 +133,15 @@ export default function RailSection() {
       if (nextIndex < 0 || nextIndex >= count) return;
 
       if (event.cancelable) event.preventDefault();
-      markInputActivity();
-
       if (touchCaptured || Math.abs(delta) < SWIPE_THRESHOLD) return;
 
+      const now = Date.now();
+      if (now - lastTouchAt < WHEEL_COOLDOWN) return;
+      lastTouchAt = now;
+
       touchCaptured = true;
-      goToIndex(nextIndex);
+      updateIndex(nextIndex);
+      scrollToIndexAnchor(nextIndex);
     };
 
     const resetTouch = () => {
@@ -220,7 +154,7 @@ export default function RailSection() {
       const currentScrollY = window.scrollY;
       const sectionActive = isSectionActive();
 
-      if (sectionActive && !wasSectionActive && !isAnimatingRef.current) {
+      if (sectionActive && !wasSectionActive) {
         const direction = currentScrollY - lastScrollY;
         const rect = section.getBoundingClientRect();
         const sectionTop = currentScrollY + rect.top;
@@ -233,7 +167,6 @@ export default function RailSection() {
           direction > 0 ? 0 : direction < 0 ? count - 1 : Math.round(progress * (count - 1));
 
         updateIndex(entryIndex);
-        beginLock();
         scrollToIndexAnchor(entryIndex);
       }
 
@@ -261,9 +194,6 @@ export default function RailSection() {
     section.addEventListener("touchcancel", resetTouch, { passive: true });
 
     return () => {
-      window.clearTimeout(animationTimer);
-      window.clearTimeout(inputIdleTimer);
-      window.clearTimeout(wheelResetTimer);
       window.removeEventListener("wheel", handleWheel);
       window.removeEventListener("scroll", handleScroll);
       section.removeEventListener("touchstart", handleTouchStart);
