@@ -77,8 +77,7 @@
   pointer-events: none;
 }
 
-.nh-rail__bowl {
-  border-radius: 50%;
+.nh-rail__media {
   position: relative;
   flex-shrink: 0;
   z-index: 2;
@@ -86,14 +85,39 @@
   height: 40vh;
   max-width: 420px;
   max-height: 420px;
-  background-size: 92%;
-  background-position: center;
-  background-repeat: no-repeat;
-  box-shadow: 0 50px 130px -28px color-mix(in srgb, var(--glow) 55%, transparent),
-    0 40px 110px -34px rgba(0, 0, 0, 0.9);
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
-.nh-rail__bowl-vig {
-  display: none;
+.nh-rail__media::before {
+  content: "";
+  position: absolute;
+  z-index: -1;
+  width: 190%;
+  height: 135%;
+  left: 50%;
+  top: 58%;
+  transform: translate(-50%, -50%) rotate(-8deg);
+  background: radial-gradient(
+    ellipse at center,
+    color-mix(in srgb, var(--glow) 44%, transparent) 0%,
+    rgba(255, 91, 31, 0.24) 34%,
+    rgba(99, 39, 25, 0.18) 52%,
+    transparent 78%
+  );
+  filter: blur(34px);
+  opacity: 1;
+  border-radius: 41% 59% 64% 36% / 46% 38% 62% 54%;
+  pointer-events: none;
+}
+.nh-rail__dish {
+  position: relative;
+  z-index: 2;
+  width: 112%;
+  height: auto;
+  object-fit: contain;
+  display: block;
+  filter: drop-shadow(0 34px 44px rgba(0, 0, 0, 0.45));
 }
 
 .nh-rail__info {
@@ -187,15 +211,11 @@
     gap: 18px;
     padding: 24px 22px;
   }
-  .nh-rail__glow {
-    width: 120vw;
-    height: 120vw;
-  }
   .nh-rail__big {
     top: 2%;
     font-size: 19vw;
   }
-  .nh-rail__bowl {
+  .nh-rail__media {
     width: 62vw;
     height: 62vw;
   }

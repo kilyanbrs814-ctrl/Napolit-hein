@@ -17,11 +17,8 @@ function RailCard({ dish, index, count, isActive }) {
       transition={{ duration: SNAP_DURATION / 1000, ease: [0.22, 1, 0.36, 1] }}
     >
       <div className="nh-rail__big">{dish.big}</div>
-      <div
-        className="nh-rail__bowl"
-        style={{ "--glow": dish.glow, backgroundImage: `url(${dish.img})` }}
-      >
-        <span className="nh-rail__bowl-vig" />
+      <div className="nh-rail__media" style={{ "--glow": dish.glow }}>
+        <img className="nh-rail__dish" src={dish.img} alt={dish.name} />
       </div>
       <div className="nh-rail__info">
         <div className="nh-rail__cat" style={{ color: dish.glow }}>
