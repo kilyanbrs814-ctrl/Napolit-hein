@@ -102,11 +102,9 @@
   height: 40vh;
   max-width: 420px;
   max-height: 420px;
-  background-size: 92%, 150%;
-  background-position: center, center;
-  background-repeat: no-repeat, no-repeat;
-  background-color: #0a0913;
-  background-blend-mode: normal;
+  background-size: 92%;
+  background-position: center;
+  background-repeat: no-repeat;
   box-shadow: 0 50px 130px -28px color-mix(in srgb, var(--glow) 55%, transparent),
     0 40px 110px -34px rgba(0, 0, 0, 0.9),
     inset 0 0 75px -6px color-mix(in srgb, var(--glow) 40%, transparent),
