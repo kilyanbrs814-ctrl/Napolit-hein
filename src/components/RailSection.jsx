@@ -16,7 +16,6 @@ function RailCard({ dish, index, count, isActive }) {
       animate={{ opacity: isActive ? 1 : 0.3, scale: isActive ? 1 : 0.93 }}
       transition={{ duration: SNAP_DURATION / 1000, ease: [0.22, 1, 0.36, 1] }}
     >
-      <div className="nh-rail__glow" style={{ "--glow": dish.glow }} />
       <div className="nh-rail__big">{dish.big}</div>
       <div
         className="nh-rail__bowl"
