@@ -4,22 +4,23 @@
   left: 0;
   right: 0;
   z-index: 50;
-  display: flex;
+  display: grid;
+  grid-template-columns: auto 1fr auto;
   align-items: center;
-  justify-content: space-between;
-  padding: 16px 40px;
+  padding: 14px 40px;
   background: linear-gradient(180deg, rgba(7, 11, 22, 0.92), rgba(7, 11, 22, 0));
   transition: background 0.3s ease, padding 0.3s ease;
 }
 
 .nh-header.is-scrolled {
   padding: 10px 40px;
-  background: rgba(7, 11, 22, 0.86);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
+  background: rgba(7, 11, 22, 0.88);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
   border-bottom: 1px solid var(--line);
 }
 
+/* ---- Logo (colonne gauche) ---- */
 .nh-header__mark {
   display: flex;
   align-items: center;
@@ -28,50 +29,79 @@
 }
 
 .nh-header__logo {
-  height: 42px;
+  height: 40px;
   width: auto;
-  max-width: 260px;
+  max-width: 240px;
   object-fit: contain;
   filter: drop-shadow(0 6px 16px rgba(0, 0, 0, 0.45));
 }
 
-.nh-header__nav {
+/* ---- Nav centrale (colonne du milieu, 1fr) ---- */
+.nh-header__center {
   display: flex;
   align-items: center;
-  gap: 22px;
+  justify-content: center;
+  gap: 2px;
 }
 
 .nh-header__link {
   font-family: var(--body);
   font-weight: 600;
-  font-size: 14px;
+  font-size: 12.5px;
   color: var(--mute);
   text-decoration: none;
-  transition: color 0.2s ease;
+  padding: 5px 9px;
+  border-radius: 6px;
+  white-space: nowrap;
+  transition: color 0.15s ease, background 0.15s ease;
 }
 .nh-header__link:hover {
   color: #fff;
+  background: rgba(255, 255, 255, 0.07);
+}
+
+/* ---- CTA téléphone (colonne droite) ---- */
+.nh-header__end {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
 }
 
 .nh-header__pill {
   font-family: var(--body);
   font-weight: 800;
-  font-size: 14px;
+  font-size: 13px;
   color: #fff;
   background: var(--orange);
-  padding: 11px 20px;
+  padding: 10px 18px;
   border-radius: 999px;
   text-decoration: none;
+  white-space: nowrap;
   box-shadow: 0 12px 30px -14px var(--orange);
-  transition: filter 0.2s ease, transform 0.2s ease;
+  transition: filter 0.15s ease, transform 0.15s ease;
 }
 .nh-header__pill:hover {
-  filter: brightness(1.08);
+  filter: brightness(1.1);
   transform: translateY(-1px);
 }
 
+/* ============ TABLETTE (861–1100px) ---- */
+@media (min-width: 861px) and (max-width: 1100px) {
+  .nh-header__link {
+    font-size: 11.5px;
+    padding: 4px 6px;
+  }
+  .nh-header__center {
+    gap: 0;
+  }
+}
+
+/* ============ MOBILE (≤860px) ---- */
 @media (max-width: 860px) {
   .nh-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
     padding: 12px 18px;
   }
   .nh-header.is-scrolled {
@@ -81,11 +111,11 @@
     height: 34px;
     max-width: 58vw;
   }
-  .nh-header__nav {
-    gap: 10px;
-  }
-  .nh-header__link {
+  .nh-header__center {
     display: none;
+  }
+  .nh-header__end {
+    justify-content: flex-end;
   }
   .nh-header__pill {
     font-size: 12px;

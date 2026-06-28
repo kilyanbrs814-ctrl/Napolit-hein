@@ -5,7 +5,7 @@ import "../styles/ambiance.css";
 
 export default function AmbianceSection() {
   return (
-    <section className="nh-amb" data-screen-label="08 Le spot">
+    <section id="ambiance" className="nh-amb" data-screen-label="08 Le spot">
       <div className="nh-amb__inner">
         <Reveal className="nh-amb__text">
           <div className="nh-eyebrow nh-amb__eyebrow">08 · Le spot</div>
@@ -43,13 +43,18 @@ export default function AmbianceSection() {
 
         <Reveal className="nh-amb__visual" delay={0.1}>
           <div className="nh-amb__photo" style={{ backgroundImage: `url(${salle})` }} />
-          <a href={LINKS.maps} target="_blank" rel="noopener noreferrer" className="nh-amb__map">
-            <div className="nh-amb__map-grid" />
-            <div className="nh-amb__map-pin">
-              <span className="nh-amb__map-dot" />
-            </div>
-            <div className="nh-amb__map-label">16 Av. Colonel Teyssier · Albi</div>
-          </a>
+          <div className="nh-amb__map">
+            <iframe
+              title="Napolit'hein Crousty sur Google Maps"
+              src="https://maps.google.com/maps?q=16+Avenue+Colonel+Teyssier%2C+81000+Albi%2C+France&t=&z=17&ie=UTF8&iwloc=&output=embed"
+              width="100%"
+              height="100%"
+              style={{ border: 0, display: "block" }}
+              allowFullScreen
+              loading="lazy"
+              referrerPolicy="no-referrer-when-downgrade"
+            />
+          </div>
         </Reveal>
       </div>
     </section>

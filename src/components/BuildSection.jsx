@@ -71,7 +71,7 @@ export default function BuildSection() {
   const glowOpacity = useTransform(scrollYProgress, (v) => 0.4 + 0.5 * Math.sin(v * Math.PI));
 
   return (
-    <section ref={sectionRef} className="nh-build" data-screen-label="03 Construction">
+    <section id="couches" ref={sectionRef} className="nh-build" data-screen-label="03 Construction">
       <div className="nh-build__stage">
         <div className="nh-eyebrow nh-build__eyebrow">03 · Couche par couche</div>
         <div className="nh-build__grid">

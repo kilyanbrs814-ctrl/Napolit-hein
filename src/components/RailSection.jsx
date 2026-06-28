@@ -5,7 +5,7 @@ import "../styles/rail.css";
 
 const SNAP_DURATION = 720;
 const SWIPE_THRESHOLD = 48;
-const WHEEL_GESTURE_GAP = 180;
+const WHEEL_GESTURE_GAP = 110;
 const MIN_WHEEL_DELTA = 4;
 
 function RailCard({ dish, index, count, isActive }) {

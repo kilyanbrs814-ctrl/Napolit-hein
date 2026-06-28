@@ -15,17 +15,26 @@
   justify-content: center;
 }
 
+.nh-proof__eyebrow {
+  position: absolute;
+  top: 76px;
+  left: 40px;
+  z-index: 6;
+  color: var(--gold);
+}
+
 .nh-proof__center {
   position: relative;
-  z-index: 1;
+  z-index: 10;
   text-align: center;
   display: flex;
   flex-direction: column;
   align-items: center;
   gap: 12px;
-}
-.nh-proof__eyebrow {
-  color: var(--gold);
+  /* Backdrop subtil pour masquer les tickets derrière le contenu central */
+  background: radial-gradient(ellipse 68% 88% at 50% 50%, rgba(7, 11, 22, 0.62) 0%, transparent 100%);
+  padding: 24px 32px;
+  border-radius: 24px;
 }
 .nh-proof__big {
   font-family: var(--display);
@@ -182,6 +191,13 @@
 @media (max-width: 860px) {
   .nh-proof {
     height: 170vh;
+  }
+  .nh-proof__eyebrow {
+    top: 90px;
+    left: 22px;
+  }
+  .nh-proof__center {
+    padding: 16px 20px;
   }
   .nh-proof__big {
     font-size: 40vw;

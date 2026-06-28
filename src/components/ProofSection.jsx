@@ -50,10 +50,10 @@ export default function ProofSection() {
   });
 
   return (
-    <section ref={sectionRef} className="nh-proof" data-screen-label="07 Avis">
+    <section id="avis" ref={sectionRef} className="nh-proof" data-screen-label="07 Avis">
       <div className="nh-proof__stage">
+        <div className="nh-eyebrow nh-proof__eyebrow">07 · Tout le monde valide</div>
         <div className="nh-proof__center">
-          <div className="nh-eyebrow nh-proof__eyebrow">07 · Tout le monde valide</div>
           <div className="nh-proof__big">4,7</div>
           <div className="nh-proof__stars">★★★★★</div>
           <div className="nh-eyebrow nh-proof__big-sub">130 avis Google · et ca continue</div>

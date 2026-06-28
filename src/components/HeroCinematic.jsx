@@ -111,8 +111,8 @@ function UberWidget({ href, rating, reviews, logo, status }) {
       className="hw-uber"
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
-      transition={{ type: "spring", stiffness: 220, damping: 28, delay: 0.4 }}
-      whileHover={{ y: -4 }}
+      transition={{ type: "spring", stiffness: 420, damping: 22, delay: 0.4 }}
+      whileHover={{ y: -6, scale: 1.022 }}
     >
       <div className="hw-uber__bar">
         <img src={logo} alt="Uber Eats" className="hw-uber__logo" />
@@ -160,7 +160,7 @@ function DeliverooWidget({ href, rating, reviews, logo, status }) {
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ type: "spring", stiffness: 220, damping: 28, delay: 0.54 }}
-      whileHover={{ y: -4 }}
+      whileHover={{ y: -6, scale: 1.022, transition: { type: "spring", stiffness: 420, damping: 22 } }}
     >
       <div className="hw-dlv__head">
         <img src={logo} alt="Deliveroo" className="hw-dlv__logo" />
@@ -241,21 +241,20 @@ export default function HeroCinematic() {
   });
 
   // Timeline cinematique pilotee uniquement par le scroll natif (aucun hijack molette).
-  const heroOpacity = useTransform(scrollYProgress, [0, 0.45], [1, 0]);
-  const heroY = useTransform(scrollYProgress, [0, 0.55], [0, -60]);
-  const heroScale = useTransform(scrollYProgress, [0, 0.6], [1, 0.95]);
+  // Plages resserrees pour une animation plus reactive au scroll.
+  const heroOpacity = useTransform(scrollYProgress, [0, 0.36], [1, 0]);
+  const heroY = useTransform(scrollYProgress, [0, 0.44], [0, -60]);
+  const heroScale = useTransform(scrollYProgress, [0, 0.48], [1, 0.95]);
 
-  const widgetsOpacity = useTransform(scrollYProgress, [0, 0.4], [1, 0]);
-  const widgetsY = useTransform(scrollYProgress, [0, 0.5], [0, 40]);
+  const widgetsOpacity = useTransform(scrollYProgress, [0, 0.30], [1, 0]);
+  const widgetsY = useTransform(scrollYProgress, [0, 0.40], [0, 40]);
 
-  const cueOpacity = useTransform(scrollYProgress, [0, 0.12], [1, 0]);
+  const cueOpacity = useTransform(scrollYProgress, [0, 0.10], [1, 0]);
 
   const glowScale = useTransform(scrollYProgress, [0, 1], [1, 1.5]);
-  const wordOpacity = useTransform(scrollYProgress, [0.4, 0.95], [0, 0.14]);
-  const wordScale = useTransform(scrollYProgress, [0.4, 1], [0.85, 1.1]);
 
-  const crOpacity = useTransform(scrollYProgress, [0.55, 0.95], [0, 1]);
-  const crY = useTransform(scrollYProgress, [0.55, 1], [42, 0]);
+  const crOpacity = useTransform(scrollYProgress, [0.36, 0.72], [0, 1]);
+  const crY = useTransform(scrollYProgress, [0.36, 0.76], [42, 0]);
 
   // En reduced-motion : aucune transformation inline -> tout reste visible.
   const s = (style) => (isStatic ? undefined : style);
@@ -264,12 +263,6 @@ export default function HeroCinematic() {
     <section id="top" ref={sectionRef} className={`nh-hero${isStatic ? " is-static" : ""}`}>
       <div className="nh-hero__stage">
         <motion.div className="nh-hero__glow" style={s({ scale: glowScale })} />
-
-        {!isStatic && (
-          <motion.div className="nh-hero__cr-word" style={{ opacity: wordOpacity, scale: wordScale }}>
-            CRROUSTY
-          </motion.div>
-        )}
 
         <motion.div
           className="nh-hero__layer"

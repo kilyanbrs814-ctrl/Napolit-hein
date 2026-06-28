@@ -20,9 +20,8 @@
 .nh-build__eyebrow {
   color: var(--gold);
   position: absolute;
-  top: 60px;
-  left: 50%;
-  transform: translateX(-50%);
+  top: 76px;
+  left: 40px;
   z-index: 5;
 }
 
@@ -173,6 +172,7 @@
   }
   .nh-build__eyebrow {
     top: 90px;
+    left: 22px;
   }
   .nh-build__grid {
     grid-template-columns: 1fr;

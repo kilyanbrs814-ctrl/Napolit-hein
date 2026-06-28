@@ -81,55 +81,12 @@
 }
 .nh-amb__map {
   position: relative;
-  height: 180px;
-  border-radius: 20px;
+  height: 200px;
+  border-radius: 16px;
   overflow: hidden;
-  display: block;
-  text-decoration: none;
-  background: #0b1430;
   border: 1px solid var(--line);
   box-shadow: 0 30px 60px -34px rgba(0, 0, 0, 0.9);
-}
-.nh-amb__map-grid {
-  position: absolute;
-  inset: 0;
-  opacity: 0.5;
-  background-image: linear-gradient(rgba(255, 255, 255, 0.06) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(255, 255, 255, 0.06) 1px, transparent 1px);
-  background-size: 34px 34px;
-}
-.nh-amb__map-pin {
-  position: absolute;
-  left: 50%;
-  top: 46%;
-  transform: translate(-50%, -50%);
-  width: 54px;
-  height: 54px;
-  border-radius: 50%;
-  background: radial-gradient(circle, rgba(255, 90, 31, 0.35), transparent 70%);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-.nh-amb__map-dot {
-  width: 16px;
-  height: 16px;
-  border-radius: 50%;
-  background: var(--orange);
-  box-shadow: 0 0 0 4px rgba(255, 90, 31, 0.3), 0 0 20px var(--orange);
-}
-.nh-amb__map-label {
-  position: absolute;
-  left: 14px;
-  bottom: 12px;
-  font-family: var(--body);
-  font-weight: 700;
-  font-size: 12px;
-  color: #fff;
-  background: rgba(7, 11, 22, 0.7);
-  padding: 7px 12px;
-  border-radius: 999px;
-  border: 1px solid var(--line);
+  background: #0b1430;
 }
 
 @media (max-width: 860px) {
@@ -154,6 +111,6 @@
     height: 240px;
   }
   .nh-amb__map {
-    height: 140px;
+    height: 160px;
   }
 }
