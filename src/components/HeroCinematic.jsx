@@ -1,8 +1,78 @@
-import { useRef } from "react";
+import { useRef, useState, useEffect } from "react";
 import { motion, useScroll, useTransform, useReducedMotion } from "framer-motion";
 import logo from "../assets/images/logo-napolithein.png";
 import { HERO_WIDGETS, CROUSTY_CHIPS } from "../data/content.js";
 import "../styles/hero.css";
+
+/* ---- Statut dynamique du restaurant (fuseau Europe/Paris) ---- */
+const SLOTS = [
+  { days: [1, 2, 3, 4, 5], start: { h: 11, m: 30 }, end: { h: 14, m: 0 } },
+  { days: [0, 1, 2, 3, 4, 5, 6], start: { h: 19, m: 0 }, end: { h: 22, m: 30 } },
+];
+const DAYS_FR = ["dimanche", "lundi", "mardi", "mercredi", "jeudi", "vendredi", "samedi"];
+
+function fmtTime({ h, m }) {
+  return m === 0 ? `${h}h` : `${h}h${String(m).padStart(2, "0")}`;
+}
+function toMin(h, m) { return h * 60 + m; }
+
+function getParisDT() {
+  const now = new Date();
+  const parts = new Intl.DateTimeFormat("fr-FR", {
+    timeZone: "Europe/Paris",
+    year: "numeric", month: "2-digit", day: "2-digit",
+    hour: "2-digit", minute: "2-digit", hour12: false,
+  }).formatToParts(now);
+  const get = (type) => parseInt(parts.find((p) => p.type === type).value, 10);
+  const year = get("year"), month = get("month"), day = get("day");
+  const h = get("hour") % 24, m = get("minute");
+  return { day: new Date(year, month - 1, day).getDay(), h, m };
+}
+
+function computeStatus() {
+  const { day, h, m } = getParisDT();
+  const now = toMin(h, m);
+
+  for (const slot of SLOTS) {
+    if (slot.days.includes(day)) {
+      const s = toMin(slot.start.h, slot.start.m);
+      const e = toMin(slot.end.h, slot.end.m);
+      if (now >= s && now < e)
+        return { open: true, label: `Ouvert jusqu’à ${fmtTime(slot.end)}` };
+    }
+  }
+
+  const todayNext = SLOTS
+    .filter((s) => s.days.includes(day) && toMin(s.start.h, s.start.m) > now)
+    .sort((a, b) => toMin(a.start.h, a.start.m) - toMin(b.start.h, b.start.m))[0];
+
+  if (todayNext) {
+    const prefix = todayNext.start.h >= 17 ? "ce soir" : "aujourd’hui";
+    return { open: false, label: `Disponible ${prefix} à ${fmtTime(todayNext.start)}` };
+  }
+
+  for (let i = 1; i <= 7; i++) {
+    const nd = (day + i) % 7;
+    const first = SLOTS
+      .filter((s) => s.days.includes(nd))
+      .sort((a, b) => toMin(a.start.h, a.start.m) - toMin(b.start.h, b.start.m))[0];
+    if (first) {
+      const dayLabel = i === 1 ? "demain" : DAYS_FR[nd];
+      return { open: false, label: `Disponible ${dayLabel} à ${fmtTime(first.start)}` };
+    }
+  }
+
+  return { open: false, label: "Fermé" };
+}
+
+function useRestaurantStatus() {
+  const [status, setStatus] = useState(computeStatus);
+  useEffect(() => {
+    const id = setInterval(() => setStatus(computeStatus()), 60_000);
+    return () => clearInterval(id);
+  }, []);
+  return status;
+}
 
 function HeroContent() {
   return (
@@ -32,7 +102,7 @@ function HeroContent() {
   );
 }
 
-function UberWidget({ href, rating, reviews, logo }) {
+function UberWidget({ href, rating, reviews, logo, status }) {
   return (
     <motion.a
       href={href}
@@ -46,12 +116,19 @@ function UberWidget({ href, rating, reviews, logo }) {
     >
       <div className="hw-uber__bar">
         <img src={logo} alt="Uber Eats" className="hw-uber__logo" />
-        <span className="hw-uber__avail">Disponible sur</span>
       </div>
       <div className="hw-uber__body">
         <div className="hw-uber__status">
-          <span className="hw-uber__dot" aria-hidden="true" />
-          <span className="hw-uber__status-label">Ouvert ce soir</span>
+          <span
+            className={`hw-uber__dot${status.open ? "" : " hw-uber__dot--closed"}`}
+            aria-hidden="true"
+          />
+          <span
+            className="hw-uber__status-label"
+            style={{ color: status.open ? "#06C167" : "#EF4444" }}
+          >
+            {status.label}
+          </span>
         </div>
         <div className="hw-uber__rating">
           <span className="hw-uber__star" aria-hidden="true">★</span>
@@ -73,7 +150,7 @@ function UberWidget({ href, rating, reviews, logo }) {
   );
 }
 
-function DeliverooWidget({ href, rating, reviews, logo }) {
+function DeliverooWidget({ href, rating, reviews, logo, status }) {
   return (
     <motion.a
       href={href}
@@ -90,15 +167,26 @@ function DeliverooWidget({ href, rating, reviews, logo }) {
       </div>
       <div className="hw-dlv__body">
         <div className="hw-dlv__status">
-          <span className="hw-dlv__dot" aria-hidden="true" />
-          <span className="hw-dlv__status-label">Disponible maintenant</span>
+          <span
+            className={`hw-dlv__dot${status.open ? "" : " hw-dlv__dot--closed"}`}
+            aria-hidden="true"
+          />
+          <span
+            className="hw-dlv__status-label"
+            style={{ color: status.open ? "#00A89E" : "#EF4444" }}
+          >
+            {status.label}
+          </span>
         </div>
         <div className="hw-dlv__rating">
           <span className="hw-dlv__star" aria-hidden="true">★</span>
           <span className="hw-dlv__score">{rating}</span>
           <span className="hw-dlv__reviews">{reviews}</span>
         </div>
-        <div className="hw-dlv__delivery">Livraison rapide</div>
+        <div className="hw-dlv__tags">
+          <span className="hw-dlv__tag">Livraison</span>
+          <span className="hw-dlv__tag">À emporter</span>
+        </div>
         <div className="hw-dlv__cta">
           Commander
           <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
@@ -113,12 +201,13 @@ function DeliverooWidget({ href, rating, reviews, logo }) {
 function DeliveryWidgets() {
   const uber = HERO_WIDGETS[0];
   const deliv = HERO_WIDGETS[1];
+  const status = useRestaurantStatus();
   return (
     <>
       <div className="nh-hero__widgets-label">Commander en livraison</div>
       <div className="nh-hero__widgets-row">
-        <UberWidget href={uber.href} rating={uber.rating} reviews={uber.reviews} logo={uber.logo} />
-        <DeliverooWidget href={deliv.href} rating={deliv.rating} reviews={deliv.reviews} logo={deliv.logo} />
+        <UberWidget href={uber.href} rating={uber.rating} reviews={uber.reviews} logo={uber.logo} status={status} />
+        <DeliverooWidget href={deliv.href} rating={deliv.rating} reviews={deliv.reviews} logo={deliv.logo} status={status} />
       </div>
     </>
   );

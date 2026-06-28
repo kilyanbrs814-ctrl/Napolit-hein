@@ -289,12 +289,10 @@
 }
 
 .hw-uber__bar {
-  background: #000000;
+  background: #1A1A1A;
   padding: 10px 12px;
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  gap: 6px;
   border-bottom: 1px solid rgba(255, 255, 255, 0.07);
 }
 .hw-uber__logo {
@@ -303,17 +301,6 @@
   max-width: 110px;
   object-fit: contain;
 }
-.hw-uber__avail {
-  font-family: var(--body);
-  font-size: 8px;
-  font-weight: 600;
-  color: rgba(255, 255, 255, 0.28);
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-  white-space: nowrap;
-  flex-shrink: 0;
-}
-
 .hw-uber__body {
   padding: 10px 12px 12px;
   display: flex;
@@ -333,6 +320,14 @@
   border-radius: 50%;
   background: #06C167;
   animation: hwUberPulse 2.4s ease-in-out infinite;
+}
+.hw-uber__dot--closed {
+  background: #EF4444;
+  animation: hwClosedPulse 2.4s ease-in-out infinite;
+}
+@keyframes hwClosedPulse {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.55); }
+  55%       { box-shadow: 0 0 0 5px rgba(239, 68, 68, 0); }
 }
 .hw-uber__status-label {
   font-family: var(--body);
@@ -457,6 +452,10 @@
   background: #00CCBC;
   animation: hwDlvPulse 2.4s ease-in-out infinite 0.5s;
 }
+.hw-dlv__dot--closed {
+  background: #EF4444;
+  animation: hwClosedPulse 2.4s ease-in-out infinite;
+}
 .hw-dlv__status-label {
   font-family: var(--body);
   font-size: 9.5px;
@@ -488,11 +487,20 @@
   font-weight: 500;
   color: #999999;
 }
-.hw-dlv__delivery {
+.hw-dlv__tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+.hw-dlv__tag {
   font-family: var(--body);
-  font-size: 11px;
+  font-size: 9.5px;
   font-weight: 500;
-  color: #666666;
+  color: #555555;
+  background: rgba(0, 204, 188, 0.1);
+  padding: 2px 8px 3px;
+  border-radius: 4px;
+  white-space: nowrap;
 }
 .hw-dlv__cta {
   display: flex;
@@ -516,7 +524,9 @@
 
 @media (prefers-reduced-motion: reduce) {
   .hw-uber__dot,
-  .hw-dlv__dot {
+  .hw-uber__dot--closed,
+  .hw-dlv__dot,
+  .hw-dlv__dot--closed {
     animation: none;
   }
 }
@@ -799,10 +809,6 @@
     height: 15px;
   }
 
-  .hw-uber__avail {
-    font-size: 7px;
-  }
-
   .hw-uber__body,
   .hw-dlv__body {
     padding: 8px 10px 10px;
@@ -827,8 +833,13 @@
     display: none;
   }
 
-  .hw-dlv__delivery {
-    font-size: 10px;
+  .hw-dlv__tags {
+    gap: 3px;
+  }
+
+  .hw-dlv__tag {
+    font-size: 8.5px;
+    padding: 2px 6px 3px;
   }
 
   .hw-dlv__status-label {
@@ -885,10 +896,6 @@
     right: 12px;
     bottom: max(12px, env(safe-area-inset-bottom));
     width: calc(100vw - 24px);
-  }
-
-  .hw-uber__avail {
-    display: none;
   }
 
   .hw-uber__score,
