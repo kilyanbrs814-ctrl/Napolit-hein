@@ -4,9 +4,12 @@ import { DELIVERY_LOGOS, PLATFORMS, TICKETS } from "../data/content.js";
 import "../styles/proof.css";
 
 function Ticket({ ticket, progress }) {
-  // parallaxe verticale stable, pilotee par le scroll (jamais par un hijack).
+  // Parallaxe verticale stable, pilotee par le scroll.
+  // Les positions dans TICKETS garantissent que la translation ne franchit pas la zone centrale.
   const y = useTransform(progress, [0, 1], [-110 * ticket.depth, 110 * ticket.depth]);
-  const hideMobile = !(ticket.depth > 0.5 || ticket.z > 3);
+  // Sur mobile : on n'affiche que les tickets du couloir gauche (x < 30 %)
+  // pour eviter tout chevauchement avec le bloc central et tout debordement hors ecran.
+  const hideMobile = parseFloat(ticket.x) >= 30;
   const isGoogle = ticket.src === "Google";
   const ticketLogo =
     ticket.logo ||

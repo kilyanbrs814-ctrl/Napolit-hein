@@ -292,12 +292,14 @@ export const PLATFORMS = [
   { name: "Deliveroo", rate: "4,4", reviews: "71 avis", logo: logoDeliveroo },
 ];
 
+// Couloirs : top (y ≤ 2 %) et bottom (y ≥ 84 %) garantissent qu'aucune carte
+// n'entre dans la zone centrale (y ≈ 27 %–73 %) même après dérive parallaxe.
 export const TICKETS = [
-  { src: "Uber Eats", mono: "UE", rate: "4,3 ★", body: "500+ commandes notees. Livraison rapide, portions au top.", col: "var(--uber)", depth: 1.0, x: "6%", y: "14%", rot: -5, z: 3 },
-  { src: "Deliveroo", mono: "D", rate: "4,4 ★", body: "« Tres bien » · 71 avis. Toujours chaud a l'arrivee.", col: "var(--deliv)", depth: -0.8, x: "70%", y: "10%", rot: 4, z: 3 },
-  { src: "Google", logo: googleLogo, rate: "4,7 ★", body: "« Le riz crousty, une tuerie. Genereux et croustillant. »", col: "var(--google)", depth: 0.6, x: "12%", y: "62%", rot: 3, z: 4 },
-  { src: "Avis client", mono: "★", rate: "5,0 ★", body: "« Portions enormes, sauce maison, on revient direct. »", col: "var(--orange)", depth: -1.2, x: "66%", y: "66%", rot: -4, z: 4 },
-  { src: "Avis client", mono: "★", rate: "5,0 ★", body: "« Le meilleur spot street food d'Albi le soir. »", col: "var(--gold)", depth: 1.4, x: "40%", y: "40%", rot: 2, z: 2 },
+  { src: "Uber Eats", mono: "UE", rate: "4,3 ★", body: "500+ commandes notees. Livraison rapide, portions au top.", col: "var(--uber)", depth: 0.45, x: "2%",  y: "2%",  rot: -4, z: 3, lane: "top"    },
+  { src: "Deliveroo", mono: "D",  rate: "4,4 ★", body: "« Tres bien » · 71 avis. Toujours chaud a l'arrivee.",       col: "var(--deliv)", depth: -0.4, x: "72%", y: "2%",  rot: 4,  z: 3, lane: "top"    },
+  { src: "Google", logo: googleLogo, rate: "4,7 ★", body: "« Le riz crousty, une tuerie. Genereux et croustillant. »", col: "var(--google)", depth: -0.4, x: "2%",  y: "84%", rot: 3,  z: 4, lane: "bottom" },
+  { src: "Avis client", mono: "★",  rate: "5,0 ★", body: "« Portions enormes, sauce maison, on revient direct. »",   col: "var(--orange)", depth: 0.38, x: "72%", y: "84%", rot: -4, z: 4, lane: "bottom" },
+  { src: "Avis client", mono: "★",  rate: "5,0 ★", body: "« Le meilleur spot street food d'Albi le soir. »",         col: "var(--gold)",   depth: -0.28, x: "38%", y: "88%", rot: 2,  z: 2, lane: "bottom" },
 ];
 
 // ---- Boutons du CTA final ----
