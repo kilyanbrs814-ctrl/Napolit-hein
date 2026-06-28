@@ -5,7 +5,8 @@ import "../styles/rail.css";
 
 const SNAP_DURATION = 720;
 const SWIPE_THRESHOLD = 48;
-const WHEEL_COOLDOWN = 480;
+const WHEEL_GESTURE_GAP = 180;
+const MIN_WHEEL_DELTA = 4;
 
 function RailCard({ dish, index, count, isActive }) {
   return (
@@ -16,7 +17,6 @@ function RailCard({ dish, index, count, isActive }) {
       animate={{ opacity: isActive ? 1 : 0.3, scale: isActive ? 1 : 0.93 }}
       transition={{ duration: SNAP_DURATION / 1000, ease: [0.22, 1, 0.36, 1] }}
     >
-      <div className="nh-rail__big">{dish.big}</div>
       <div className="nh-rail__media">
         <img className="nh-rail__dish" src={dish.img} alt={dish.name} />
       </div>
@@ -48,7 +48,6 @@ export default function RailSection() {
   const count = DISHES.length;
   const [activeIndex, setActiveIndex] = useState(0);
   const activeIndexRef = useRef(0);
-  const lastWheelAtRef = useRef(0);
 
   useEffect(() => {
     const section = sectionRef.current;
@@ -60,6 +59,8 @@ export default function RailSection() {
     let lastTouchAt = 0;
     let wasSectionActive = false;
     let lastScrollY = window.scrollY;
+    let wheelGestureLocked = false;
+    let wheelGestureTimer;
 
     const isSectionActive = () => {
       const rect = section.getBoundingClientRect();
@@ -79,29 +80,48 @@ export default function RailSection() {
       window.scrollTo({ top: target, behavior: "auto" });
     };
 
-    const handleWheel = (event) => {
-      if (event.ctrlKey || !isSectionActive()) return;
-
+    const normalizeWheelDelta = (event) => {
       const multiplier =
         event.deltaMode === WheelEvent.DOM_DELTA_LINE
           ? 16
           : event.deltaMode === WheelEvent.DOM_DELTA_PAGE
             ? window.innerHeight
             : 1;
-      const delta = event.deltaY * multiplier;
-      if (Math.abs(delta) < 1) return;
+      return event.deltaY * multiplier;
+    };
 
+    const unlockWheelAfterGesture = () => {
+      window.clearTimeout(wheelGestureTimer);
+      wheelGestureTimer = window.setTimeout(() => {
+        wheelGestureLocked = false;
+      }, WHEEL_GESTURE_GAP);
+    };
+
+    const handleWheel = (event) => {
+      if (event.ctrlKey || !isSectionActive()) return;
+
+      const delta = normalizeWheelDelta(event);
+      if (Math.abs(delta) < MIN_WHEEL_DELTA) return;
+
+      // scroll down (delta > 0) = plat suivant ; scroll up (delta < 0) = plat précédent
       const direction = delta > 0 ? 1 : -1;
       const nextIndex = activeIndexRef.current + direction;
 
-      // At limits: let natural scroll exit the section
+      // Aux limites : laisser le scroll naturel sortir de la section
       if (nextIndex < 0 || nextIndex >= count) return;
 
+      // Toujours bloquer le scroll page quand on est dans la section
       if (event.cancelable) event.preventDefault();
 
-      const now = Date.now();
-      if (now - lastWheelAtRef.current < WHEEL_COOLDOWN) return;
-      lastWheelAtRef.current = now;
+      // Même geste en cours : bloquer sans changer de plat
+      if (wheelGestureLocked) {
+        unlockWheelAfterGesture();
+        return;
+      }
+
+      // Premier event du geste : changer de plat et verrouiller
+      wheelGestureLocked = true;
+      unlockWheelAfterGesture();
 
       updateIndex(nextIndex);
       scrollToIndexAnchor(nextIndex);
@@ -136,7 +156,7 @@ export default function RailSection() {
       if (touchCaptured || Math.abs(delta) < SWIPE_THRESHOLD) return;
 
       const now = Date.now();
-      if (now - lastTouchAt < WHEEL_COOLDOWN) return;
+      if (now - lastTouchAt < 480) return;
       lastTouchAt = now;
 
       touchCaptured = true;
@@ -194,6 +214,7 @@ export default function RailSection() {
     section.addEventListener("touchcancel", resetTouch, { passive: true });
 
     return () => {
+      window.clearTimeout(wheelGestureTimer);
       window.removeEventListener("wheel", handleWheel);
       window.removeEventListener("scroll", handleScroll);
       section.removeEventListener("touchstart", handleTouchStart);

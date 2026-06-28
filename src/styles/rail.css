@@ -60,20 +60,26 @@
   flex-direction: row-reverse;
 }
 
-
-.nh-rail__big {
+/* Grand blob diffus derrière le plat ET le texte */
+.nh-rail__card::before {
+  content: "";
   position: absolute;
-  top: 6%;
-  left: 50%;
-  transform: translateX(-50%);
-  z-index: 1;
-  font-family: var(--display);
-  font-size: 18vw;
-  line-height: 0.8;
-  color: transparent;
-  -webkit-text-stroke: 1.5px color-mix(in srgb, var(--dish-color) 27%, transparent);
-  letter-spacing: 0.01em;
-  white-space: nowrap;
+  z-index: 0;
+  width: min(980px, 70vw);
+  height: min(520px, 48vh);
+  left: 48%;
+  top: 56%;
+  transform: translate(-50%, -50%) rotate(-8deg);
+  background: radial-gradient(
+    ellipse at center,
+    color-mix(in srgb, var(--dish-color) 52%, transparent) 0%,
+    color-mix(in srgb, var(--dish-color) 34%, transparent) 32%,
+    color-mix(in srgb, var(--dish-color) 16%, transparent) 55%,
+    transparent 78%
+  );
+  filter: blur(46px);
+  opacity: 0.95;
+  border-radius: 41% 59% 64% 36% / 46% 38% 62% 54%;
   pointer-events: none;
 }
 
@@ -89,24 +95,24 @@
   align-items: center;
   justify-content: center;
 }
+/* Petit glow local renforcé derrière le plat */
 .nh-rail__media::before {
   content: "";
   position: absolute;
   z-index: -1;
-  width: 190%;
-  height: 135%;
+  width: 160%;
+  height: 120%;
   left: 50%;
   top: 58%;
   transform: translate(-50%, -50%) rotate(-8deg);
   background: radial-gradient(
     ellipse at center,
-    color-mix(in srgb, var(--dish-color) 44%, transparent) 0%,
-    color-mix(in srgb, var(--dish-color) 24%, transparent) 34%,
-    color-mix(in srgb, var(--dish-color) 14%, transparent) 52%,
-    transparent 78%
+    color-mix(in srgb, var(--dish-color) 45%, transparent) 0%,
+    color-mix(in srgb, var(--dish-color) 22%, transparent) 45%,
+    transparent 76%
   );
-  filter: blur(34px);
-  opacity: 1;
+  filter: blur(30px);
+  opacity: 0.9;
   border-radius: 41% 59% 64% 36% / 46% 38% 62% 54%;
   pointer-events: none;
 }
@@ -212,9 +218,11 @@
     gap: 18px;
     padding: 24px 22px;
   }
-  .nh-rail__big {
-    top: 2%;
-    font-size: 19vw;
+  .nh-rail__card::before {
+    width: 100vw;
+    height: 50vh;
+    left: 50%;
+    top: 42%;
   }
   .nh-rail__media {
     width: 62vw;

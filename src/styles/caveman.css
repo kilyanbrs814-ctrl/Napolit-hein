@@ -1,0 +1,25 @@
+/* ============================================================
+   CAVEMAN MODE — Easter egg activé par triple-clic sur le logo
+   ============================================================ */
+
+html[data-caveman="true"] {
+  --bg:       #130A05;
+  --bg-2:     #1E1008;
+  --panel:    #28160A;
+  --panel-hi: #371E0E;
+
+  --orange:    #C94C10;
+  --orange-hi: #DC5F1A;
+  --gold:      #AA7A10;
+  --cream:     #F0DFB0;
+
+  /* Police primitive pour tous les titres display */
+  --display: "Rock Salt", Georgia, serif;
+}
+
+/* Grain plus dense pour simuler la texture pierre */
+html[data-caveman="true"] .nh-grain {
+  opacity: 0.22;
+}
+
+/* Les pills / boutons héritent automatiquement des nouvelles couleurs via les vars */

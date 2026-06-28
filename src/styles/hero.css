@@ -221,7 +221,7 @@
   margin-top: 24px;
 }
 
-/* ---- Widgets livraison ---- */
+/* ---- Widgets livraison : conteneur commun ---- */
 .nh-hero__widgets {
   position: absolute;
   right: 40px;
@@ -251,96 +251,274 @@
   width: 100%;
 }
 
-.nh-widget {
+/* ---- Animations partagées (dots pulsants) ---- */
+@keyframes hwUberPulse {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(6, 193, 103, 0.55); }
+  55%       { box-shadow: 0 0 0 5px rgba(6, 193, 103, 0); }
+}
+@keyframes hwDlvPulse {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(0, 204, 188, 0.55); }
+  55%       { box-shadow: 0 0 0 5px rgba(0, 204, 188, 0); }
+}
+
+/* ===== WIDGET UBER EATS ===== */
+.hw-uber {
   position: relative;
   flex: 1 1 0;
   min-width: 0;
   text-decoration: none;
+  border-radius: 14px;
   overflow: hidden;
-  background: linear-gradient(160deg, rgba(255, 255, 255, 0.13), rgba(10, 16, 40, 0.5));
-  backdrop-filter: blur(16px) saturate(150%);
-  -webkit-backdrop-filter: blur(16px) saturate(150%);
-  border: 1px solid rgba(255, 255, 255, 0.18);
-  border-radius: 16px;
-  padding: 15px 18px;
+  background: #0D0D0D;
+  border: 1px solid rgba(6, 193, 103, 0.18);
+  box-shadow:
+    0 0 0 1px rgba(0, 0, 0, 0.9),
+    0 22px 52px -16px rgba(0, 0, 0, 0.95),
+    0 0 28px -8px rgba(6, 193, 103, 0.12);
   display: flex;
   flex-direction: column;
-  gap: 9px;
-  box-shadow: 0 16px 40px -18px rgba(0, 0, 0, 0.8);
-  transition: transform 0.25s ease, box-shadow 0.25s ease, border-color 0.25s ease;
+  cursor: pointer;
+  transition: border-color 0.22s ease, box-shadow 0.22s ease;
 }
-.nh-widget:hover {
-  transform: translateY(-4px);
-  box-shadow: 0 26px 54px -18px rgba(0, 0, 0, 0.9);
-  border-color: rgba(255, 255, 255, 0.34);
+.hw-uber:hover {
+  border-color: rgba(6, 193, 103, 0.4);
+  box-shadow:
+    0 0 0 1px rgba(0, 0, 0, 0.9),
+    0 28px 62px -16px rgba(0, 0, 0, 0.95),
+    0 0 40px -6px rgba(6, 193, 103, 0.24);
 }
-.nh-widget__glow {
-  position: absolute;
-  top: -28px;
-  right: -28px;
-  width: 92px;
-  height: 92px;
-  border-radius: 50%;
-  opacity: 0.5;
-  filter: blur(34px);
-  pointer-events: none;
-}
-.nh-widget__head {
+
+.hw-uber__bar {
+  background: #000000;
+  padding: 10px 12px;
   display: flex;
   align-items: center;
-  gap: 8px;
-  position: relative;
-  z-index: 1;
+  justify-content: space-between;
+  gap: 6px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.07);
 }
-.nh-widget__logo {
-  height: 26px;
-  max-width: 108px;
+.hw-uber__logo {
+  height: 17px;
   width: auto;
+  max-width: 110px;
   object-fit: contain;
 }
-.nh-widget__brand {
+.hw-uber__avail {
   font-family: var(--body);
-  font-weight: 800;
-  font-size: 15px;
-  color: #fff;
-  white-space: nowrap;
-}
-.nh-widget__rate-row {
-  display: flex;
-  align-items: baseline;
-  gap: 7px;
-  position: relative;
-  z-index: 1;
-}
-.nh-widget__rate {
-  font-family: var(--display);
-  font-size: 32px;
-  color: #fff;
-  line-height: 1;
-}
-.nh-widget__star {
-  color: var(--gold);
-  font-size: 16px;
-}
-.nh-widget__rev {
-  font-family: var(--body);
-  font-weight: 500;
-  font-size: 12px;
-  color: var(--mute);
-}
-.nh-widget__cta {
-  margin-top: 2px;
-  font-family: var(--body);
-  font-weight: 800;
-  font-size: 12px;
-  letter-spacing: 0.05em;
+  font-size: 8px;
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.28);
+  letter-spacing: 0.08em;
   text-transform: uppercase;
-  color: var(--gold);
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.hw-uber__body {
+  padding: 10px 12px 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  flex: 1;
+}
+.hw-uber__status {
   display: flex;
   align-items: center;
   gap: 6px;
+}
+.hw-uber__dot {
+  flex-shrink: 0;
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: #06C167;
+  animation: hwUberPulse 2.4s ease-in-out infinite;
+}
+.hw-uber__status-label {
+  font-family: var(--body);
+  font-size: 10.5px;
+  font-weight: 600;
+  color: #06C167;
+  line-height: 1.2;
+}
+.hw-uber__rating {
+  display: flex;
+  align-items: baseline;
+  gap: 5px;
+}
+.hw-uber__star {
+  color: #FFD04D;
+  font-size: 12px;
+}
+.hw-uber__score {
+  font-family: var(--body);
+  font-size: 20px;
+  font-weight: 800;
+  color: #ffffff;
+  line-height: 1;
+  letter-spacing: -0.01em;
+}
+.hw-uber__reviews {
+  font-family: var(--body);
+  font-size: 10px;
+  font-weight: 500;
+  color: rgba(255, 255, 255, 0.32);
+}
+.hw-uber__tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+.hw-uber__tag {
+  font-family: var(--body);
+  font-size: 9.5px;
+  font-weight: 500;
+  color: rgba(255, 255, 255, 0.42);
+  background: rgba(255, 255, 255, 0.07);
+  padding: 2px 8px 3px;
+  border-radius: 4px;
+  white-space: nowrap;
+}
+.hw-uber__cta {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  background: #06C167;
+  color: #000000;
+  font-family: var(--body);
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  padding: 9px 10px;
+  border-radius: 8px;
+  transition: background 0.18s ease;
+}
+.hw-uber:hover .hw-uber__cta {
+  background: #09D97B;
+}
+
+/* ===== WIDGET DELIVEROO ===== */
+.hw-dlv {
   position: relative;
-  z-index: 1;
+  flex: 1 1 0;
+  min-width: 0;
+  text-decoration: none;
+  border-radius: 14px;
+  overflow: hidden;
+  background: #ffffff;
+  border: 1px solid rgba(0, 204, 188, 0.22);
+  box-shadow:
+    0 22px 52px -16px rgba(0, 0, 0, 0.82),
+    0 0 28px -8px rgba(0, 204, 188, 0.18);
+  display: flex;
+  flex-direction: column;
+  cursor: pointer;
+  transition: box-shadow 0.22s ease;
+}
+.hw-dlv:hover {
+  box-shadow:
+    0 28px 62px -16px rgba(0, 0, 0, 0.82),
+    0 0 40px -6px rgba(0, 204, 188, 0.32);
+}
+
+.hw-dlv__head {
+  background: #00CCBC;
+  padding: 10px 12px;
+  display: flex;
+  align-items: center;
+}
+.hw-dlv__logo {
+  height: 17px;
+  width: auto;
+  max-width: 110px;
+  object-fit: contain;
+  filter: brightness(0) invert(1);
+}
+
+.hw-dlv__body {
+  padding: 10px 12px 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+  flex: 1;
+}
+.hw-dlv__status {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+.hw-dlv__dot {
+  flex-shrink: 0;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #00CCBC;
+  animation: hwDlvPulse 2.4s ease-in-out infinite 0.5s;
+}
+.hw-dlv__status-label {
+  font-family: var(--body);
+  font-size: 9.5px;
+  font-weight: 700;
+  color: #00A89E;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+.hw-dlv__rating {
+  display: flex;
+  align-items: baseline;
+  gap: 5px;
+}
+.hw-dlv__star {
+  color: #FF6232;
+  font-size: 12px;
+}
+.hw-dlv__score {
+  font-family: var(--body);
+  font-size: 20px;
+  font-weight: 800;
+  color: #111111;
+  line-height: 1;
+  letter-spacing: -0.01em;
+}
+.hw-dlv__reviews {
+  font-family: var(--body);
+  font-size: 10px;
+  font-weight: 500;
+  color: #999999;
+}
+.hw-dlv__delivery {
+  font-family: var(--body);
+  font-size: 11px;
+  font-weight: 500;
+  color: #666666;
+}
+.hw-dlv__cta {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  background: #00CCBC;
+  color: #ffffff;
+  font-family: var(--body);
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  padding: 9px 10px;
+  border-radius: 8px;
+  transition: background 0.18s ease;
+}
+.hw-dlv:hover .hw-dlv__cta {
+  background: #00B3A4;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .hw-uber__dot,
+  .hw-dlv__dot {
+    animation: none;
+  }
 }
 
 /* ---- Indice de scroll ---- */
@@ -605,53 +783,63 @@
     gap: 8px;
   }
 
-  .nh-widget {
-    border-radius: 14px;
-    padding: 10px 11px;
+  /* ---- Widgets mobile ---- */
+  .hw-uber,
+  .hw-dlv {
+    border-radius: 12px;
+  }
+
+  .hw-uber__bar,
+  .hw-dlv__head {
+    padding: 8px 10px;
+  }
+
+  .hw-uber__logo,
+  .hw-dlv__logo {
+    height: 15px;
+  }
+
+  .hw-uber__avail {
+    font-size: 7px;
+  }
+
+  .hw-uber__body,
+  .hw-dlv__body {
+    padding: 8px 10px 10px;
     gap: 6px;
-    backdrop-filter: blur(12px) saturate(145%);
-    -webkit-backdrop-filter: blur(12px) saturate(145%);
-    background: linear-gradient(160deg, rgba(255, 255, 255, 0.14), rgba(10, 16, 40, 0.72));
   }
 
-  .nh-widget__glow {
-    width: 70px;
-    height: 70px;
-    filter: blur(28px);
+  .hw-uber__status-label {
+    font-size: 9.5px;
   }
 
-  .nh-widget__head {
-    gap: 6px;
+  .hw-uber__score,
+  .hw-dlv__score {
+    font-size: 17px;
   }
 
-  .nh-widget__logo {
-    height: 20px;
-    max-width: 92px;
+  .hw-uber__reviews,
+  .hw-dlv__reviews {
+    font-size: 9px;
   }
 
-  .nh-widget__brand {
-    font-size: 12px;
+  .hw-uber__tags {
+    display: none;
   }
 
-  .nh-widget__rate-row {
-    gap: 5px;
-  }
-
-  .nh-widget__rate {
-    font-size: 24px;
-  }
-
-  .nh-widget__star {
-    font-size: 13px;
-  }
-
-  .nh-widget__rev {
+  .hw-dlv__delivery {
     font-size: 10px;
   }
 
-  .nh-widget__cta {
+  .hw-dlv__status-label {
+    font-size: 9px;
+  }
+
+  .hw-uber__cta,
+  .hw-dlv__cta {
     font-size: 10px;
-    letter-spacing: 0.03em;
+    padding: 8px 8px;
+    border-radius: 7px;
   }
 
   .nh-hero__cue {
@@ -699,7 +887,12 @@
     width: calc(100vw - 24px);
   }
 
-  .nh-widget {
-    padding: 9px 10px;
+  .hw-uber__avail {
+    display: none;
+  }
+
+  .hw-uber__score,
+  .hw-dlv__score {
+    font-size: 16px;
   }
 }
