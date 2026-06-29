@@ -3,13 +3,51 @@ import { motion, useScroll, useTransform } from "framer-motion";
 import { DELIVERY_LOGOS, PLATFORMS, TICKETS } from "../data/content.js";
 import "../styles/proof.css";
 
-function Ticket({ ticket, progress }) {
-  // Parallaxe verticale stable, pilotee par le scroll.
-  // Les positions dans TICKETS garantissent que la translation ne franchit pas la zone centrale.
-  const y = useTransform(progress, [0, 1], [-110 * ticket.depth, 110 * ticket.depth]);
-  // Sur mobile : on n'affiche que les tickets du couloir gauche (x < 30 %)
-  // pour eviter tout chevauchement avec le bloc central et tout debordement hors ecran.
-  const hideMobile = parseFloat(ticket.x) >= 30;
+// Clamp scroll progress to [0, 1] after applying per-ticket delay offset.
+function c(v) { return Math.min(1, Math.max(0, v)); }
+
+/*
+ * Trajectoire par couloir (vérifiée de 390px à 1920px de largeur) :
+ *
+ *   x deviation ±720px au passage du centre :
+ *   - left  : card right edge = (50vw - 150px) + (-720px) + 300px ≈ −70px  → hors écran gauche ✓
+ *   - right : card left  edge = (50vw - 150px) +  720px            ≈ +920px → hors écran droit  ✓
+ *
+ *   y timeline (px) :
+ *   1150  → card sous l'écran   (invisible)
+ *    700  → card entre dans la vue par le bas
+ *   −200  → card a passé le bloc central (zone y:27-73% du viewport)
+ *   −800  → card sort hors écran par le haut
+ */
+function AnimatedTicket({ ticket, progress }) {
+  const d = ticket.delay;
+  const left = ticket.lane === "left";
+
+  // --- X : déviation couloir ---
+  const xVals = left
+    ? [-80, -80, -720, -920, -1200]
+    : [ 80,  80,  720,  920,  1200];
+  const xKeys = [
+    c(d + 0.06), c(d + 0.14), c(d + 0.30), c(d + 0.58), c(d + 0.74),
+  ];
+
+  // --- Y : montée depuis le bas ---
+  const yVals = [1150, 700, -200, -800];
+  const yKeys = [c(d + 0.06), c(d + 0.22), c(d + 0.55), c(d + 0.74)];
+
+  // --- Opacity : invisible → visible → invisible ---
+  const opKeys = [c(d + 0.06), c(d + 0.14), c(d + 0.65), c(d + 0.74)];
+  const opVals = [0, 1, 1, 0];
+
+  // --- Scale : léger zoom à l'entrée ---
+  const scKeys = [c(d + 0.06), c(d + 0.17), c(d + 0.74)];
+  const scVals = [0.82, 1, 1];
+
+  const x       = useTransform(progress, xKeys,  xVals);
+  const y       = useTransform(progress, yKeys,  yVals);
+  const opacity = useTransform(progress, opKeys, opVals);
+  const scale   = useTransform(progress, scKeys, scVals);
+
   const isGoogle = ticket.src === "Google";
   const ticketLogo =
     ticket.logo ||
@@ -21,8 +59,8 @@ function Ticket({ ticket, progress }) {
 
   return (
     <motion.div
-      className={`nh-proof__ticket${hideMobile ? " is-hidden-mobile" : ""}`}
-      style={{ left: ticket.x, top: ticket.y, zIndex: ticket.z, rotate: ticket.rot, y }}
+      className="nh-proof__ticket"
+      style={{ x, y, opacity, scale, rotate: ticket.rot, zIndex: ticket.z }}
     >
       <div className="nh-proof__ticket-top">
         <span
@@ -56,6 +94,7 @@ export default function ProofSection() {
     <section id="avis" ref={sectionRef} className="nh-proof" data-screen-label="07 Avis">
       <div className="nh-proof__stage">
         <div className="nh-eyebrow nh-proof__eyebrow">07 · Tout le monde valide</div>
+
         <div className="nh-proof__center">
           <div className="nh-proof__big">4,7</div>
           <div className="nh-proof__stars">★★★★★</div>
@@ -84,7 +123,7 @@ export default function ProofSection() {
 
         <div className="nh-proof__field">
           {TICKETS.map((t, i) => (
-            <Ticket key={i} ticket={t} progress={scrollYProgress} />
+            <AnimatedTicket key={i} ticket={t} progress={scrollYProgress} />
           ))}
         </div>
       </div>
