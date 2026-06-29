@@ -96,12 +96,12 @@ export default function ProofSection() {
         <div className="nh-eyebrow nh-proof__eyebrow">07 · Tout le monde valide</div>
 
         <div className="nh-proof__center">
-          <div className="nh-proof__big">4,7</div>
+          <div className="nh-proof__big">4,5</div>
           <div className="nh-proof__stars">★★★★★</div>
-          <div className="nh-eyebrow nh-proof__big-sub">130 avis Google · et ca continue</div>
+          <div className="nh-eyebrow nh-proof__big-sub">Moyenne Google, Uber Eats &amp; Deliveroo · et ça continue</div>
           <div className="nh-proof__platforms">
             {PLATFORMS.map((p) => (
-              <div key={p.name} className="nh-proof__platform">
+              <div key={p.name} className={`nh-proof__platform nh-proof__platform--${p.name.toLowerCase().replace(/\s+/g, '-')}`}>
                 {p.logo ? (
                   <img
                     src={p.logo}

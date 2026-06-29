@@ -1,7 +1,7 @@
 /* ============ SCENE 07 - PREUVE SOCIALE ============ */
 .nh-proof {
   position: relative;
-  height: 280vh;
+  height: 320vh;
   background: var(--bg);
 }
 .nh-proof__stage {
@@ -30,7 +30,7 @@
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 12px;
+  gap: 18px;
   /* Backdrop subtil pour masquer les tickets derrière le contenu central */
   background: radial-gradient(ellipse 68% 88% at 50% 50%, rgba(7, 11, 22, 0.62) 0%, transparent 100%);
   padding: 24px 32px;
@@ -40,8 +40,8 @@
   font-family: var(--display);
   font-size: 320px;
   line-height: 0.8;
-  color: transparent;
-  -webkit-text-stroke: 2px rgba(255, 90, 31, 0.5);
+  color: var(--orange);
+  -webkit-text-stroke: 0;
   opacity: 0.9;
 }
 .nh-proof__stars {
@@ -107,6 +107,82 @@
   font-size: 12px;
   color: var(--mute);
   white-space: nowrap;
+}
+
+/* ---- Capsules par plateforme ---- */
+
+/* Google : badge blanc, look Google Reviews */
+.nh-proof__platform--google {
+  background: #fff;
+  border-color: rgba(0, 0, 0, 0.10);
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+}
+.nh-proof__platform--google .nh-proof__platform-logo.is-google {
+  transform: scale(1.15);
+}
+.nh-proof__platform--google .nh-proof__platform-rate {
+  font-size: 20px;
+  color: #202124;
+}
+.nh-proof__platform--google .nh-proof__platform-star {
+  color: #FBBC05;
+  font-size: 16px;
+}
+.nh-proof__platform--google .nh-proof__platform-rev {
+  color: #5F6368;
+}
+
+/* Uber Eats : fond noir, accent vert #06c167 */
+.nh-proof__platform--uber-eats {
+  background: #111;
+  border-color: rgba(6, 193, 103, 0.28);
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+}
+.nh-proof__platform--uber-eats .nh-proof__platform-logo {
+  height: 15px;
+  background: rgba(255, 255, 255, 0.94);
+  border-radius: 5px;
+  padding: 3px 6px;
+  box-sizing: content-box;
+}
+.nh-proof__platform--uber-eats .nh-proof__platform-rate {
+  font-size: 20px;
+  color: var(--uber);
+}
+.nh-proof__platform--uber-eats .nh-proof__platform-star {
+  color: var(--uber);
+  font-size: 16px;
+}
+.nh-proof__platform--uber-eats .nh-proof__platform-rev {
+  color: rgba(255, 255, 255, 0.5);
+}
+
+/* Deliveroo : fond teal #00ccbc, texte blanc */
+.nh-proof__platform--deliveroo {
+  background: var(--deliv);
+  border-color: transparent;
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+}
+.nh-proof__platform--deliveroo .nh-proof__platform-logo {
+  height: 15px;
+  background: rgba(255, 255, 255, 0.94);
+  border-radius: 5px;
+  padding: 3px 6px;
+  box-sizing: content-box;
+}
+.nh-proof__platform--deliveroo .nh-proof__platform-rate {
+  font-size: 20px;
+  color: #fff;
+}
+.nh-proof__platform--deliveroo .nh-proof__platform-star {
+  color: rgba(255, 255, 255, 0.90);
+  font-size: 16px;
+}
+.nh-proof__platform--deliveroo .nh-proof__platform-rev {
+  color: rgba(255, 255, 255, 0.78);
 }
 
 .nh-proof__field {
@@ -193,7 +269,7 @@
 
 @media (max-width: 860px) {
   .nh-proof {
-    height: 240vh;
+    height: 270vh;
   }
   .nh-proof__eyebrow {
     top: 90px;

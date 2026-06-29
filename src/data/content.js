@@ -300,17 +300,17 @@ export const TICKETS = [
   { src: "Google",    logo: googleLogo,    rate: "5,0 ★", body: "« Le riz crousty, une tuerie. Généreux et croustillant. »",    col: "var(--google)", lane: "left",  delay: 0.00, rot: -5, z: 4 },
   { src: "Google",    logo: googleLogo,    rate: "5,0 ★", body: "« Super resto, autant sur la quantité que sur la qualité. »",  col: "var(--google)", lane: "right", delay: 0.00, rot:  4, z: 4 },
   // — slot 0.08 —
-  { src: "Deliveroo", logo: logoDeliveroo, rate: "5,0 ★", body: "« Repas délicieux, bon rapport qualité/prix. »",               col: "var(--deliv)",  lane: "left",  delay: 0.08, rot:  3, z: 4 },
-  { src: "Deliveroo", logo: logoDeliveroo, rate: "5,0 ★", body: "« Very good. Still warm. Yummi! »",                            col: "var(--deliv)",  lane: "right", delay: 0.08, rot: -4, z: 4 },
+  { src: "Deliveroo", logo: logoDeliveroo, rate: "5,0 ★", body: "« Repas délicieux, bon rapport qualité/prix. »",               col: "var(--deliv)",  lane: "left",  delay: 0.07, rot:  3, z: 4 },
+  { src: "Deliveroo", logo: logoDeliveroo, rate: "5,0 ★", body: "« Very good. Still warm. Yummi! »",                            col: "var(--deliv)",  lane: "right", delay: 0.07, rot: -4, z: 4 },
   // — slot 0.14 —
   { src: "Google",    logo: googleLogo,    rate: "5,0 ★", body: "« Serveur très agréable, il m'a aidé à choisir. »",            col: "var(--google)", lane: "left",  delay: 0.14, rot: -3, z: 3 },
   { src: "Google",    logo: googleLogo,    rate: "5,0 ★", body: "« Venue de Clermont-Ferrand juste pour leurs pâtes. »",        col: "var(--google)", lane: "right", delay: 0.14, rot:  4, z: 3 },
   // — slot 0.20 —
-  { src: "Deliveroo", logo: logoDeliveroo, rate: "5,0 ★", body: "« Bolognaise excellente ! »",                                  col: "var(--deliv)",  lane: "left",  delay: 0.20, rot: -5, z: 3 },
-  { src: "Uber Eats", logo: logoUber,      rate: "4,3 ★", body: "500+ avis. Pâtes, riz crousty et plats généreux sur Albi.",   col: "var(--uber)",   lane: "right", delay: 0.20, rot:  3, z: 3 },
+  { src: "Deliveroo", logo: logoDeliveroo, rate: "5,0 ★", body: "« Bolognaise excellente ! »",                                  col: "var(--deliv)",  lane: "left",  delay: 0.21, rot: -5, z: 3 },
+  { src: "Uber Eats", logo: logoUber,      rate: "4,3 ★", body: "500+ avis. Pâtes, riz crousty et plats généreux sur Albi.",   col: "var(--uber)",   lane: "right", delay: 0.21, rot:  3, z: 3 },
   // — slot 0.26 —
-  { src: "Google",    logo: googleLogo,    rate: "5,0 ★", body: "« Plusieurs fois que je viens, toujours aussi contente. »",    col: "var(--google)", lane: "left",  delay: 0.26, rot:  2, z: 2 },
-  { src: "Deliveroo", logo: logoDeliveroo, rate: "5,0 ★", body: "« Plats authentiques, livrés chauds. »",                      col: "var(--deliv)",  lane: "right", delay: 0.26, rot: -4, z: 2 },
+  { src: "Google",    logo: googleLogo,    rate: "5,0 ★", body: "« Plusieurs fois que je viens, toujours aussi contente. »",    col: "var(--google)", lane: "left",  delay: 0.28, rot:  2, z: 2 },
+  { src: "Deliveroo", logo: logoDeliveroo, rate: "5,0 ★", body: "« Plats authentiques, livrés chauds. »",                      col: "var(--deliv)",  lane: "right", delay: 0.28, rot: -4, z: 2 },
 ];
 
 // ---- Boutons du CTA final ----
