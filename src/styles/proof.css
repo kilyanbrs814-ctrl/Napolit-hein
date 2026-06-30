@@ -1,7 +1,7 @@
 /* ============ SCENE 07 - PREUVE SOCIALE ============ */
 .nh-proof {
   position: relative;
-  height: 320vh;
+  height: 370vh;
   background: var(--bg);
 }
 .nh-proof__stage {
@@ -141,11 +141,8 @@
   -webkit-backdrop-filter: none;
 }
 .nh-proof__platform--uber-eats .nh-proof__platform-logo {
-  height: 15px;
-  background: rgba(255, 255, 255, 0.94);
-  border-radius: 5px;
-  padding: 3px 6px;
-  box-sizing: content-box;
+  height: 18px;
+  filter: brightness(0) invert(1);
 }
 .nh-proof__platform--uber-eats .nh-proof__platform-rate {
   font-size: 20px;
@@ -167,11 +164,8 @@
   -webkit-backdrop-filter: none;
 }
 .nh-proof__platform--deliveroo .nh-proof__platform-logo {
-  height: 15px;
-  background: rgba(255, 255, 255, 0.94);
-  border-radius: 5px;
-  padding: 3px 6px;
-  box-sizing: content-box;
+  height: 18px;
+  filter: brightness(0) invert(1);
 }
 .nh-proof__platform--deliveroo .nh-proof__platform-rate {
   font-size: 20px;
@@ -228,8 +222,11 @@
 }
 .nh-proof__ticket-badge.is-logo {
   width: 62px;
-  padding: 0 7px;
-  background: rgba(255, 255, 255, 0.94);
+  padding: 0 4px;
+  background: transparent;
+}
+.nh-proof__ticket-badge.is-logo:not(.is-google) .nh-proof__ticket-badge-logo {
+  filter: brightness(0) invert(1);
 }
 .nh-proof__ticket-badge.is-google {
   width: 68px;
@@ -269,7 +266,7 @@
 
 @media (max-width: 860px) {
   .nh-proof {
-    height: 270vh;
+    height: 300vh;
   }
   .nh-proof__eyebrow {
     top: 90px;

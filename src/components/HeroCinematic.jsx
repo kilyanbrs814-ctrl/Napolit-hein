@@ -253,8 +253,8 @@ export default function HeroCinematic() {
 
   const glowScale = useTransform(scrollYProgress, [0, 1], [1, 1.5]);
 
-  const crOpacity = useTransform(scrollYProgress, [0.36, 0.72], [0, 1]);
-  const crY = useTransform(scrollYProgress, [0.36, 0.76], [42, 0]);
+  const crOpacity = useTransform(scrollYProgress, [0.36, 0.91], [0, 1]);
+  const crY = useTransform(scrollYProgress, [0.36, 0.93], [42, 0]);
 
   // En reduced-motion : aucune transformation inline -> tout reste visible.
   const s = (style) => (isStatic ? undefined : style);

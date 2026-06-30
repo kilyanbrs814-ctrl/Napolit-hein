@@ -1,7 +1,7 @@
 /* ============ SCENE 04 - LES INCONTOURNABLES (RAIL) ============ */
 .nh-rail {
   position: relative;
-  height: 360vh;
+  height: 180vh;
   background: var(--bg);
 }
 
@@ -206,7 +206,7 @@
 
 @media (max-width: 860px) {
   .nh-rail {
-    height: 420vh;
+    height: 210vh;
   }
   .nh-rail__header {
     top: 78px;

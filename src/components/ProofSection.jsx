@@ -28,19 +28,19 @@ function AnimatedTicket({ ticket, progress }) {
     ? [-80, -80, -720, -920, -1200]
     : [ 80,  80,  720,  920,  1200];
   const xKeys = [
-    c(d + 0.06), c(d + 0.14), c(d + 0.30), c(d + 0.58), c(d + 0.74),
+    c(d + 0.06), c(d + 0.14), c(d + 0.30), c(d + 0.58), c(d + 0.78),
   ];
 
   // --- Y : montée depuis le bas ---
   const yVals = [1150, 700, -200, -800];
-  const yKeys = [c(d + 0.06), c(d + 0.22), c(d + 0.55), c(d + 0.74)];
+  const yKeys = [c(d + 0.06), c(d + 0.22), c(d + 0.55), c(d + 0.78)];
 
   // --- Opacity : invisible → visible → invisible ---
-  const opKeys = [c(d + 0.06), c(d + 0.14), c(d + 0.65), c(d + 0.74)];
+  const opKeys = [c(d + 0.06), c(d + 0.14), c(d + 0.68), c(d + 0.78)];
   const opVals = [0, 1, 1, 0];
 
   // --- Scale : léger zoom à l'entrée ---
-  const scKeys = [c(d + 0.06), c(d + 0.17), c(d + 0.74)];
+  const scKeys = [c(d + 0.06), c(d + 0.17), c(d + 0.78)];
   const scVals = [0.82, 1, 1];
 
   const x       = useTransform(progress, xKeys,  xVals);

@@ -3,6 +3,7 @@ import { motion } from "framer-motion";
 import { DISHES, LINKS } from "../data/content.js";
 import "../styles/rail.css";
 
+const RAIL_DISHES = DISHES.slice(0, 3);
 const SNAP_DURATION = 720;
 const SWIPE_THRESHOLD = 48;
 const WHEEL_GESTURE_GAP = 110;
@@ -37,7 +38,7 @@ function RailCard({ dish, index, count, isActive }) {
         </div>
       </div>
       <div className="nh-rail__index">
-        {"0" + (index + 1)} / {count}
+        {"0" + (index + 1)} / {"0" + count}
       </div>
     </motion.div>
   );
@@ -45,7 +46,7 @@ function RailCard({ dish, index, count, isActive }) {
 
 export default function RailSection() {
   const sectionRef = useRef(null);
-  const count = DISHES.length;
+  const count = RAIL_DISHES.length;
   const [activeIndex, setActiveIndex] = useState(0);
   const activeIndexRef = useRef(0);
 
@@ -243,7 +244,7 @@ export default function RailSection() {
           animate={{ x: `${-activeIndex * 100}vw` }}
           transition={{ duration: SNAP_DURATION / 1000, ease: [0.22, 1, 0.36, 1] }}
         >
-          {DISHES.map((dish, index) => (
+          {RAIL_DISHES.map((dish, index) => (
             <RailCard
               key={dish.name}
               dish={dish}

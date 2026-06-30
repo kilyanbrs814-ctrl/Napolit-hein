@@ -1,8 +1,8 @@
 /* ============ HERO CINEMATIQUE (Hero <-> Croustillant) ============ */
 .nh-hero {
   position: relative;
-  height: 230vh;
-  height: 230svh;
+  height: 185vh;
+  height: 185svh;
   background: var(--bg);
 }
 
@@ -600,8 +600,8 @@
 /* ============ TABLETTE : meme scene, proportions reduites ============ */
 @media (min-width: 861px) and (max-width: 1100px) {
   .nh-hero {
-    height: 218vh;
-    height: 218svh;
+    height: 175vh;
+    height: 175svh;
   }
 
   .nh-hero__bowls {
@@ -640,8 +640,8 @@
 /* ============ MOBILE : adaptation fidele de la scene desktop ============ */
 @media (max-width: 860px) {
   .nh-hero {
-    height: 215vh;
-    height: 215svh;
+    height: 172vh;
+    height: 172svh;
   }
 
   .nh-hero__stage {
@@ -838,8 +838,8 @@
 
 @media (max-width: 380px) {
   .nh-hero {
-    height: 205vh;
-    height: 205svh;
+    height: 163vh;
+    height: 163svh;
   }
 
   .nh-hero__logo {
