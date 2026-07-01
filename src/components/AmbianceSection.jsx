@@ -1,5 +1,5 @@
 import { LINKS } from "../data/content.js";
-import salle from "../assets/images/ambiance-comptoir.jpg";
+import salle from "../assets/images/spot-napolithein.png";
 import Reveal from "./Reveal.jsx";
 import "../styles/ambiance.css";
 

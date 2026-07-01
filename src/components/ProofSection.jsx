@@ -37,8 +37,10 @@ function AnimatedTicket({ ticket, progress }) {
     c(d + 0.04), c(d + 0.10), c(d + 0.24), c(d + 0.46), c(d + 0.58),
   ];
 
-  // --- Y : montée depuis le bas (-20 %) ---
-  const yVals = [960, 576, -200, -720];
+  // --- Y : montée depuis le bas.
+  // y=60 au keyframe central : la carte reste visible près du haut du viewport
+  // jusqu'à ce que l'opacité atteigne 0, éliminant le scroll vide final.
+  const yVals = [960, 576, 60, -200];
   const yKeys = [c(d + 0.04), c(d + 0.18), c(d + 0.44), c(d + 0.58)];
 
   // --- Opacity : invisible → visible → invisible ---

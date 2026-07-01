@@ -48,6 +48,7 @@ export default function RailSection() {
   const count = RAIL_DISHES.length;
   const [activeIndex, setActiveIndex] = useState(0);
   const activeIndexRef = useRef(0);
+  const wheelLockedRef = useRef(false);
 
   useEffect(() => {
     const section = sectionRef.current;
@@ -58,16 +59,12 @@ export default function RailSection() {
     let touchStartedWhileActive = false;
     let lastTouchAt = 0;
     let wasSectionActive = false;
-    let lastScrollY = window.scrollY;
-    let wheelGestureLocked = false;
-    let wheelGestureTimer;
-    // True une fois que l'entrée dans la section a été absorbée ; reset à la sortie.
-    let sectionEntryHandled = false;
+    let wheelTimer = null;
 
+    // Active quand le stage sticky occupe réellement l'écran (haut sorti, bas pas encore).
     const isSectionActive = () => {
       const rect = section.getBoundingClientRect();
-      // Tolérance 20 px pour capturer les wheel events dès que le stage est sticky.
-      return rect.top <= 20 && rect.bottom >= window.innerHeight - 20;
+      return rect.top <= 0 && rect.bottom >= window.innerHeight;
     };
 
     const updateIndex = (nextIndex) => {
@@ -75,6 +72,8 @@ export default function RailSection() {
       setActiveIndex(nextIndex);
     };
 
+    // Ancre le scroll sous-jacent sur le repère exact du plat nextIndex.
+    // Indispensable pour que la sortie naturelle aux limites soit immédiate.
     const scrollToIndexAnchor = (nextIndex) => {
       const rect = section.getBoundingClientRect();
       const sectionTop = window.scrollY + rect.top;
@@ -93,53 +92,39 @@ export default function RailSection() {
       return event.deltaY * multiplier;
     };
 
-    // Déverrouille après la fin de l'animation (SNAP_DURATION + marge).
-    // On NE renouvelle PAS le timer sur les événements ignorés : ainsi un burst
-    // de scroll ne retarde pas l'unlock et chaque burst = exactement 1 plat.
-    const scheduleUnlock = () => {
-      window.clearTimeout(wheelGestureTimer);
-      wheelGestureTimer = window.setTimeout(() => {
-        wheelGestureLocked = false;
-      }, SNAP_DURATION + 80);
-    };
-
     const handleWheel = (event) => {
-      if (event.ctrlKey || !isSectionActive()) return;
+      if (event.ctrlKey) return;
 
       const delta = normalizeWheelDelta(event);
       if (Math.abs(delta) < MIN_WHEEL_DELTA) return;
 
       const direction = delta > 0 ? 1 : -1;
-      const currentIndex = activeIndexRef.current;
+      const current = activeIndexRef.current;
 
-      // Aux limites exactes : laisser le scroll naturel passer.
-      if (currentIndex === 0 && direction === -1) return;
-      if (currentIndex === count - 1 && direction === 1) return;
+      const isLeavingUp   = current === 0         && direction < 0;
+      const isLeavingDown = current === count - 1 && direction > 0;
 
-      // Dans la section : toujours bloquer le scroll page d'abord.
+      if (!isSectionActive()) return;
+
+      // Limites autorisées : on laisse le scroll naturel sortir de la section.
+      if (isLeavingUp || isLeavingDown) return;
+
+      // Toujours bloquer la page quand on est entre les limites.
       if (event.cancelable) event.preventDefault();
 
-      // Premier geste d'entrée : ancrer au bon plat de départ, puis verrou.
-      if (!sectionEntryHandled) {
-        sectionEntryHandled = true;
-        const entryIndex = direction > 0 ? 0 : count - 1;
-        if (currentIndex !== entryIndex) {
-          updateIndex(entryIndex);
-          scrollToIndexAnchor(entryIndex);
-        }
-        wheelGestureLocked = true;
-        scheduleUnlock();
-        return;
-      }
+      // Verrou actif (animation en cours) : ignorer sans renouveler le timer.
+      if (wheelLockedRef.current) return;
 
-      // Verrou actif : ignorer le geste sans renouveler le timer.
-      if (wheelGestureLocked) return;
+      // Verrouiller pour toute la durée de l'animation, puis avancer d'un seul plat.
+      wheelLockedRef.current = true;
+      window.clearTimeout(wheelTimer);
+      wheelTimer = window.setTimeout(() => {
+        wheelLockedRef.current = false;
+      }, SNAP_DURATION + 100);
 
-      // Nouveau geste libre : avancer d'exactement un plat.
-      wheelGestureLocked = true;
-      scheduleUnlock();
-      updateIndex(currentIndex + direction);
-      scrollToIndexAnchor(currentIndex + direction);
+      const next = Math.max(0, Math.min(count - 1, current + direction));
+      updateIndex(next);
+      scrollToIndexAnchor(next);
     };
 
     const handleTouchStart = (event) => {
@@ -150,33 +135,31 @@ export default function RailSection() {
     };
 
     const handleTouchMove = (event) => {
-      if (
-        touchStartY === null ||
-        event.touches.length !== 1 ||
-        !touchStartedWhileActive ||
-        !isSectionActive()
-      ) {
-        return;
-      }
+      if (touchStartY === null || event.touches.length !== 1 || !touchStartedWhileActive || !isSectionActive()) return;
 
       const delta = touchStartY - event.touches[0].clientY;
       if (Math.abs(delta) < 8) return;
 
       const direction = delta > 0 ? 1 : -1;
-      const nextIndex = activeIndexRef.current + direction;
+      const current = activeIndexRef.current;
 
-      if (nextIndex < 0 || nextIndex >= count) return;
+      const isExitingUp   = current === 0         && direction < 0;
+      const isExitingDown = current === count - 1 && direction > 0;
+
+      // Sortie touch aux limites : scroll naturel.
+      if (isExitingUp || isExitingDown) return;
 
       if (event.cancelable) event.preventDefault();
       if (touchCaptured || Math.abs(delta) < SWIPE_THRESHOLD) return;
 
       const now = Date.now();
-      if (now - lastTouchAt < 480) return;
+      if (now - lastTouchAt < SNAP_DURATION) return;
       lastTouchAt = now;
 
       touchCaptured = true;
-      updateIndex(nextIndex);
-      scrollToIndexAnchor(nextIndex);
+      const next = current + direction;
+      updateIndex(next);
+      scrollToIndexAnchor(next);
     };
 
     const resetTouch = () => {
@@ -186,38 +169,27 @@ export default function RailSection() {
     };
 
     const handleScroll = () => {
-      const currentScrollY = window.scrollY;
       const nowActive = isSectionActive();
 
+      // Entrée via nav clavier / lien ancre : synchroniser l'index visuel.
       if (nowActive && !wasSectionActive) {
-        // Entrée via navigation clavier / lien ancre (pas wheel) : ancrer au bon plat.
-        if (!sectionEntryHandled) {
-          sectionEntryHandled = true;
-          const direction = currentScrollY - lastScrollY;
-          const rect = section.getBoundingClientRect();
-          const sectionTop = currentScrollY + rect.top;
-          const scrollableDistance = Math.max(1, section.offsetHeight - window.innerHeight);
-          const progress = Math.min(1, Math.max(0, (currentScrollY - sectionTop) / scrollableDistance));
-          const entryIndex =
-            direction > 0 ? 0 : direction < 0 ? count - 1 : Math.round(progress * (count - 1));
-          updateIndex(entryIndex);
-          scrollToIndexAnchor(entryIndex);
-        }
+        const rect = section.getBoundingClientRect();
+        const sectionTop = window.scrollY + rect.top;
+        const scrollableDistance = Math.max(1, section.offsetHeight - window.innerHeight);
+        const progress = Math.min(1, Math.max(0, (window.scrollY - sectionTop) / scrollableDistance));
+        const entryIndex = Math.round(progress * (count - 1));
+        if (activeIndexRef.current !== entryIndex) updateIndex(entryIndex);
       }
 
-      if (!nowActive && wasSectionActive) {
-        // Sortie de la section : préparer la prochaine entrée.
-        sectionEntryHandled = false;
-      }
+      // Sortie de la section : relâcher le verrou par sécurité.
+      if (!nowActive && wasSectionActive) wheelLockedRef.current = false;
 
       wasSectionActive = nowActive;
-      lastScrollY = currentScrollY;
     };
 
-    // Initialisation (page rechargée avec la section déjà visible).
+    // Init : synchroniser si la section est déjà visible au chargement.
     wasSectionActive = isSectionActive();
     if (wasSectionActive) {
-      sectionEntryHandled = true;
       const rect = section.getBoundingClientRect();
       const sectionTop = window.scrollY + rect.top;
       const scrollableDistance = Math.max(1, section.offsetHeight - window.innerHeight);
@@ -233,7 +205,8 @@ export default function RailSection() {
     section.addEventListener("touchcancel", resetTouch, { passive: true });
 
     return () => {
-      window.clearTimeout(wheelGestureTimer);
+      window.clearTimeout(wheelTimer);
+      wheelLockedRef.current = false;
       window.removeEventListener("wheel", handleWheel);
       window.removeEventListener("scroll", handleScroll);
       section.removeEventListener("touchstart", handleTouchStart);

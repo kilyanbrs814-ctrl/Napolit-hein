@@ -1,7 +1,7 @@
 /* ============ SCENE 07 - PREUVE SOCIALE ============ */
 .nh-proof {
   position: relative;
-  height: 340vh;
+  height: 300vh;
   background: var(--bg);
 }
 .nh-proof__stage {
@@ -268,7 +268,7 @@
 
 @media (max-width: 860px) {
   .nh-proof {
-    height: 270vh;
+    height: 240vh;
   }
   .nh-proof__eyebrow {
     top: 90px;
