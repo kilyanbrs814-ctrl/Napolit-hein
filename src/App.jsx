@@ -1,6 +1,7 @@
 import { useEffect, useLayoutEffect, useState } from "react";
 import Header from "./components/Header.jsx";
 import HeroCinematic from "./components/HeroCinematic.jsx";
+import Marquee from "./components/Marquee.jsx";
 import BuildSection from "./components/BuildSection.jsx";
 import RailSection from "./components/RailSection.jsx";
 import MenuSection from "./components/MenuSection.jsx";
@@ -46,6 +47,7 @@ export default function App() {
       <CavemanMode isActive={isCaveman} onDeactivate={() => setIsCaveman(false)} />
       <main>
         <HeroCinematic />
+        <Marquee />
         <BuildSection />
         <RailSection />
         <MenuSection />

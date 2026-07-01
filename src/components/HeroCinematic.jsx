@@ -2,7 +2,6 @@ import { useRef, useState, useEffect } from "react";
 import { motion, useScroll, useTransform, useReducedMotion } from "framer-motion";
 import logo from "../assets/images/logo-napolithein.png";
 import { HERO_WIDGETS, CROUSTY_CHIPS } from "../data/content.js";
-import Marquee from "./Marquee.jsx";
 import "../styles/hero.css";
 
 /* ---- Statut dynamique du restaurant (fuseau Europe/Paris) ---- */
@@ -241,26 +240,25 @@ export default function HeroCinematic() {
     offset: ["start start", "end end"],
   });
 
-  // ── Phase 1 (0 → ~0.35) : hero principal ancré, pas de déplacement Y.
-  // Fondu progressif qui donne de la profondeur derrière la couche 02.
-  const heroOpacity = useTransform(scrollYProgress, [0, 0.55, 0.78], [1, 0.25, 0.12]);
-  const heroScale  = useTransform(scrollYProgress, [0, 0.65], [1, 0.97]);
+  // ── Phase 1 : hero principal.
+  // Fondu et léger recul progressifs, étalés sur la quasi-totalité du scroll.
+  // Aucune disparition brutale : le hero reste lisible longtemps.
+  const heroOpacity = useTransform(scrollYProgress, [0, 0.50, 0.78], [1, 0.55, 0.12]);
+  const heroY       = useTransform(scrollYProgress, [0, 0.78], [0, -28]);
+  const heroScale   = useTransform(scrollYProgress, [0, 0.85], [1, 0.975]);
 
-  // Widgets livraison — disparaissent avant que la section 02 arrive.
-  const widgetsOpacity = useTransform(scrollYProgress, [0, 0.28], [1, 0]);
-  const widgetsY       = useTransform(scrollYProgress, [0, 0.38], [0, 40]);
+  // Widgets livraison — s'effacent lentement sur la première moitié du scroll.
+  const widgetsOpacity = useTransform(scrollYProgress, [0, 0.45], [1, 0]);
+  const widgetsY       = useTransform(scrollYProgress, [0, 0.50], [0, 24]);
 
-  const cueOpacity = useTransform(scrollYProgress, [0, 0.10], [1, 0]);
+  const cueOpacity = useTransform(scrollYProgress, [0, 0.14], [1, 0]);
   const glowScale  = useTransform(scrollYProgress, [0, 1], [1, 1.5]);
 
-  // ── Phase 2+3 (0.35 → 0.75) : 02 · Le croustillant se révèle, reste pleinement
-  // visible (dwell 0.68 → 0.76), puis s'efface légèrement quand le cover arrive.
-  const crOpacity = useTransform(scrollYProgress, [0.32, 0.52, 0.76, 0.88], [0, 1, 1, 0.15]);
-  const crY       = useTransform(scrollYProgress, [0.32, 0.62], [48, 0]);
-
-  // ── Phase 4 (0.76 → 1.00) : cover final (Marquee seule) monte depuis le bas.
-  // Ne démarre QUE quand 02 est 100 % visible — aucun chevauchement visuel.
-  const coverY = useTransform(scrollYProgress, [0.76, 1.00], ["105%", "0%"]);
+  // ── Phase 2+3 : 02 · Le croustillant.
+  // Révélation douce à partir du tiers du scroll ; reste pleinement visible
+  // jusqu'à la fin de la section pour une transition propre vers la bannière.
+  const crOpacity = useTransform(scrollYProgress, [0.35, 0.62, 0.82], [0, 1, 1]);
+  const crY       = useTransform(scrollYProgress, [0.35, 0.72], [44, 0]);
 
   // En reduced-motion : aucune transformation inline → affichage empilé lisible.
   const s = (style) => (isStatic ? undefined : style);
@@ -270,15 +268,15 @@ export default function HeroCinematic() {
       <div className="nh-hero__stage">
         <motion.div className="nh-hero__glow" style={s({ scale: glowScale })} />
 
-        {/* Phase 1 : hero principal — reste ancré, aucun translateY */}
+        {/* Phase 1 : hero principal */}
         <motion.div
           className="nh-hero__layer"
-          style={s({ opacity: heroOpacity, scale: heroScale })}
+          style={s({ opacity: heroOpacity, y: heroY, scale: heroScale })}
         >
           <HeroContent />
         </motion.div>
 
-        {/* Widgets livraison — s'effacent en fin de phase 1 */}
+        {/* Widgets livraison */}
         <motion.div
           className="nh-hero__widgets"
           style={s({ opacity: widgetsOpacity, y: widgetsY })}
@@ -290,20 +288,12 @@ export default function HeroCinematic() {
           <span className="nh-eyebrow">Scroll</span>
         </motion.a>
 
-        {/* Phase 2+3 : 02 · Le croustillant — couche indépendante, pas dans le cover */}
+        {/* Phase 2+3 : 02 · Le croustillant — couche indépendante */}
         <motion.div
           className="nh-hero__cr-layer"
           style={s({ opacity: crOpacity, y: crY })}
         >
           <CroustyContent />
-        </motion.div>
-
-        {/* Phase 4 : cover final — Marquee seule monte après que 02 est 100 % visible */}
-        <motion.div
-          className="nh-hero__overlay"
-          style={s({ y: coverY })}
-        >
-          <Marquee />
         </motion.div>
       </div>
     </section>
