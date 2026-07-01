@@ -2,7 +2,6 @@ import { useRef, useState, useEffect } from "react";
 import { motion, useScroll, useTransform, useReducedMotion } from "framer-motion";
 import logo from "../assets/images/logo-napolithein.png";
 import { HERO_WIDGETS, CROUSTY_CHIPS } from "../data/content.js";
-import Marquee from "./Marquee.jsx";
 import "../styles/hero.css";
 
 /* ---- Statut dynamique du restaurant (fuseau Europe/Paris) ---- */
@@ -258,12 +257,6 @@ export default function HeroCinematic() {
   const crOpacity = useTransform(scrollYProgress, [0.35, 0.62, 0.76, 0.92], [0, 1, 1, 0.1]);
   const crY       = useTransform(scrollYProgress, [0.35, 0.72], [44, 0]);
 
-  // ── Phase 4 : cover final — Marquee monte depuis le bas après que 02 est 100 % visible.
-  // Démarre à 0.74 (après le dwell de 02) et se termine exactement à 1.
-  // Fin = 1 : aucun scroll mort, 03 · Couche par couche arrive directement.
-  const coverY       = useTransform(scrollYProgress, [0.74, 1], ["105%", "0%"]);
-  const coverOpacity = useTransform(scrollYProgress, [0.72, 0.80], [0, 1]);
-
   // En reduced-motion : aucune transformation inline → affichage empilé lisible.
   const s = (style) => (isStatic ? undefined : style);
 
@@ -300,14 +293,6 @@ export default function HeroCinematic() {
           <CroustyContent />
         </motion.div>
 
-        {/* Phase 4 : cover final — Marquee monte depuis le bas après révélation complète de 02 */}
-        <motion.div
-          className="nh-hero__cover"
-          style={s({ y: coverY, opacity: coverOpacity })}
-          aria-hidden={isStatic ? undefined : "true"}
-        >
-          <Marquee />
-        </motion.div>
       </div>
     </section>
   );

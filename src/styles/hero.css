@@ -1,6 +1,7 @@
 /* ============ HERO CINEMATIQUE (Hero <-> Croustillant) ============ */
 .nh-hero {
   position: relative;
+  z-index: 1;
   height: 230vh;
   height: 230svh;
   background: var(--bg);
@@ -166,27 +167,6 @@
   align-items: center;
   justify-content: center;
   will-change: transform, opacity;
-}
-
-/* ---- Cover final : Marquee monte depuis le bas après révélation complète de 02 ---- */
-.nh-hero__cover {
-  position: absolute;
-  inset: 0;
-  z-index: 8;
-  display: flex;
-  flex-direction: column;
-  justify-content: flex-start;
-  will-change: transform, opacity;
-  pointer-events: none;
-}
-
-.nh-hero__cover .nh-marquee {
-  flex: 0 0 auto;
-  pointer-events: auto;
-}
-
-.nh-hero__cover-fill {
-  display: none;
 }
 
 .nh-hero__cr-text {
@@ -554,6 +534,17 @@
   animation: nhBob 1.8s ease-in-out infinite;
 }
 
+/* ---- Wrapper de transition : Marquee + section 03 montent ensemble par-dessus la fin du hero ---- */
+/* z-index: 10 > .nh-hero (z-index: 1) → handoff visible au-dessus du stage sticky.               */
+/* margin-top: -100svh → le handoff commence à document Y 130svh (hero 230svh − 100svh).           */
+/* La Marquee atteint exactement le haut du viewport quand scrollYProgress = 1 (hero terminé).     */
+.nh-hero-handoff {
+  position: relative;
+  z-index: 10;
+  margin-top: -100vh;
+  margin-top: -100svh;
+}
+
 /* ============ STATIQUE : reduced-motion ============
    Pilote par la classe .is-static (JS). Scroll 100% natif, mise en page
    empilee, toutes les couches visibles pour eviter les transitions forcees. */
@@ -608,23 +599,11 @@
   order: 2;
   margin-top: 4vh;
 }
-.nh-hero.is-static .nh-hero__cover {
-  position: relative;
-  inset: auto;
-  transform: none !important;
-  opacity: 1 !important;
-  background: transparent;
-  order: 3;
-  margin-top: 4vh;
-}
-.nh-hero.is-static .nh-hero__cover-fill {
-  display: none;
-}
 .nh-hero.is-static .nh-hero__widgets {
   position: relative;
   right: auto;
   bottom: auto;
-  order: 4;
+  order: 3;
   margin: 2vh auto 0;
   align-items: stretch;
   opacity: 1 !important;
@@ -632,6 +611,12 @@
 }
 .nh-hero.is-static .nh-hero__cue {
   display: none;
+}
+
+/* En reduced-motion : le hero a height:auto, le margin négatif n'a plus de sens. */
+.nh-hero.is-static ~ .nh-hero-handoff {
+  margin-top: 0;
+  z-index: auto;
 }
 
 /* ============ TABLETTE : meme scene, proportions reduites ============ */
