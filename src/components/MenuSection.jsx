@@ -1,4 +1,4 @@
-import { useMemo, useState, useRef, useEffect, useCallback } from "react";
+import { useMemo, useState } from "react";
 import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 import { MENU_GROUPS, BADGE_BG, BADGE_FG, LINKS } from "../data/content.js";
 import Reveal from "./Reveal.jsx";
@@ -102,40 +102,7 @@ function MenuCard({ item, index, compact, categoryTitle, reduceMotion }) {
 
 export default function MenuSection() {
   const [activeId, setActiveId] = useState(MENU_GROUPS[0].id);
-  const [canScrollLeft, setCanScrollLeft] = useState(false);
-  const [canScrollRight, setCanScrollRight] = useState(true);
-  const tabsRef = useRef(null);
   const reduceMotion = useReducedMotion();
-
-  const updateScrollState = useCallback(() => {
-    const el = tabsRef.current;
-    if (!el) return;
-    setCanScrollLeft(el.scrollLeft > 2);
-    setCanScrollRight(el.scrollLeft < el.scrollWidth - el.clientWidth - 2);
-  }, []);
-
-  useEffect(() => {
-    const el = tabsRef.current;
-    if (!el) return;
-    updateScrollState();
-    el.addEventListener("scroll", updateScrollState, { passive: true });
-    window.addEventListener("resize", updateScrollState, { passive: true });
-    return () => {
-      el.removeEventListener("scroll", updateScrollState);
-      window.removeEventListener("resize", updateScrollState);
-    };
-  }, [updateScrollState]);
-
-  useEffect(() => {
-    const el = document.getElementById(`nh-menu-tab-${activeId}`);
-    if (el) el.scrollIntoView({ behavior: "smooth", inline: "center", block: "nearest" });
-  }, [activeId]);
-
-  const scrollTabs = useCallback((direction) => {
-    const el = tabsRef.current;
-    if (!el) return;
-    el.scrollBy({ left: direction === "right" ? 180 : -180, behavior: "smooth" });
-  }, []);
 
   const activeGroup = useMemo(
     () => MENU_GROUPS.find((g) => g.id === activeId) || MENU_GROUPS[0],
@@ -165,69 +132,48 @@ export default function MenuSection() {
           </p>
         </Reveal>
 
-        <div className="nh-menu__tabs-nav">
-          <button
-            type="button"
-            className={`nh-menu__tabs-arrow${!canScrollLeft ? " is-faded" : ""}`}
-            onClick={() => scrollTabs("left")}
-            aria-label="Catégories précédentes"
-            aria-disabled={!canScrollLeft}
-          >
-            <svg width="14" height="14" viewBox="0 0 14 14" fill="none" aria-hidden="true">
-              <path d="M9 2L4 7L9 12" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-            </svg>
-          </button>
-
-          <div className="nh-menu__tabs" ref={tabsRef} role="tablist" aria-label="Catégories du menu">
-            {MENU_GROUPS.map((g) => (
-              <button
-                key={g.id}
-                type="button"
-                role="tab"
-                id={`nh-menu-tab-${g.id}`}
-                aria-selected={g.id === activeId}
-                aria-controls="nh-menu-panel"
-                className={`nh-menu__tab${g.id === activeId ? " is-active" : ""}`}
-                onClick={() => setActiveId(g.id)}
-              >
-                <span className="nh-menu__tab-emoji" aria-hidden="true">{g.emoji}</span>
-                {g.title}
-              </button>
-            ))}
-          </div>
-
-          <button
-            type="button"
-            className={`nh-menu__tabs-arrow${!canScrollRight ? " is-faded" : ""}`}
-            onClick={() => scrollTabs("right")}
-            aria-label="Catégories suivantes"
-            aria-disabled={!canScrollRight}
-          >
-            <svg width="14" height="14" viewBox="0 0 14 14" fill="none" aria-hidden="true">
-              <path d="M5 2L10 7L5 12" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-            </svg>
-          </button>
-        </div>
-
-        <div id="nh-menu-panel" role="tabpanel" aria-labelledby={`nh-menu-tab-${activeGroup.id}`}>
-          <AnimatePresence mode="wait" initial={false}>
-            <GridWrap
-              key={activeGroup.id}
-              className={`nh-menu__grid${activeGroup.isDrink ? " nh-menu__grid--drink" : ""}`}
-              {...gridMotionProps}
-            >
-              {activeGroup.items.map((item, i) => (
-                <MenuCard
-                  key={item.name + i}
-                  item={item}
-                  index={i}
-                  compact={!!activeGroup.isDrink}
-                  categoryTitle={activeGroup.title}
-                  reduceMotion={reduceMotion}
-                />
+        <div className="nh-menu__content">
+          <nav className="nh-menu__side" aria-label="Catégories du menu">
+            <ul className="nh-menu__side-list" role="tablist">
+              {MENU_GROUPS.map((g) => (
+                <li key={g.id} role="presentation">
+                  <button
+                    type="button"
+                    role="tab"
+                    id={`nh-menu-tab-${g.id}`}
+                    aria-selected={g.id === activeId}
+                    aria-controls="nh-menu-panel"
+                    className={`nh-menu__side-tab${g.id === activeId ? " is-active" : ""}`}
+                    onClick={() => setActiveId(g.id)}
+                  >
+                    <span className="nh-menu__tab-emoji" aria-hidden="true">{g.emoji}</span>
+                    {g.title}
+                  </button>
+                </li>
               ))}
-            </GridWrap>
-          </AnimatePresence>
+            </ul>
+          </nav>
+
+          <div id="nh-menu-panel" role="tabpanel" aria-labelledby={`nh-menu-tab-${activeGroup.id}`}>
+            <AnimatePresence mode="wait" initial={false}>
+              <GridWrap
+                key={activeGroup.id}
+                className={`nh-menu__grid${activeGroup.isDrink ? " nh-menu__grid--drink" : ""}`}
+                {...gridMotionProps}
+              >
+                {activeGroup.items.map((item, i) => (
+                  <MenuCard
+                    key={item.name + i}
+                    item={item}
+                    index={i}
+                    compact={!!activeGroup.isDrink}
+                    categoryTitle={activeGroup.title}
+                    reduceMotion={reduceMotion}
+                  />
+                ))}
+              </GridWrap>
+            </AnimatePresence>
+          </div>
         </div>
       </div>
     </section>

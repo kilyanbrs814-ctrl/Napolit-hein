@@ -2,6 +2,7 @@ import { useRef, useState, useEffect } from "react";
 import { motion, useScroll, useTransform, useReducedMotion } from "framer-motion";
 import logo from "../assets/images/logo-napolithein.png";
 import { HERO_WIDGETS, CROUSTY_CHIPS } from "../data/content.js";
+import Marquee from "./Marquee.jsx";
 import "../styles/hero.css";
 
 /* ---- Statut dynamique du restaurant (fuseau Europe/Paris) ---- */
@@ -38,7 +39,7 @@ function computeStatus() {
       const s = toMin(slot.start.h, slot.start.m);
       const e = toMin(slot.end.h, slot.end.m);
       if (now >= s && now < e)
-        return { open: true, label: `Ouvert jusqu’à ${fmtTime(slot.end)}` };
+        return { open: true, label: `Ouvert jusqu'à ${fmtTime(slot.end)}` };
     }
   }
 
@@ -47,7 +48,7 @@ function computeStatus() {
     .sort((a, b) => toMin(a.start.h, a.start.m) - toMin(b.start.h, b.start.m))[0];
 
   if (todayNext) {
-    const prefix = todayNext.start.h >= 17 ? "ce soir" : "aujourd’hui";
+    const prefix = todayNext.start.h >= 17 ? "ce soir" : "aujourd'hui";
     return { open: false, label: `Disponible ${prefix} à ${fmtTime(todayNext.start)}` };
   }
 
@@ -240,41 +241,39 @@ export default function HeroCinematic() {
     offset: ["start start", "end end"],
   });
 
-  // Timeline cinematique pilotee uniquement par le scroll natif (aucun hijack molette).
-  // Plages resserrees pour une animation plus reactive au scroll.
-  const heroOpacity = useTransform(scrollYProgress, [0, 0.36], [1, 0]);
-  const heroY = useTransform(scrollYProgress, [0, 0.44], [0, -60]);
-  const heroScale = useTransform(scrollYProgress, [0, 0.48], [1, 0.95]);
+  // Hero reste ancre — plus de deplacement Y. Leger fondu pour donner de la
+  // profondeur derriere l'overlay qui monte.
+  const heroOpacity = useTransform(scrollYProgress, [0, 0.55], [1, 0.25]);
+  const heroScale = useTransform(scrollYProgress, [0, 0.65], [1, 0.97]);
 
-  const widgetsOpacity = useTransform(scrollYProgress, [0, 0.30], [1, 0]);
-  const widgetsY = useTransform(scrollYProgress, [0, 0.40], [0, 40]);
+  const widgetsOpacity = useTransform(scrollYProgress, [0, 0.28], [1, 0]);
+  const widgetsY = useTransform(scrollYProgress, [0, 0.38], [0, 40]);
 
   const cueOpacity = useTransform(scrollYProgress, [0, 0.10], [1, 0]);
 
   const glowScale = useTransform(scrollYProgress, [0, 1], [1, 1.5]);
 
-  const crOpacity = useTransform(scrollYProgress, [0.36, 0.91], [0, 1]);
-  const crY = useTransform(scrollYProgress, [0.36, 0.93], [42, 0]);
+  // L'overlay (marquee + section 02) monte depuis le bas pour recouvrir le hero.
+  // Aucun scroll hijack — piloté uniquement par le scroll natif.
+  const overlayY = useTransform(scrollYProgress, [0.18, 0.82], ["105%", "0%"]);
 
-  // En reduced-motion : aucune transformation inline -> tout reste visible.
   const s = (style) => (isStatic ? undefined : style);
 
   return (
     <section id="top" ref={sectionRef} className={`nh-hero${isStatic ? " is-static" : ""}`}>
       <div className="nh-hero__stage">
+        {/* Fond lumineux */}
         <motion.div className="nh-hero__glow" style={s({ scale: glowScale })} />
 
+        {/* Couche hero — reste ancrée, pas de translateY */}
         <motion.div
           className="nh-hero__layer"
-          style={s({ opacity: heroOpacity, y: heroY, scale: heroScale })}
+          style={s({ opacity: heroOpacity, scale: heroScale })}
         >
           <HeroContent />
         </motion.div>
 
-        <motion.div className="nh-hero__cr-layer" style={s({ opacity: crOpacity, y: crY })}>
-          <CroustyContent />
-        </motion.div>
-
+        {/* Widgets livraison — disparaissent avant que l'overlay n'arrive */}
         <motion.div
           className="nh-hero__widgets"
           style={s({ opacity: widgetsOpacity, y: widgetsY })}
@@ -282,9 +281,22 @@ export default function HeroCinematic() {
           <DeliveryWidgets />
         </motion.div>
 
+        {/* Indicateur de scroll */}
         <motion.a href="#carte" className="nh-hero__cue" style={s({ opacity: cueOpacity })}>
           <span className="nh-eyebrow">Scroll</span>
         </motion.a>
+
+        {/* Overlay cinématique — monte depuis le bas, recouvre le hero.
+            Contient la bannière marquee puis la section 02. */}
+        <motion.div
+          className="nh-hero__overlay"
+          style={s({ y: overlayY })}
+        >
+          <Marquee />
+          <div className="nh-hero__overlay-main">
+            <CroustyContent />
+          </div>
+        </motion.div>
       </div>
     </section>
   );

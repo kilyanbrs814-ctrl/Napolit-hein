@@ -41,7 +41,7 @@
   align-items: center;
   text-align: center;
   gap: 24px;
-  margin-bottom: 48px;
+  margin-bottom: 56px;
 }
 .nh-menu__eyebrow {
   color: var(--gold);
@@ -62,106 +62,66 @@
   max-width: 520px;
 }
 
-/* ---- Nav wrapper (flèches + rail) ---- */
-.nh-menu__tabs-nav {
-  position: relative;
+/* ---- Layout 2 colonnes (nav catégories + grille) ---- */
+.nh-menu__content {
+  display: grid;
+  grid-template-columns: 230px minmax(0, 1fr);
+  gap: clamp(36px, 5vw, 72px);
+  align-items: start;
+}
+
+/* ---- Navigation verticale des catégories ---- */
+.nh-menu__side {
+  position: sticky;
+  top: 90px;
+}
+
+.nh-menu__side-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.nh-menu__side-tab {
   display: flex;
   align-items: center;
   gap: 10px;
-  margin: 0 0 40px;
-}
-
-/* Boutons flèches */
-.nh-menu__tabs-arrow {
-  flex: 0 0 36px;
-  width: 36px;
-  height: 36px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  border-radius: 50%;
-  background: transparent;
-  border: 1px solid rgba(255, 140, 50, 0.28);
-  color: rgba(255, 195, 90, 0.88);
-  cursor: pointer;
-  transition: opacity 0.25s ease, border-color 0.25s ease, box-shadow 0.25s ease, color 0.25s ease;
-  z-index: 5;
-}
-.nh-menu__tabs-arrow:hover {
-  border-color: rgba(255, 90, 31, 0.6);
-  box-shadow: 0 0 16px rgba(255, 90, 31, 0.3);
-  color: #fff;
-}
-.nh-menu__tabs-arrow.is-faded {
-  opacity: 0.2;
-  pointer-events: none;
-  cursor: default;
-}
-
-/* ---- Tabs de categories ---- */
-.nh-menu__tabs {
-  flex: 1;
-  min-width: 0;
-  display: flex;
-  align-items: center;
-  gap: 30px;
-  overflow-x: auto;
-  overflow-y: hidden;
-  -webkit-overflow-scrolling: touch;
-  scroll-snap-type: x proximity;
-  scrollbar-width: none;
-  -ms-overflow-style: none;
-  margin: 0;
-  padding: 4px 4px 18px;
-  border-bottom: 1px solid var(--line);
-}
-.nh-menu__tabs::-webkit-scrollbar {
-  display: none;
-}
-.nh-menu__tab {
-  position: relative;
-  flex: 0 0 auto;
-  scroll-snap-align: start;
-  display: inline-flex;
-  align-items: center;
-  gap: 9px;
+  width: 100%;
+  text-align: left;
   font-family: var(--body);
   font-weight: 800;
   font-size: 13px;
   letter-spacing: 0.06em;
   text-transform: uppercase;
+  line-height: 1.3;
   color: var(--mute);
   background: none;
   border: none;
+  border-left: 2px solid transparent;
   cursor: pointer;
-  padding: 10px 2px;
-  white-space: nowrap;
-  transition: color 0.25s ease;
+  padding: 10px 14px;
+  border-radius: 0 6px 6px 0;
+  transition: color 0.22s ease, border-color 0.22s ease, background 0.22s ease;
 }
+
 .nh-menu__tab-emoji {
   font-size: 16px;
   line-height: 1;
+  flex-shrink: 0;
 }
-.nh-menu__tab::after {
-  content: "";
-  position: absolute;
-  left: 0;
-  right: 0;
-  bottom: -19px;
-  height: 2px;
-  background: var(--orange);
-  transform: scaleX(0);
-  transform-origin: center;
-  transition: transform 0.25s ease;
+
+.nh-menu__side-tab:hover {
+  color: rgba(255, 255, 255, 0.85);
+  background: rgba(255, 255, 255, 0.04);
 }
-.nh-menu__tab:hover {
+
+.nh-menu__side-tab.is-active {
   color: #fff;
-}
-.nh-menu__tab.is-active {
-  color: #fff;
-}
-.nh-menu__tab.is-active::after {
-  transform: scaleX(1);
+  border-left-color: var(--orange);
+  background: rgba(255, 90, 31, 0.07);
 }
 
 /* ---- Grille de cards produits ---- */
@@ -172,7 +132,7 @@
   align-items: stretch;
 }
 .nh-menu__grid--drink {
-  grid-template-columns: repeat(4, 1fr);
+  grid-template-columns: repeat(3, 1fr);
   gap: 14px;
 }
 
@@ -375,20 +335,26 @@
   .nh-menu__card,
   .nh-menu__image,
   .nh-menu__order,
-  .nh-menu__tab {
+  .nh-menu__side-tab {
     transition: none;
   }
 }
 
-@media (max-width: 1100px) {
+/* ---- Responsive tablette (1200px) : grille passe à 2 colonnes ---- */
+@media (max-width: 1200px) {
+  .nh-menu__content {
+    grid-template-columns: 200px minmax(0, 1fr);
+    gap: clamp(28px, 4vw, 52px);
+  }
   .nh-menu__grid {
     grid-template-columns: repeat(2, 1fr);
   }
   .nh-menu__grid--drink {
-    grid-template-columns: repeat(3, 1fr);
+    grid-template-columns: repeat(2, 1fr);
   }
 }
 
+/* ---- Responsive mobile (860px) : layout empilé ---- */
 @media (max-width: 860px) {
   .nh-menu {
     padding: 70px 0 80px;
@@ -406,25 +372,38 @@
   .nh-menu__sub {
     font-size: 15px;
   }
-  .nh-menu__tabs-nav {
-    gap: 8px;
-    margin: 0 0 28px;
+
+  /* Passer en 1 colonne : catégories au-dessus de la grille */
+  .nh-menu__content {
+    grid-template-columns: 1fr;
+    gap: 24px;
   }
-  .nh-menu__tabs-arrow {
-    flex: 0 0 30px;
-    width: 30px;
-    height: 30px;
+
+  /* Nav catégories : grille compacte 2 colonnes */
+  .nh-menu__side {
+    position: static;
   }
-  .nh-menu__tabs {
-    gap: 22px;
-    padding: 2px 2px 14px;
+  .nh-menu__side-list {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 6px;
   }
-  .nh-menu__tab {
-    font-size: 12px;
+  .nh-menu__side-tab {
+    border-left: none;
+    border-bottom: 2px solid transparent;
+    border-radius: 6px;
+    padding: 9px 12px;
+    font-size: 11.5px;
+    white-space: normal;
+    justify-content: flex-start;
   }
-  .nh-menu__tab::after {
-    bottom: -15px;
+  .nh-menu__side-tab.is-active {
+    border-bottom-color: var(--orange);
+    border-left-color: transparent;
+    background: rgba(255, 90, 31, 0.07);
   }
+
+  /* Grille cards : 1 colonne */
   .nh-menu__grid {
     grid-template-columns: 1fr;
     gap: 16px;

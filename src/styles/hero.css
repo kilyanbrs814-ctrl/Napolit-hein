@@ -157,15 +157,23 @@
   display: none;
 }
 
-/* ---- Couche croustillant ---- */
-.nh-hero__cr-layer {
+/* ---- Overlay cinematique (marquee + section 02) qui monte depuis le bas ---- */
+.nh-hero__overlay {
   position: absolute;
   inset: 0;
-  z-index: 3;
+  z-index: 6;
+  display: flex;
+  flex-direction: column;
+  background: var(--bg);
+  will-change: transform;
+  overflow: hidden;
+}
+
+.nh-hero__overlay-main {
+  flex: 1;
   display: flex;
   align-items: center;
   justify-content: center;
-  will-change: transform, opacity;
 }
 
 .nh-hero__cr-text {
@@ -571,17 +579,24 @@
   opacity: 1;
   transform: none;
 }
-.nh-hero.is-static .nh-hero__layer,
-.nh-hero.is-static .nh-hero__cr-layer {
+.nh-hero.is-static .nh-hero__layer {
   position: relative;
   inset: auto;
   opacity: 1 !important;
   transform: none !important;
   order: 1;
 }
-.nh-hero.is-static .nh-hero__cr-layer {
+.nh-hero.is-static .nh-hero__overlay {
+  position: relative;
+  inset: auto;
+  transform: none !important;
+  background: transparent;
+  overflow: visible;
   order: 2;
   margin-top: 4vh;
+}
+.nh-hero.is-static .nh-hero__overlay-main {
+  display: block;
 }
 .nh-hero.is-static .nh-hero__widgets {
   position: relative;
