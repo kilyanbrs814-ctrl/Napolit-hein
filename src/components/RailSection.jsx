@@ -77,8 +77,8 @@ export default function RailSection() {
     const scrollToIndexAnchor = (nextIndex) => {
       const rect = section.getBoundingClientRect();
       const sectionTop = window.scrollY + rect.top;
-      const scrollableDistance = Math.max(0, section.offsetHeight - window.innerHeight);
-      const target = sectionTop + (nextIndex / (count - 1)) * scrollableDistance;
+      const dishScrollable = Math.max(0, section.offsetHeight - 2 * window.innerHeight);
+      const target = sectionTop + (nextIndex / (count - 1)) * dishScrollable;
       window.scrollTo({ top: target, behavior: "auto" });
     };
 
@@ -175,8 +175,8 @@ export default function RailSection() {
       if (nowActive && !wasSectionActive) {
         const rect = section.getBoundingClientRect();
         const sectionTop = window.scrollY + rect.top;
-        const scrollableDistance = Math.max(1, section.offsetHeight - window.innerHeight);
-        const progress = Math.min(1, Math.max(0, (window.scrollY - sectionTop) / scrollableDistance));
+        const dishScrollable = Math.max(1, section.offsetHeight - 2 * window.innerHeight);
+        const progress = Math.min(1, Math.max(0, (window.scrollY - sectionTop) / dishScrollable));
         const entryIndex = Math.round(progress * (count - 1));
         if (activeIndexRef.current !== entryIndex) updateIndex(entryIndex);
       }
@@ -192,8 +192,8 @@ export default function RailSection() {
     if (wasSectionActive) {
       const rect = section.getBoundingClientRect();
       const sectionTop = window.scrollY + rect.top;
-      const scrollableDistance = Math.max(1, section.offsetHeight - window.innerHeight);
-      const progress = Math.min(1, Math.max(0, (window.scrollY - sectionTop) / scrollableDistance));
+      const dishScrollable = Math.max(1, section.offsetHeight - 2 * window.innerHeight);
+      const progress = Math.min(1, Math.max(0, (window.scrollY - sectionTop) / dishScrollable));
       updateIndex(Math.round(progress * (count - 1)));
     }
 

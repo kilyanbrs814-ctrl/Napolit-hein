@@ -1,6 +1,9 @@
 /* ============ SCENE 05 - LA CARTE ============ */
 .nh-menu {
   position: relative;
+  z-index: 20;
+  margin-top: -100vh;
+  margin-top: -100svh;
   background: linear-gradient(180deg, #090d1c, #060912);
   padding: 120px 0;
   overflow: hidden;
@@ -332,6 +335,10 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
+  .nh-menu {
+    margin-top: 0;
+    z-index: auto;
+  }
   .nh-menu__card,
   .nh-menu__image,
   .nh-menu__order,
