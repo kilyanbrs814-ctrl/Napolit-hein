@@ -5,8 +5,7 @@
   margin-top: -100vh;
   margin-top: -100svh;
   background: linear-gradient(180deg, #090d1c, #060912);
-  /* padding-bottom réserve le runway pour que la section 06 la recouvre (--menu-doors-handoff) */
-  padding: 120px 0 calc(120px + var(--menu-doors-handoff));
+  padding: 120px 0;
   overflow: clip;
 }
 
@@ -349,7 +348,6 @@
   .nh-menu {
     margin-top: 0;
     z-index: auto;
-    padding-bottom: 120px;
   }
   .nh-menu__card,
   .nh-menu__image,

@@ -27,6 +27,4 @@
   --radius: 16px;
   --radius-lg: 20px;
 
-  /* ---- Transitions inter-sections (overlap au scroll) ---- */
-  --menu-doors-handoff: 100svh;
 }
