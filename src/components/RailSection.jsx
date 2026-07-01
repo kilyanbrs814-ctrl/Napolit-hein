@@ -6,8 +6,8 @@ import "../styles/rail.css";
 const RAIL_DISHES = DISHES.slice(0, 3);
 const SNAP_DURATION = 720;
 const SWIPE_THRESHOLD = 48;
-const WHEEL_GESTURE_GAP = 110;
-const MIN_WHEEL_DELTA = 4;
+const WHEEL_GESTURE_GAP = 300;
+const MIN_WHEEL_DELTA = 6;
 
 function RailCard({ dish, index, count, isActive }) {
   return (
@@ -62,10 +62,13 @@ export default function RailSection() {
     let lastScrollY = window.scrollY;
     let wheelGestureLocked = false;
     let wheelGestureTimer;
+    // True une fois que l'entrée dans la section a été absorbée ; reset à la sortie.
+    let sectionEntryHandled = false;
 
     const isSectionActive = () => {
       const rect = section.getBoundingClientRect();
-      return rect.top <= 2 && rect.bottom >= window.innerHeight - 2;
+      // Tolérance 20 px pour capturer les wheel events dès que le stage est sticky.
+      return rect.top <= 20 && rect.bottom >= window.innerHeight - 20;
     };
 
     const updateIndex = (nextIndex) => {
@@ -104,26 +107,37 @@ export default function RailSection() {
       const delta = normalizeWheelDelta(event);
       if (Math.abs(delta) < MIN_WHEEL_DELTA) return;
 
-      // scroll down (delta > 0) = plat suivant ; scroll up (delta < 0) = plat précédent
       const direction = delta > 0 ? 1 : -1;
       const nextIndex = activeIndexRef.current + direction;
 
-      // Aux limites : laisser le scroll naturel sortir de la section
+      // Aux limites : laisser le scroll naturel sortir de la section.
       if (nextIndex < 0 || nextIndex >= count) return;
 
-      // Toujours bloquer le scroll page quand on est dans la section
+      // Bloquer le scroll page quand on est dans la section.
       if (event.cancelable) event.preventDefault();
 
-      // Même geste en cours : bloquer sans changer de plat
+      // Premier geste d'entrée : ancrer au bon plat de départ avant d'avancer.
+      if (!sectionEntryHandled) {
+        sectionEntryHandled = true;
+        const entryIndex = direction > 0 ? 0 : count - 1;
+        if (activeIndexRef.current !== entryIndex) {
+          updateIndex(entryIndex);
+          scrollToIndexAnchor(entryIndex);
+        }
+        wheelGestureLocked = true;
+        unlockWheelAfterGesture();
+        return;
+      }
+
+      // Même geste en cours : renouveler le verrou sans changer de plat.
       if (wheelGestureLocked) {
         unlockWheelAfterGesture();
         return;
       }
 
-      // Premier event du geste : changer de plat et verrouiller
+      // Nouveau geste : avancer d'un plat.
       wheelGestureLocked = true;
       unlockWheelAfterGesture();
-
       updateIndex(nextIndex);
       scrollToIndexAnchor(nextIndex);
     };
@@ -173,37 +187,41 @@ export default function RailSection() {
 
     const handleScroll = () => {
       const currentScrollY = window.scrollY;
-      const sectionActive = isSectionActive();
+      const nowActive = isSectionActive();
 
-      if (sectionActive && !wasSectionActive) {
-        const direction = currentScrollY - lastScrollY;
-        const rect = section.getBoundingClientRect();
-        const sectionTop = currentScrollY + rect.top;
-        const scrollableDistance = Math.max(1, section.offsetHeight - window.innerHeight);
-        const progress = Math.min(
-          1,
-          Math.max(0, (currentScrollY - sectionTop) / scrollableDistance)
-        );
-        const entryIndex =
-          direction > 0 ? 0 : direction < 0 ? count - 1 : Math.round(progress * (count - 1));
-
-        updateIndex(entryIndex);
-        scrollToIndexAnchor(entryIndex);
+      if (nowActive && !wasSectionActive) {
+        // Entrée via navigation clavier / lien ancre (pas wheel) : ancrer au bon plat.
+        if (!sectionEntryHandled) {
+          sectionEntryHandled = true;
+          const direction = currentScrollY - lastScrollY;
+          const rect = section.getBoundingClientRect();
+          const sectionTop = currentScrollY + rect.top;
+          const scrollableDistance = Math.max(1, section.offsetHeight - window.innerHeight);
+          const progress = Math.min(1, Math.max(0, (currentScrollY - sectionTop) / scrollableDistance));
+          const entryIndex =
+            direction > 0 ? 0 : direction < 0 ? count - 1 : Math.round(progress * (count - 1));
+          updateIndex(entryIndex);
+          scrollToIndexAnchor(entryIndex);
+        }
       }
 
-      wasSectionActive = sectionActive;
+      if (!nowActive && wasSectionActive) {
+        // Sortie de la section : préparer la prochaine entrée.
+        sectionEntryHandled = false;
+      }
+
+      wasSectionActive = nowActive;
       lastScrollY = currentScrollY;
     };
 
-    const initialRect = section.getBoundingClientRect();
+    // Initialisation (page rechargée avec la section déjà visible).
     wasSectionActive = isSectionActive();
     if (wasSectionActive) {
-      const sectionTop = window.scrollY + initialRect.top;
+      sectionEntryHandled = true;
+      const rect = section.getBoundingClientRect();
+      const sectionTop = window.scrollY + rect.top;
       const scrollableDistance = Math.max(1, section.offsetHeight - window.innerHeight);
-      const progress = Math.min(
-        1,
-        Math.max(0, (window.scrollY - sectionTop) / scrollableDistance)
-      );
+      const progress = Math.min(1, Math.max(0, (window.scrollY - sectionTop) / scrollableDistance));
       updateIndex(Math.round(progress * (count - 1)));
     }
 

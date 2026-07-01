@@ -78,17 +78,17 @@
   position: absolute;
   top: 0;
   bottom: 0;
-  width: 44px;
+  width: 36px;
   pointer-events: none;
   z-index: 4;
 }
 .nh-menu__tabs-nav::before {
   left: 46px;
-  background: linear-gradient(to right, rgba(9, 13, 28, 0.97), transparent);
+  background: linear-gradient(to right, rgba(9, 13, 28, 0.55), transparent);
 }
 .nh-menu__tabs-nav::after {
   right: 46px;
-  background: linear-gradient(to left, rgba(9, 13, 28, 0.97), transparent);
+  background: linear-gradient(to left, rgba(9, 13, 28, 0.55), transparent);
 }
 
 /* Boutons flèches */
@@ -100,9 +100,7 @@
   align-items: center;
   justify-content: center;
   border-radius: 50%;
-  background: rgba(9, 13, 28, 0.82);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
+  background: transparent;
   border: 1px solid rgba(255, 140, 50, 0.28);
   color: rgba(255, 195, 90, 0.88);
   cursor: pointer;

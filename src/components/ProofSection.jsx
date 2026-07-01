@@ -23,24 +23,30 @@ function AnimatedTicket({ ticket, progress }) {
   const d = ticket.delay;
   const left = ticket.lane === "left";
 
+  /*
+   * Span d'animation réduit à 0.58 (était 0.78) pour permettre des delays
+   * plus espacés (step 0.10) tout en gardant la fin à progress=1.0.
+   * Spread horizontal élargi (±820px au centre) pour plus de respiration.
+   */
+
   // --- X : déviation couloir ---
   const xVals = left
-    ? [-80, -80, -720, -920, -1200]
-    : [ 80,  80,  720,  920,  1200];
+    ? [-80, -80, -820, -1040, -1400]
+    : [ 80,  80,  820,  1040,  1400];
   const xKeys = [
-    c(d + 0.06), c(d + 0.14), c(d + 0.30), c(d + 0.58), c(d + 0.78),
+    c(d + 0.04), c(d + 0.10), c(d + 0.24), c(d + 0.46), c(d + 0.58),
   ];
 
   // --- Y : montée depuis le bas ---
-  const yVals = [1150, 700, -200, -800];
-  const yKeys = [c(d + 0.06), c(d + 0.22), c(d + 0.55), c(d + 0.78)];
+  const yVals = [1200, 720, -250, -900];
+  const yKeys = [c(d + 0.04), c(d + 0.18), c(d + 0.44), c(d + 0.58)];
 
   // --- Opacity : invisible → visible → invisible ---
-  const opKeys = [c(d + 0.06), c(d + 0.14), c(d + 0.68), c(d + 0.78)];
+  const opKeys = [c(d + 0.04), c(d + 0.10), c(d + 0.50), c(d + 0.58)];
   const opVals = [0, 1, 1, 0];
 
   // --- Scale : léger zoom à l'entrée ---
-  const scKeys = [c(d + 0.06), c(d + 0.17), c(d + 0.78)];
+  const scKeys = [c(d + 0.04), c(d + 0.14), c(d + 0.58)];
   const scVals = [0.82, 1, 1];
 
   const x       = useTransform(progress, xKeys,  xVals);
