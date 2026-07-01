@@ -62,8 +62,68 @@
   max-width: 520px;
 }
 
+/* ---- Nav wrapper (flèches + rail) ---- */
+.nh-menu__tabs-nav {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 0 0 40px;
+}
+
+/* Fades aux extrémités du rail */
+.nh-menu__tabs-nav::before,
+.nh-menu__tabs-nav::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 44px;
+  pointer-events: none;
+  z-index: 4;
+}
+.nh-menu__tabs-nav::before {
+  left: 46px;
+  background: linear-gradient(to right, rgba(9, 13, 28, 0.97), transparent);
+}
+.nh-menu__tabs-nav::after {
+  right: 46px;
+  background: linear-gradient(to left, rgba(9, 13, 28, 0.97), transparent);
+}
+
+/* Boutons flèches */
+.nh-menu__tabs-arrow {
+  flex: 0 0 36px;
+  width: 36px;
+  height: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  background: rgba(9, 13, 28, 0.82);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 140, 50, 0.28);
+  color: rgba(255, 195, 90, 0.88);
+  cursor: pointer;
+  transition: opacity 0.25s ease, border-color 0.25s ease, box-shadow 0.25s ease, color 0.25s ease;
+  z-index: 5;
+}
+.nh-menu__tabs-arrow:hover {
+  border-color: rgba(255, 90, 31, 0.6);
+  box-shadow: 0 0 16px rgba(255, 90, 31, 0.3);
+  color: #fff;
+}
+.nh-menu__tabs-arrow.is-faded {
+  opacity: 0.2;
+  pointer-events: none;
+  cursor: default;
+}
+
 /* ---- Tabs de categories ---- */
 .nh-menu__tabs {
+  flex: 1;
+  min-width: 0;
   display: flex;
   align-items: center;
   gap: 30px;
@@ -73,7 +133,7 @@
   scroll-snap-type: x proximity;
   scrollbar-width: none;
   -ms-overflow-style: none;
-  margin: 0 0 40px;
+  margin: 0;
   padding: 4px 4px 18px;
   border-bottom: 1px solid var(--line);
 }
@@ -368,9 +428,25 @@
   .nh-menu__sub {
     font-size: 15px;
   }
+  .nh-menu__tabs-nav {
+    gap: 8px;
+    margin: 0 0 28px;
+  }
+  .nh-menu__tabs-nav::before {
+    left: 38px;
+    width: 36px;
+  }
+  .nh-menu__tabs-nav::after {
+    right: 38px;
+    width: 36px;
+  }
+  .nh-menu__tabs-arrow {
+    flex: 0 0 30px;
+    width: 30px;
+    height: 30px;
+  }
   .nh-menu__tabs {
     gap: 22px;
-    margin-bottom: 28px;
     padding: 2px 2px 14px;
   }
   .nh-menu__tab {
