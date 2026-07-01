@@ -59,9 +59,10 @@ export default function RailSection() {
     let touchStartedWhileActive = false;
     let lastTouchAt = 0;
     let wasSectionActive = false;
+    let wasAboveSection = section.getBoundingClientRect().top > 0;
     let wheelTimer = null;
 
-    // Active quand le stage sticky occupe réellement l'écran (haut sorti, bas pas encore).
+    // Vrai quand le stage sticky couvre tout le viewport (haut sorti, bas pas encore).
     const isSectionActive = () => {
       const rect = section.getBoundingClientRect();
       return rect.top <= 0 && rect.bottom >= window.innerHeight;
@@ -72,8 +73,7 @@ export default function RailSection() {
       setActiveIndex(nextIndex);
     };
 
-    // Ancre le scroll sous-jacent sur le repère exact du plat nextIndex.
-    // Indispensable pour que la sortie naturelle aux limites soit immédiate.
+    // Cale le scroll sous-jacent exactement sur l'ancre du plat nextIndex.
     const scrollToIndexAnchor = (nextIndex) => {
       const rect = section.getBoundingClientRect();
       const sectionTop = window.scrollY + rect.top;
@@ -100,30 +100,44 @@ export default function RailSection() {
 
       const direction = delta > 0 ? 1 : -1;
       const current = activeIndexRef.current;
+      const rect = section.getBoundingClientRect();
+      const sectionTop = window.scrollY + rect.top;
+      const dishScrollable = Math.max(0, section.offsetHeight - 2 * window.innerHeight);
 
+      // ── Zone d'overlap 04 ↔ 05 ─────────────────────────────────────────────
+      // Quand scrollY dépasse l'ancre du dernier plat, le menu chevauche le rail.
+      // On laisse le scroll naturel passer vers le haut (symétrique à isLeavingDown).
+      if (window.scrollY >= sectionTop + dishScrollable && direction < 0) return;
+
+      // ── Pré-entrée depuis le haut ───────────────────────────────────────────
+      // Le haut de la section est visible dans le viewport mais pas encore sticky.
+      // On cale immédiatement sur l'ancre du plat 01 pour éviter qu'un gros wheel
+      // ne saute par-dessus sans passer par le carousel.
+      if (direction > 0 && rect.top > 0 && rect.top < window.innerHeight) {
+        if (event.cancelable) event.preventDefault();
+        if (activeIndexRef.current !== 0) updateIndex(0);
+        scrollToIndexAnchor(0);
+        return;
+      }
+
+      // ── Hors section active : ne pas interférer ─────────────────────────────
+      if (!isSectionActive()) return;
+
+      // ── Section active ──────────────────────────────────────────────────────
       const isLeavingUp   = current === 0         && direction < 0;
       const isLeavingDown = current === count - 1 && direction > 0;
 
-      if (!isSectionActive()) return;
-
-      // Zone d'overlap 04 ↔ 05 : quand scrollY dépasse l'ancre du dernier plat,
-      // on est dans la zone de chevauchement avec le menu. On laisse le scroll
-      // naturel passer dans les deux sens (miroir de isLeavingDown en descente).
-      const wRect = section.getBoundingClientRect();
-      const wSectionTop = window.scrollY + wRect.top;
-      const wDishScrollable = Math.max(0, section.offsetHeight - 2 * window.innerHeight);
-      if (window.scrollY >= wSectionTop + wDishScrollable && direction < 0) return;
-
-      // Limites autorisées : on laisse le scroll naturel sortir de la section.
+      // Sorties autorisées aux limites : scroll naturel vers section 03 ou 05.
       if (isLeavingUp || isLeavingDown) return;
 
-      // Toujours bloquer la page quand on est entre les limites.
+      // Dans la section, hors limites : TOUJOURS bloquer le scroll naturel,
+      // même si le verrou d'animation est actif.
       if (event.cancelable) event.preventDefault();
 
-      // Verrou actif (animation en cours) : ignorer sans renouveler le timer.
+      // Verrou actif (animation en cours) : scroll bloqué, pas de changement de plat.
       if (wheelLockedRef.current) return;
 
-      // Verrouiller pour toute la durée de l'animation, puis avancer d'un seul plat.
+      // Avancer d'exactement un plat, jamais plus.
       wheelLockedRef.current = true;
       window.clearTimeout(wheelTimer);
       wheelTimer = window.setTimeout(() => {
@@ -154,7 +168,6 @@ export default function RailSection() {
       const isExitingUp   = current === 0         && direction < 0;
       const isExitingDown = current === count - 1 && direction > 0;
 
-      // Sortie touch aux limites : scroll naturel.
       if (isExitingUp || isExitingDown) return;
 
       // Zone d'overlap 04 ↔ 05 : laisser le scroll naturel passer en remontée.
@@ -184,25 +197,36 @@ export default function RailSection() {
 
     const handleScroll = () => {
       const nowActive = isSectionActive();
+      const rect = section.getBoundingClientRect();
+      const aboveSection = rect.top > 0; // section encore sous le haut du viewport
 
-      // Entrée via nav clavier / lien ancre : synchroniser l'index visuel.
       if (nowActive && !wasSectionActive) {
-        const rect = section.getBoundingClientRect();
-        const sectionTop = window.scrollY + rect.top;
-        const dishScrollable = Math.max(1, section.offsetHeight - 2 * window.innerHeight);
-        const progress = Math.min(1, Math.max(0, (window.scrollY - sectionTop) / dishScrollable));
-        const entryIndex = Math.round(progress * (count - 1));
-        if (activeIndexRef.current !== entryIndex) updateIndex(entryIndex);
+        if (wasAboveSection) {
+          // Filet de sécurité : gros scroll depuis le haut qui a sauté la pré-entrée.
+          // Force le plat 01 et cale l'ancre.
+          if (activeIndexRef.current !== 0) updateIndex(0);
+          scrollToIndexAnchor(0);
+        } else {
+          // Entrée depuis le bas (retour depuis section 05 ou overlap) :
+          // synchroniser l'index sans snap forcé.
+          const sectionTopDoc = window.scrollY + rect.top;
+          const ds = Math.max(1, section.offsetHeight - 2 * window.innerHeight);
+          const progress = Math.min(1, Math.max(0, (window.scrollY - sectionTopDoc) / ds));
+          const entryIndex = Math.round(progress * (count - 1));
+          if (activeIndexRef.current !== entryIndex) updateIndex(entryIndex);
+        }
       }
 
       // Sortie de la section : relâcher le verrou par sécurité.
       if (!nowActive && wasSectionActive) wheelLockedRef.current = false;
 
       wasSectionActive = nowActive;
+      wasAboveSection = aboveSection;
     };
 
     // Init : synchroniser si la section est déjà visible au chargement.
     wasSectionActive = isSectionActive();
+    wasAboveSection = section.getBoundingClientRect().top > 0;
     if (wasSectionActive) {
       const rect = section.getBoundingClientRect();
       const sectionTop = window.scrollY + rect.top;
