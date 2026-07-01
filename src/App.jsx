@@ -4,9 +4,7 @@ import HeroCinematic from "./components/HeroCinematic.jsx";
 import Marquee from "./components/Marquee.jsx";
 import BuildSection from "./components/BuildSection.jsx";
 import RailSection from "./components/RailSection.jsx";
-import MenuSection from "./components/MenuSection.jsx";
-import MenuDoorsHandoff from "./components/MenuDoorsHandoff.jsx";
-import DoorsSection from "./components/DoorsSection.jsx";
+import MenuDoorsScene from "./components/MenuDoorsScene.jsx";
 import ProofSection from "./components/ProofSection.jsx";
 import AmbianceSection from "./components/AmbianceSection.jsx";
 import FinalCTA from "./components/FinalCTA.jsx";
@@ -53,9 +51,7 @@ export default function App() {
           <BuildSection />
         </div>
         <RailSection />
-        <MenuSection />
-        <MenuDoorsHandoff />
-        <DoorsSection />
+        <MenuDoorsScene />
         <ProofSection />
         <AmbianceSection />
         <FinalCTA />

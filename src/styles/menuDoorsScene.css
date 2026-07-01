@@ -1,0 +1,66 @@
+/* ============ SCÈNE TRANSITION 05 → 06 ============
+   Principe exact du Hero → Build :
+
+   Hero :
+     .nh-hero        { height: 420svh }
+     .nh-hero__stage { sticky; top:0; 100svh }      ← stage plein écran
+     .nh-hero-handoff{ margin-top:-100svh; z:10 }   ← arrive par-dessus
+
+   Ici (05 → 06) :
+     .nh-mds         { height: menu_h + --mds-size } ← espace de scroll
+     .nh-mds__menu   { sticky; top: mds_size - menu_h } ← bottom du menu pincé
+     .nh-doors       { margin-top: -mds-size; z:21 }    ← arrive par-dessus
+
+   Pendant --mds-size de scroll après la fin du menu :
+     • le BAS du vrai menu (avec son contenu) reste figé dans le viewport
+     • DoorsSection monte depuis le bas et le recouvre progressivement
+   ==================================================== */
+
+/* Durée de la transition (hauteur d'overlap) */
+:root {
+  --mds-size: 100svh;
+}
+@media (max-width: 860px) {
+  :root {
+    --mds-size: 60svh;
+  }
+}
+
+/* ---- Annule le margin-top de .nh-menu DANS la scène ----
+   C'est .nh-mds lui-même qui reprend ce rôle (margin-top: -100svh ci-dessous),
+   ce qui permet de garder un calcul sticky propre à l'intérieur.           */
+.nh-mds .nh-menu {
+  margin-top: 0;
+}
+
+/* ---- Conteneur de scroll de la scène ---- */
+.nh-mds {
+  position: relative;
+  z-index: 20;
+  /* Reprend le margin-top: -100svh du menu (overlap 04 → 05 préservé) */
+  margin-top: -100svh;
+  /* height réelle injectée par JS via --menu-h ;
+     = hauteur du menu + zone de transition               */
+  height: calc(var(--menu-h, 800px) + var(--mds-size));
+}
+
+/* ---- Wrapper sticky : reste pincé le temps que DoorsSection remonte ---- */
+.nh-mds__menu {
+  position: sticky;
+  /* top négatif : quand le sticky se déclenche, le bas du menu
+     est exactement au bas du viewport.
+     Formule : top = mds_size - menu_h  (valeur négative si menu > viewport) */
+  top: calc(var(--mds-size) - var(--menu-h, 800px));
+}
+
+/* ---- Reduced motion : scroll linéaire, pas d'effet sticky ---- */
+@media (prefers-reduced-motion: reduce) {
+  .nh-mds {
+    height: auto;
+    margin-top: 0; /* cohérent avec .nh-menu { margin-top:0 } en reduced-motion */
+  }
+  .nh-mds__menu {
+    position: static;
+    top: auto;
+  }
+}
