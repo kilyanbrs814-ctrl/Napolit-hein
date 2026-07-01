@@ -16,13 +16,23 @@ export default function App() {
   const [isCaveman, setIsCaveman] = useState(false);
 
   // Filet de sécurité : certains navigateurs restaurent le scroll après le premier render.
-  // Le double rAF capture cette restauration tardive et force le retour en haut.
+  // useLayoutEffect (synchrone avant paint) + double rAF + timeout 80ms couvrent
+  // les trois moments possibles de restauration tardive.
   useLayoutEffect(() => {
+    if ("scrollRestoration" in window.history) {
+      window.history.scrollRestoration = "manual";
+    }
+
     if (!window.location.hash) {
       window.scrollTo({ top: 0, left: 0, behavior: "auto" });
+
       requestAnimationFrame(() => {
         window.scrollTo({ top: 0, left: 0, behavior: "auto" });
       });
+
+      setTimeout(() => {
+        window.scrollTo({ top: 0, left: 0, behavior: "auto" });
+      }, 80);
     }
   }, []);
 
