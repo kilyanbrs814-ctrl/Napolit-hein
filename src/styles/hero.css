@@ -1,8 +1,8 @@
 /* ============ HERO CINEMATIQUE (Hero <-> Croustillant) ============ */
 .nh-hero {
   position: relative;
-  height: 185vh;
-  height: 185svh;
+  height: 230vh;
+  height: 230svh;
   background: var(--bg);
 }
 
@@ -157,7 +157,18 @@
   display: none;
 }
 
-/* ---- Overlay cinematique (marquee + section 02) qui monte depuis le bas ---- */
+/* ---- Couche 02 · Le croustillant (phase 2+3) — indépendante du cover ---- */
+.nh-hero__cr-layer {
+  position: absolute;
+  inset: 0;
+  z-index: 4;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  will-change: transform, opacity;
+}
+
+/* ---- Cover final (phase 4) : Marquee seule monte après la révélation de 02 ---- */
 .nh-hero__overlay {
   position: absolute;
   inset: 0;
@@ -167,13 +178,6 @@
   background: var(--bg);
   will-change: transform;
   overflow: hidden;
-}
-
-.nh-hero__overlay-main {
-  flex: 1;
-  display: flex;
-  align-items: center;
-  justify-content: center;
 }
 
 .nh-hero__cr-text {
@@ -586,23 +590,29 @@
   transform: none !important;
   order: 1;
 }
+.nh-hero.is-static .nh-hero__cr-layer {
+  position: relative;
+  inset: auto;
+  opacity: 1 !important;
+  transform: none !important;
+  display: block;
+  order: 2;
+  margin-top: 4vh;
+}
 .nh-hero.is-static .nh-hero__overlay {
   position: relative;
   inset: auto;
   transform: none !important;
   background: transparent;
   overflow: visible;
-  order: 2;
+  order: 3;
   margin-top: 4vh;
-}
-.nh-hero.is-static .nh-hero__overlay-main {
-  display: block;
 }
 .nh-hero.is-static .nh-hero__widgets {
   position: relative;
   right: auto;
   bottom: auto;
-  order: 3;
+  order: 4;
   margin: 2vh auto 0;
   align-items: stretch;
   opacity: 1 !important;
@@ -615,8 +625,8 @@
 /* ============ TABLETTE : meme scene, proportions reduites ============ */
 @media (min-width: 861px) and (max-width: 1100px) {
   .nh-hero {
-    height: 175vh;
-    height: 175svh;
+    height: 220vh;
+    height: 220svh;
   }
 
   .nh-hero__bowls {
@@ -655,8 +665,8 @@
 /* ============ MOBILE : adaptation fidele de la scene desktop ============ */
 @media (max-width: 860px) {
   .nh-hero {
-    height: 172vh;
-    height: 172svh;
+    height: 215vh;
+    height: 215svh;
   }
 
   .nh-hero__stage {
@@ -853,8 +863,8 @@
 
 @media (max-width: 380px) {
   .nh-hero {
-    height: 163vh;
-    height: 163svh;
+    height: 200vh;
+    height: 200svh;
   }
 
   .nh-hero__logo {
