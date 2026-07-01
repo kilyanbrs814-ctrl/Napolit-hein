@@ -6,7 +6,6 @@ import "../styles/rail.css";
 const RAIL_DISHES = DISHES.slice(0, 3);
 const SNAP_DURATION = 720;
 const SWIPE_THRESHOLD = 48;
-const WHEEL_GESTURE_GAP = 300;
 const MIN_WHEEL_DELTA = 6;
 
 function RailCard({ dish, index, count, isActive }) {
@@ -94,11 +93,14 @@ export default function RailSection() {
       return event.deltaY * multiplier;
     };
 
-    const unlockWheelAfterGesture = () => {
+    // Déverrouille après la fin de l'animation (SNAP_DURATION + marge).
+    // On NE renouvelle PAS le timer sur les événements ignorés : ainsi un burst
+    // de scroll ne retarde pas l'unlock et chaque burst = exactement 1 plat.
+    const scheduleUnlock = () => {
       window.clearTimeout(wheelGestureTimer);
       wheelGestureTimer = window.setTimeout(() => {
         wheelGestureLocked = false;
-      }, WHEEL_GESTURE_GAP);
+      }, SNAP_DURATION + 80);
     };
 
     const handleWheel = (event) => {
@@ -108,38 +110,36 @@ export default function RailSection() {
       if (Math.abs(delta) < MIN_WHEEL_DELTA) return;
 
       const direction = delta > 0 ? 1 : -1;
-      const nextIndex = activeIndexRef.current + direction;
+      const currentIndex = activeIndexRef.current;
 
-      // Aux limites : laisser le scroll naturel sortir de la section.
-      if (nextIndex < 0 || nextIndex >= count) return;
+      // Aux limites exactes : laisser le scroll naturel passer.
+      if (currentIndex === 0 && direction === -1) return;
+      if (currentIndex === count - 1 && direction === 1) return;
 
-      // Bloquer le scroll page quand on est dans la section.
+      // Dans la section : toujours bloquer le scroll page d'abord.
       if (event.cancelable) event.preventDefault();
 
-      // Premier geste d'entrée : ancrer au bon plat de départ avant d'avancer.
+      // Premier geste d'entrée : ancrer au bon plat de départ, puis verrou.
       if (!sectionEntryHandled) {
         sectionEntryHandled = true;
         const entryIndex = direction > 0 ? 0 : count - 1;
-        if (activeIndexRef.current !== entryIndex) {
+        if (currentIndex !== entryIndex) {
           updateIndex(entryIndex);
           scrollToIndexAnchor(entryIndex);
         }
         wheelGestureLocked = true;
-        unlockWheelAfterGesture();
+        scheduleUnlock();
         return;
       }
 
-      // Même geste en cours : renouveler le verrou sans changer de plat.
-      if (wheelGestureLocked) {
-        unlockWheelAfterGesture();
-        return;
-      }
+      // Verrou actif : ignorer le geste sans renouveler le timer.
+      if (wheelGestureLocked) return;
 
-      // Nouveau geste : avancer d'un plat.
+      // Nouveau geste libre : avancer d'exactement un plat.
       wheelGestureLocked = true;
-      unlockWheelAfterGesture();
-      updateIndex(nextIndex);
-      scrollToIndexAnchor(nextIndex);
+      scheduleUnlock();
+      updateIndex(currentIndex + direction);
+      scrollToIndexAnchor(currentIndex + direction);
     };
 
     const handleTouchStart = (event) => {

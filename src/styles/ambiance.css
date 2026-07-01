@@ -74,7 +74,7 @@
   height: 380px;
   border-radius: 20px;
   background-size: cover;
-  background-position: center;
+  background-position: center 65%;
   background-color: var(--bg-2);
   box-shadow: 0 40px 80px -34px rgba(0, 0, 0, 0.9);
   border: 1px solid var(--line);
@@ -109,6 +109,7 @@
   }
   .nh-amb__photo {
     height: 240px;
+    background-position: center 60%;
   }
   .nh-amb__map {
     height: 160px;

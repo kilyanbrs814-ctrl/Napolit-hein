@@ -71,26 +71,6 @@
   margin: 0 0 40px;
 }
 
-/* Fades aux extrémités du rail */
-.nh-menu__tabs-nav::before,
-.nh-menu__tabs-nav::after {
-  content: "";
-  position: absolute;
-  top: 0;
-  bottom: 0;
-  width: 36px;
-  pointer-events: none;
-  z-index: 4;
-}
-.nh-menu__tabs-nav::before {
-  left: 46px;
-  background: linear-gradient(to right, rgba(9, 13, 28, 0.55), transparent);
-}
-.nh-menu__tabs-nav::after {
-  right: 46px;
-  background: linear-gradient(to left, rgba(9, 13, 28, 0.55), transparent);
-}
-
 /* Boutons flèches */
 .nh-menu__tabs-arrow {
   flex: 0 0 36px;
@@ -429,14 +409,6 @@
   .nh-menu__tabs-nav {
     gap: 8px;
     margin: 0 0 28px;
-  }
-  .nh-menu__tabs-nav::before {
-    left: 38px;
-    width: 36px;
-  }
-  .nh-menu__tabs-nav::after {
-    right: 38px;
-    width: 36px;
   }
   .nh-menu__tabs-arrow {
     flex: 0 0 30px;

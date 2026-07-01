@@ -29,16 +29,16 @@ function AnimatedTicket({ ticket, progress }) {
    * Spread horizontal élargi (±820px au centre) pour plus de respiration.
    */
 
-  // --- X : déviation couloir ---
+  // --- X : déviation couloir (-20 % par rapport à la session précédente) ---
   const xVals = left
-    ? [-80, -80, -820, -1040, -1400]
-    : [ 80,  80,  820,  1040,  1400];
+    ? [-80, -80, -656, -832, -1120]
+    : [ 80,  80,  656,  832,  1120];
   const xKeys = [
     c(d + 0.04), c(d + 0.10), c(d + 0.24), c(d + 0.46), c(d + 0.58),
   ];
 
-  // --- Y : montée depuis le bas ---
-  const yVals = [1200, 720, -250, -900];
+  // --- Y : montée depuis le bas (-20 %) ---
+  const yVals = [960, 576, -200, -720];
   const yKeys = [c(d + 0.04), c(d + 0.18), c(d + 0.44), c(d + 0.58)];
 
   // --- Opacity : invisible → visible → invisible ---
