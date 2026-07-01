@@ -2,8 +2,8 @@
 .nh-hero {
   position: relative;
   z-index: 1;
-  height: 230vh;
-  height: 230svh;
+  height: 420vh;
+  height: 420svh;
   background: var(--bg);
 }
 
@@ -622,8 +622,8 @@
 /* ============ TABLETTE : meme scene, proportions reduites ============ */
 @media (min-width: 861px) and (max-width: 1100px) {
   .nh-hero {
-    height: 220vh;
-    height: 220svh;
+    height: 380vh;
+    height: 380svh;
   }
 
   .nh-hero__bowls {
@@ -662,8 +662,8 @@
 /* ============ MOBILE : adaptation fidele de la scene desktop ============ */
 @media (max-width: 860px) {
   .nh-hero {
-    height: 215vh;
-    height: 215svh;
+    height: 340vh;
+    height: 340svh;
   }
 
   .nh-hero__stage {
@@ -860,8 +860,8 @@
 
 @media (max-width: 380px) {
   .nh-hero {
-    height: 200vh;
-    height: 200svh;
+    height: 310vh;
+    height: 310svh;
   }
 
   .nh-hero__logo {

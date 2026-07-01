@@ -240,22 +240,23 @@ export default function HeroCinematic() {
     offset: ["start start", "end end"],
   });
 
-  // ── Phase 1 : hero principal. Fondu et léger recul sur toute la durée.
-  const heroOpacity = useTransform(scrollYProgress, [0, 0.50, 0.78, 1], [1, 0.55, 0.16, 0.08]);
-  const heroY       = useTransform(scrollYProgress, [0, 0.78], [0, -28]);
-  const heroScale   = useTransform(scrollYProgress, [0, 0.85], [1, 0.975]);
+  // ── Phase 1 : hero principal — tenu à 100 % jusqu'à 0.18, disparu à 0 à 0.32.
+  // heroOpacity DOIT atteindre 0 avant que crOpacity commence (0.36). Pas de chevauchement.
+  const heroOpacity = useTransform(scrollYProgress, [0, 0.18, 0.32], [1, 1, 0]);
+  const heroY       = useTransform(scrollYProgress, [0, 0.32], [0, -40]);
+  const heroScale   = useTransform(scrollYProgress, [0, 0.36], [1, 0.97]);
 
-  // Widgets livraison — s'effacent lentement sur la première moitié du scroll.
-  const widgetsOpacity = useTransform(scrollYProgress, [0, 0.45], [1, 0]);
-  const widgetsY       = useTransform(scrollYProgress, [0, 0.50], [0, 24]);
-
-  const cueOpacity = useTransform(scrollYProgress, [0, 0.14], [1, 0]);
+  // Widgets livraison — disparaissent avant la fin du hero principal.
+  const widgetsOpacity = useTransform(scrollYProgress, [0, 0.20, 0.30], [1, 1, 0]);
+  const widgetsY       = useTransform(scrollYProgress, [0, 0.32], [0, 28]);
+  const cueOpacity = useTransform(scrollYProgress, [0, 0.12], [1, 0]);
   const glowScale  = useTransform(scrollYProgress, [0, 1], [1, 1.5]);
 
-  // ── Phase 2+3 : 02 · Le croustillant (0.35 → 0.76 : révélation, 0.76 → fin : dwell).
-  // Commence à s'effacer juste avant que le cover arrive pour éviter le chevauchement.
-  const crOpacity = useTransform(scrollYProgress, [0.35, 0.62, 0.76, 0.92], [0, 1, 1, 0.1]);
-  const crY       = useTransform(scrollYProgress, [0.35, 0.72], [44, 0]);
+  // ── Phase 2 : 02 · Le croustillant — commence APRÈS la disparition complète du hero.
+  // Dwell de 0.52 à 0.68 (02 pleinement visible et seul), puis fondu vers 0.1
+  // pendant la montée du handoff (qui n'apparaît qu'à partir de ~0.69 avec height: 420svh).
+  const crOpacity = useTransform(scrollYProgress, [0.36, 0.52, 0.68, 0.78], [0, 1, 1, 0.1]);
+  const crY       = useTransform(scrollYProgress, [0.36, 0.56], [44, 0]);
 
   // En reduced-motion : aucune transformation inline → affichage empilé lisible.
   const s = (style) => (isStatic ? undefined : style);
