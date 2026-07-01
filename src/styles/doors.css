@@ -12,7 +12,7 @@
   z-index: 21;
   margin-top: calc(-1 * var(--mds-size, 100svh));
   background: radial-gradient(120% 90% at 50% 0%, #0e1836 0%, var(--bg) 58%);
-  padding: 120px 0 0;
+  padding: 120px 0;
 }
 .nh-doors__inner {
   max-width: var(--max-w);
