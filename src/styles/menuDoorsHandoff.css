@@ -1,0 +1,52 @@
+/* ============ SCÈNE DE TRANSITION 05 → 06 ============
+   Principe identique au handoff Hero → Build :
+
+   Hero side :
+     .nh-hero          { height: 420svh }         ← conteneur qui crée l'espace de scroll
+     .nh-hero__stage   { sticky; top:0; 100svh }  ← stage pincé plein écran
+     .nh-hero-handoff  { margin-top: -100svh; z-index:10 } ← monte par-dessus
+
+   Ici (05 → 06) :
+     .nh-mdhf          { height: calc(2 × handoff) }       ← espace de scroll dédié
+     .nh-mdhf__stage   { sticky; top:0; height: handoff }  ← fond pincé (couleur menu)
+     .nh-doors         { margin-top: -handoff; z-index:21 } ← monte par-dessus le stage
+
+   Pendant les `handoff` de scroll après la fin du menu :
+     • le stage reste fixe à l'écran (frozen background)
+     • DoorsSection monte depuis le bas du viewport jusqu'à le recouvrir complètement
+   ======================================================== */
+
+/* Valeur de l'overlap — ajustez ici si nécessaire */
+:root {
+  --mdhf-size: 100svh;
+}
+@media (max-width: 860px) {
+  :root {
+    --mdhf-size: 60svh;
+  }
+}
+
+/* ---- Conteneur : crée l'espace de scroll nécessaire à la transition ---- */
+.nh-mdhf {
+  position: relative;
+  z-index: 20;
+  height: calc(2 * var(--mdhf-size));
+  /* Même fond que le bas de .nh-menu → transition seamless */
+  background: linear-gradient(180deg, #090d1c, #060912);
+}
+
+/* ---- Stage pincé : reste immobile pendant que DoorsSection monte ---- */
+.nh-mdhf__stage {
+  position: sticky;
+  top: 0;
+  height: var(--mdhf-size);
+  overflow: hidden;
+  background: linear-gradient(180deg, #090d1c, #060912);
+}
+
+/* ---- Reduced motion : désactive la scène, scroll normal ---- */
+@media (prefers-reduced-motion: reduce) {
+  .nh-mdhf {
+    display: none;
+  }
+}

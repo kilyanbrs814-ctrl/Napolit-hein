@@ -1,6 +1,16 @@
 /* ============ SCENE 06 - COMMANDER (3 PORTES) ============ */
+
+/*
+ * .nh-doors joue ici le même rôle que .nh-hero-handoff :
+ *   - margin-top: -mdhf-size → commence --mdhf-size avant la fin de .nh-mdhf
+ *     (= DoorsSection est au bas du viewport quand le stage pincé apparaît)
+ *   - z-index: 21 > .nh-mdhf (z-index: 20) → passe visuellement au-dessus
+ *   Au scroll, DoorsSection monte naturellement et recouvre le stage.
+ */
 .nh-doors {
   position: relative;
+  z-index: 21;
+  margin-top: calc(-1 * var(--mdhf-size));
   background: radial-gradient(120% 90% at 50% 0%, #0e1836 0%, var(--bg) 58%);
   padding: 120px 0;
 }
@@ -144,6 +154,13 @@
   object-fit: contain;
   flex-shrink: 0;
   filter: brightness(0) invert(1);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .nh-doors {
+    margin-top: 0;
+    z-index: auto;
+  }
 }
 
 @media (max-width: 860px) {

@@ -5,6 +5,7 @@ import Marquee from "./components/Marquee.jsx";
 import BuildSection from "./components/BuildSection.jsx";
 import RailSection from "./components/RailSection.jsx";
 import MenuSection from "./components/MenuSection.jsx";
+import MenuDoorsHandoff from "./components/MenuDoorsHandoff.jsx";
 import DoorsSection from "./components/DoorsSection.jsx";
 import ProofSection from "./components/ProofSection.jsx";
 import AmbianceSection from "./components/AmbianceSection.jsx";
@@ -53,6 +54,7 @@ export default function App() {
         </div>
         <RailSection />
         <MenuSection />
+        <MenuDoorsHandoff />
         <DoorsSection />
         <ProofSection />
         <AmbianceSection />
