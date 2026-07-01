@@ -1,9 +1,6 @@
 /* ============ SCENE 06 - COMMANDER (3 PORTES) ============ */
 .nh-doors {
   position: relative;
-  z-index: 30;
-  margin-top: -100vh;
-  margin-top: -100svh;
   background: radial-gradient(120% 90% at 50% 0%, #0e1836 0%, var(--bg) 58%);
   padding: 120px 0;
 }
@@ -178,18 +175,5 @@
   }
   .nh-door__desc {
     font-size: 15px;
-  }
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .nh-doors {
-    margin-top: 0;
-    z-index: auto;
-  }
-  .nh-door {
-    transition: none;
-  }
-  .nh-door__action {
-    transition: none;
   }
 }
