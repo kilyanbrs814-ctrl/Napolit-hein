@@ -31,6 +31,10 @@
    ce qui permet de garder un calcul sticky propre à l'intérieur.           */
 .nh-mds .nh-menu {
   margin-top: 0;
+  /* Garantit que le menu couvre toujours au moins un viewport entier.
+     Sans min-height, si menu_h < 100svh le top sticky devient positif
+     → gap au-dessus du menu, section 04 visible derrière.               */
+  min-height: 100svh;
 }
 
 /* ---- Conteneur de scroll de la scène ---- */
@@ -42,6 +46,9 @@
   /* height réelle injectée par JS via --menu-h ;
      = hauteur du menu + zone de transition               */
   height: calc(var(--menu-h, 800px) + var(--mds-size));
+  /* Fond de sécurité : si le wrapper sticky ne couvre pas un pixel
+     (sub-pixel, rounding), on ne voit jamais la section 04 derrière. */
+  background: linear-gradient(180deg, #090d1c, #060912);
 }
 
 /* ---- Wrapper sticky : reste pincé le temps que DoorsSection remonte ---- */
@@ -51,6 +58,9 @@
      est exactement au bas du viewport.
      Formule : top = mds_size - menu_h  (valeur négative si menu > viewport) */
   top: calc(var(--mds-size) - var(--menu-h, 800px));
+  /* Fond de sécurité identique au menu : bouche tout gap sub-pixel
+     entre le haut du viewport et le haut du contenu du menu.          */
+  background: linear-gradient(180deg, #090d1c, #060912);
 }
 
 /* ---- Reduced motion : scroll linéaire, pas d'effet sticky ---- */
