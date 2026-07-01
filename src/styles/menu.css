@@ -1,15 +1,11 @@
 /* ============ SCENE 05 - LA CARTE ============ */
-:root {
-  --menu-doors-handoff: 100svh;
-}
-
 .nh-menu {
   position: relative;
   z-index: 20;
   margin-top: -100vh;
   margin-top: -100svh;
   background: linear-gradient(180deg, #090d1c, #060912);
-  padding: 120px 0 calc(120px + var(--menu-doors-handoff));
+  padding: 120px 0;
   overflow: clip;
 }
 
@@ -91,6 +87,7 @@
 .nh-menu__side::-webkit-scrollbar {
   display: none;
 }
+
 
 .nh-menu__side-list {
   list-style: none;
@@ -351,7 +348,6 @@
   .nh-menu {
     margin-top: 0;
     z-index: auto;
-    padding-bottom: 120px;
   }
   .nh-menu__card,
   .nh-menu__image,
