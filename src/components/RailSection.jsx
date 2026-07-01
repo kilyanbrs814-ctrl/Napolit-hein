@@ -106,6 +106,14 @@ export default function RailSection() {
 
       if (!isSectionActive()) return;
 
+      // Zone d'overlap 04 ↔ 05 : quand scrollY dépasse l'ancre du dernier plat,
+      // on est dans la zone de chevauchement avec le menu. On laisse le scroll
+      // naturel passer dans les deux sens (miroir de isLeavingDown en descente).
+      const wRect = section.getBoundingClientRect();
+      const wSectionTop = window.scrollY + wRect.top;
+      const wDishScrollable = Math.max(0, section.offsetHeight - 2 * window.innerHeight);
+      if (window.scrollY >= wSectionTop + wDishScrollable && direction < 0) return;
+
       // Limites autorisées : on laisse le scroll naturel sortir de la section.
       if (isLeavingUp || isLeavingDown) return;
 
@@ -148,6 +156,12 @@ export default function RailSection() {
 
       // Sortie touch aux limites : scroll naturel.
       if (isExitingUp || isExitingDown) return;
+
+      // Zone d'overlap 04 ↔ 05 : laisser le scroll naturel passer en remontée.
+      const tRect = section.getBoundingClientRect();
+      const tSectionTop = window.scrollY + tRect.top;
+      const tDishScrollable = Math.max(0, section.offsetHeight - 2 * window.innerHeight);
+      if (window.scrollY >= tSectionTop + tDishScrollable && direction < 0) return;
 
       if (event.cancelable) event.preventDefault();
       if (touchCaptured || Math.abs(delta) < SWIPE_THRESHOLD) return;
