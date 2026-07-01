@@ -186,9 +186,7 @@
 }
 
 .nh-hero__cover-fill {
-  flex: 1;
-  min-height: 0;
-  background: var(--bg);
+  display: none;
 }
 
 .nh-hero__cr-text {

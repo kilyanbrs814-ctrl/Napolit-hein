@@ -307,7 +307,6 @@ export default function HeroCinematic() {
           aria-hidden={isStatic ? undefined : "true"}
         >
           <Marquee />
-          <div className="nh-hero__cover-fill" />
         </motion.div>
       </div>
     </section>
