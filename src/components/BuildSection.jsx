@@ -17,11 +17,13 @@ import "../styles/build.css";
 const IMAGES = [build1, build2, build3, build4];
 
 // Plages d'opacite pour le crossfade des 4 couches.
+// L'image 4 est totalement visible des 0.82 : le dernier cran (0.88) tombe
+// sur son plateau, donc pas de crossfade fige ni de fin de section forcee.
 const IMG_RANGES = [
   { in: [0, 0.33], out: [1, 0] },
   { in: [0, 0.33, 0.66], out: [0, 1, 0] },
-  { in: [0.33, 0.66, 1], out: [0, 1, 0] },
-  { in: [0.66, 1], out: [0, 1] },
+  { in: [0.33, 0.66, 0.82], out: [0, 1, 0] },
+  { in: [0.66, 0.82, 1], out: [0, 1, 1] },
 ];
 
 // Plages dediees aux textes : fade, plateau de lecture, puis fade.
@@ -35,10 +37,12 @@ const TEXT_RANGES = [
 // Points ou le texte entrant devient plus visible que le texte sortant.
 const ACTIVE_THRESHOLDS = [0.27, 0.518, 0.77];
 
-// Points de snap magnetique, un par etape : [0, 1/3, 2/3, 1] pour 4 etapes.
-const SNAP_POINTS = BUILD_STEPS.map((_, i) => i / (BUILD_STEPS.length - 1));
-const SNAP_DEBOUNCE_MS = 150;
-const SNAP_RELEASE_MS = 600;
+// Points de repos du scroll par crans, un par etape.
+// Le dernier cran reste volontairement avant 1 : l'image 4 est stable
+// sans que la page ne descende automatiquement vers la section suivante.
+const STEP_POINTS = [0, 0.34, 0.67, 0.88];
+// Verrou anti-spam : un seul cran par action de molette, jamais plus.
+const STEP_LOCK_MS = 700;
 
 function Layer({ progress, range, image }) {
   const opacity = useTransform(progress, range.in, range.out);
@@ -74,89 +78,64 @@ export default function BuildSection() {
   });
 
   const prefersReducedMotion = useReducedMotion();
-  const progressRef = useRef(0);
-  const isSnappingRef = useRef(false);
-  const isTouchingRef = useRef(false);
-  const snapTimeoutRef = useRef(null);
+  // activeRef evite les stale states dans le handler wheel.
+  const activeRef = useRef(0);
+  const isAnimatingRef = useRef(false);
+  const lockTimeoutRef = useRef(null);
 
   useMotionValueEvent(scrollYProgress, "change", (v) => {
-    progressRef.current = v;
     const next = ACTIVE_THRESHOLDS.findIndex((threshold) => v < threshold);
     const activeIndex = next === -1 ? TEXT_RANGES.length - 1 : next;
+    activeRef.current = activeIndex;
     setActive((cur) => (cur === activeIndex ? cur : activeIndex));
   });
 
-  // Snap magnetique : une fois le scroll natif immobile, recale doucement
-  // sur l'etape la plus proche pour eviter un crossfade fige entre deux couches.
+  // Scroll par crans (desktop) : chaque action molette avance ou recule
+  // d'une seule image. Les touch events ne sont pas interceptes : le
+  // comportement natif mobile reste intact.
   useEffect(() => {
     if (prefersReducedMotion) return undefined;
+    const section = sectionRef.current;
+    if (!section) return undefined;
 
-    const trySnap = () => {
-      const v = progressRef.current;
-      // v strictement dans ]0,1[ signifie qu'on est bien a l'interieur de la
-      // section (useScroll clampe a 0 ou 1 hors de sa plage) : on ne ramene
-      // jamais quelqu'un qui est clairement sorti de .nh-build.
-      if (v <= 0 || v >= 1) return;
-      if (isTouchingRef.current || isSnappingRef.current) return;
-
-      const nearest = SNAP_POINTS.reduce((best, point) =>
-        Math.abs(point - v) < Math.abs(best - v) ? point : best
-      );
-      if (Math.abs(nearest - v) < 0.001) return;
-
-      const section = sectionRef.current;
-      if (!section) return;
+    const goToStep = (index) => {
       const rect = section.getBoundingClientRect();
-      const sectionTop = rect.top + window.scrollY;
-      const sectionHeight = rect.height;
-      const targetY = sectionTop + nearest * (sectionHeight - window.innerHeight);
-
-      isSnappingRef.current = true;
+      const sectionTop = window.scrollY + rect.top;
+      const scrollRange = section.offsetHeight - window.innerHeight;
+      const targetY = sectionTop + STEP_POINTS[index] * scrollRange;
+      isAnimatingRef.current = true;
       window.scrollTo({ top: targetY, behavior: "smooth" });
-      window.setTimeout(() => {
-        isSnappingRef.current = false;
-      }, SNAP_RELEASE_MS);
+      if (lockTimeoutRef.current) clearTimeout(lockTimeoutRef.current);
+      lockTimeoutRef.current = setTimeout(() => {
+        isAnimatingRef.current = false;
+      }, STEP_LOCK_MS);
     };
 
-    const scheduleSnap = () => {
-      if (snapTimeoutRef.current) clearTimeout(snapTimeoutRef.current);
-      snapTimeoutRef.current = setTimeout(trySnap, SNAP_DEBOUNCE_MS);
+    const handleWheel = (event) => {
+      if (event.deltaY === 0) return;
+      const rect = section.getBoundingClientRect();
+      // N'intercepte que quand le stage est reellement sticky (plein ecran).
+      const isSticky = rect.top <= 1 && rect.bottom >= window.innerHeight - 1;
+      if (!isSticky) return;
+
+      const dir = event.deltaY > 0 ? 1 : -1;
+      const current = activeRef.current;
+
+      // Bords : depuis l'image 4 vers le bas ou l'image 1 vers le haut,
+      // on laisse le scroll natif sortir de la section.
+      if (dir > 0 && current >= STEP_POINTS.length - 1) return;
+      if (dir < 0 && current <= 0) return;
+
+      // Entre les crans : un wheel = un seul step, quel que soit deltaY.
+      event.preventDefault();
+      if (isAnimatingRef.current) return;
+      goToStep(current + dir);
     };
 
-    const handleScroll = () => {
-      if (isSnappingRef.current) return;
-      scheduleSnap();
-    };
-
-    // La molette ne doit jamais etre bloquee : un wheel signale une vraie
-    // intention utilisateur, donc on relache le verrou pour lui rendre la main
-    // meme si un snap etait en cours d'animation.
-    const handleUserInput = () => {
-      isSnappingRef.current = false;
-    };
-
-    const handleTouchStart = () => {
-      isTouchingRef.current = true;
-      isSnappingRef.current = false;
-      if (snapTimeoutRef.current) clearTimeout(snapTimeoutRef.current);
-    };
-
-    const handleTouchEnd = () => {
-      isTouchingRef.current = false;
-      scheduleSnap();
-    };
-
-    window.addEventListener("scroll", handleScroll, { passive: true });
-    window.addEventListener("wheel", handleUserInput, { passive: true });
-    window.addEventListener("touchstart", handleTouchStart, { passive: true });
-    window.addEventListener("touchend", handleTouchEnd, { passive: true });
-
+    section.addEventListener("wheel", handleWheel, { passive: false });
     return () => {
-      window.removeEventListener("scroll", handleScroll);
-      window.removeEventListener("wheel", handleUserInput);
-      window.removeEventListener("touchstart", handleTouchStart);
-      window.removeEventListener("touchend", handleTouchEnd);
-      if (snapTimeoutRef.current) clearTimeout(snapTimeoutRef.current);
+      section.removeEventListener("wheel", handleWheel);
+      if (lockTimeoutRef.current) clearTimeout(lockTimeoutRef.current);
     };
   }, [prefersReducedMotion]);
 
