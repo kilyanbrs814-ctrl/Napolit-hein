@@ -1,5 +1,11 @@
-import { useRef, useState } from "react";
-import { motion, useScroll, useTransform, useMotionValueEvent } from "framer-motion";
+import { useEffect, useRef, useState } from "react";
+import {
+  motion,
+  useScroll,
+  useTransform,
+  useMotionValueEvent,
+  useReducedMotion,
+} from "framer-motion";
 import { BUILD_STEPS } from "../data/content.js";
 import logo from "../assets/images/logo-napolithein.png";
 import build1 from "../assets/images/build-1-rice.png";
@@ -28,6 +34,11 @@ const TEXT_RANGES = [
 
 // Points ou le texte entrant devient plus visible que le texte sortant.
 const ACTIVE_THRESHOLDS = [0.27, 0.518, 0.77];
+
+// Points de snap magnetique, un par etape : [0, 1/3, 2/3, 1] pour 4 etapes.
+const SNAP_POINTS = BUILD_STEPS.map((_, i) => i / (BUILD_STEPS.length - 1));
+const SNAP_DEBOUNCE_MS = 150;
+const SNAP_RELEASE_MS = 600;
 
 function Layer({ progress, range, image }) {
   const opacity = useTransform(progress, range.in, range.out);
@@ -62,11 +73,92 @@ export default function BuildSection() {
     offset: ["start start", "end end"],
   });
 
+  const prefersReducedMotion = useReducedMotion();
+  const progressRef = useRef(0);
+  const isSnappingRef = useRef(false);
+  const isTouchingRef = useRef(false);
+  const snapTimeoutRef = useRef(null);
+
   useMotionValueEvent(scrollYProgress, "change", (v) => {
+    progressRef.current = v;
     const next = ACTIVE_THRESHOLDS.findIndex((threshold) => v < threshold);
     const activeIndex = next === -1 ? TEXT_RANGES.length - 1 : next;
     setActive((cur) => (cur === activeIndex ? cur : activeIndex));
   });
+
+  // Snap magnetique : une fois le scroll natif immobile, recale doucement
+  // sur l'etape la plus proche pour eviter un crossfade fige entre deux couches.
+  useEffect(() => {
+    if (prefersReducedMotion) return undefined;
+
+    const trySnap = () => {
+      const v = progressRef.current;
+      // v strictement dans ]0,1[ signifie qu'on est bien a l'interieur de la
+      // section (useScroll clampe a 0 ou 1 hors de sa plage) : on ne ramene
+      // jamais quelqu'un qui est clairement sorti de .nh-build.
+      if (v <= 0 || v >= 1) return;
+      if (isTouchingRef.current || isSnappingRef.current) return;
+
+      const nearest = SNAP_POINTS.reduce((best, point) =>
+        Math.abs(point - v) < Math.abs(best - v) ? point : best
+      );
+      if (Math.abs(nearest - v) < 0.001) return;
+
+      const section = sectionRef.current;
+      if (!section) return;
+      const rect = section.getBoundingClientRect();
+      const sectionTop = rect.top + window.scrollY;
+      const sectionHeight = rect.height;
+      const targetY = sectionTop + nearest * (sectionHeight - window.innerHeight);
+
+      isSnappingRef.current = true;
+      window.scrollTo({ top: targetY, behavior: "smooth" });
+      window.setTimeout(() => {
+        isSnappingRef.current = false;
+      }, SNAP_RELEASE_MS);
+    };
+
+    const scheduleSnap = () => {
+      if (snapTimeoutRef.current) clearTimeout(snapTimeoutRef.current);
+      snapTimeoutRef.current = setTimeout(trySnap, SNAP_DEBOUNCE_MS);
+    };
+
+    const handleScroll = () => {
+      if (isSnappingRef.current) return;
+      scheduleSnap();
+    };
+
+    // La molette ne doit jamais etre bloquee : un wheel signale une vraie
+    // intention utilisateur, donc on relache le verrou pour lui rendre la main
+    // meme si un snap etait en cours d'animation.
+    const handleUserInput = () => {
+      isSnappingRef.current = false;
+    };
+
+    const handleTouchStart = () => {
+      isTouchingRef.current = true;
+      isSnappingRef.current = false;
+      if (snapTimeoutRef.current) clearTimeout(snapTimeoutRef.current);
+    };
+
+    const handleTouchEnd = () => {
+      isTouchingRef.current = false;
+      scheduleSnap();
+    };
+
+    window.addEventListener("scroll", handleScroll, { passive: true });
+    window.addEventListener("wheel", handleUserInput, { passive: true });
+    window.addEventListener("touchstart", handleTouchStart, { passive: true });
+    window.addEventListener("touchend", handleTouchEnd, { passive: true });
+
+    return () => {
+      window.removeEventListener("scroll", handleScroll);
+      window.removeEventListener("wheel", handleUserInput);
+      window.removeEventListener("touchstart", handleTouchStart);
+      window.removeEventListener("touchend", handleTouchEnd);
+      if (snapTimeoutRef.current) clearTimeout(snapTimeoutRef.current);
+    };
+  }, [prefersReducedMotion]);
 
   const glowOpacity = useTransform(scrollYProgress, (v) => 0.4 + 0.5 * Math.sin(v * Math.PI));
 
