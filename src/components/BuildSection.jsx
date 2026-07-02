@@ -89,6 +89,9 @@ export default function BuildSection() {
   const isAnimatingRef = useRef(false);
   const lockTimeoutRef = useRef(null);
   const animationFrameRef = useRef(null);
+  // Le scroll par crans ne s'arme qu'apres stabilisation a l'entree :
+  // un gros scroll venant de la section precedente ne doit pas enchainer 1->2.
+  const entryArmedRef = useRef(false);
 
   useMotionValueEvent(scrollYProgress, "change", (v) => {
     const next = ACTIVE_THRESHOLDS.findIndex((threshold) => v < threshold);
@@ -152,9 +155,27 @@ export default function BuildSection() {
       const dir = event.deltaY > 0 ? 1 : -1;
       const current = activeRef.current;
 
-      // Bords : depuis l'image 4 vers le bas ou l'image 1 vers le haut,
-      // on laisse le scroll natif sortir de la section.
-      if (dir > 0 && current >= STEP_POINTS.length - 1) return;
+      // Guard d'entree : le premier wheel apres l'engagement du sticky est
+      // absorbe si on vient d'arriver (progress < 0.08). On se cale sur le
+      // cran 0, puis le scroll par crans s'arme pour les wheels suivants.
+      if (!entryArmedRef.current) {
+        entryArmedRef.current = true;
+        if (current === 0 && dir > 0 && scrollYProgress.get() < 0.08) {
+          event.preventDefault();
+          if (!isAnimatingRef.current) goToStep(0);
+          return;
+        }
+      }
+
+      // Sortie basse : depuis l'image 4, descente progressive cappee au lieu
+      // d'un saut direct vers la section suivante sur un gros deltaY.
+      if (dir > 0 && current >= STEP_POINTS.length - 1) {
+        event.preventDefault();
+        if (isAnimatingRef.current) return;
+        window.scrollBy({ top: Math.min(Math.abs(event.deltaY), 260), behavior: "auto" });
+        return;
+      }
+      // Sortie haute : depuis l'image 1, on laisse le scroll natif remonter.
       if (dir < 0 && current <= 0) return;
 
       // Entre les crans : un wheel = un seul step, quel que soit deltaY.
@@ -163,13 +184,23 @@ export default function BuildSection() {
       goToStep(current + dir);
     };
 
+    // Desarme le guard d'entree des que la section n'est plus sticky :
+    // le prochain wheel a l'interieur repassera par la stabilisation.
+    const handleScrollArm = () => {
+      const rect = section.getBoundingClientRect();
+      const isSticky = rect.top <= 1 && rect.bottom >= window.innerHeight - 1;
+      if (!isSticky) entryArmedRef.current = false;
+    };
+
     section.addEventListener("wheel", handleWheel, { passive: false });
+    window.addEventListener("scroll", handleScrollArm, { passive: true });
     return () => {
       section.removeEventListener("wheel", handleWheel);
+      window.removeEventListener("scroll", handleScrollArm);
       if (lockTimeoutRef.current) clearTimeout(lockTimeoutRef.current);
       if (animationFrameRef.current) cancelAnimationFrame(animationFrameRef.current);
     };
-  }, [prefersReducedMotion]);
+  }, [prefersReducedMotion, scrollYProgress]);
 
   const glowOpacity = useTransform(scrollYProgress, (v) => 0.4 + 0.5 * Math.sin(v * Math.PI));
 
@@ -183,7 +214,6 @@ export default function BuildSection() {
             {IMAGES.map((img, i) => (
               <Layer key={i} progress={scrollYProgress} range={IMG_RANGES[i]} image={img} />
             ))}
-            <div className="nh-build__ring" />
           </div>
 
           <div className="nh-build__side">
