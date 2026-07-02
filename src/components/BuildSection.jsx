@@ -101,6 +101,9 @@ export default function BuildSection() {
   // ne sert plus qu'a l'affichage et a la resync au repos).
   const currentStepRef = useRef(0); // cran committe (au repos)
   const targetStepRef = useRef(null); // cran vise pendant l'animation, sinon null
+  // Horodatage du dernier wheel : distingue un lock fantome (vrai silence)
+  // de l'inertie d'un geste en cours (wheels rapproches).
+  const lastWheelTimeRef = useRef(0);
 
   useMotionValueEvent(scrollYProgress, "change", (v) => {
     const next = ACTIVE_THRESHOLDS.findIndex((threshold) => v < threshold);
@@ -196,29 +199,33 @@ export default function BuildSection() {
       if (!isBuildActive) return;
 
       const dir = event.deltaY > 0 ? 1 : -1;
-      // Source de verite : cible en vol si animation, sinon cran committe.
-      // Jamais activeRef directement (desync possible mi-transition).
-      const current =
-        targetStepRef.current !== null ? targetStepRef.current : currentStepRef.current;
+      const now = performance.now();
+      const sinceLastWheel = now - lastWheelTimeRef.current;
+      lastWheelTimeRef.current = now;
 
-      // Verrous AVANT les bords : l'inertie d'un geste qui vient de declencher
-      // un step est entierement absorbee (jamais 2 crans), et pas de sortie
-      // native accidentelle pendant la transition vers l'image 4.
+      // Failsafe anti-blocage : un lock sans animation ni cible en vol, frappe
+      // par un wheel apres un vrai silence, est un lock fantome -> on le leve
+      // pour que ce wheel declenche son step. (Un wheel rapproche = inertie du
+      // meme geste : le lock reste, sinon un gros scroll passerait 2 crans.)
+      if (
+        gestureLockedRef.current &&
+        !isAnimatingRef.current &&
+        targetStepRef.current === null &&
+        sinceLastWheel > GESTURE_QUIET_MS
+      ) {
+        gestureLockedRef.current = false;
+      }
+
+      // Pendant animation/geste : absorber l'inertie, jamais 2 crans, et pas
+      // de sortie native accidentelle pendant la transition vers l'image 4.
       if (isAnimatingRef.current || gestureLockedRef.current) {
         event.preventDefault();
         armGestureEnd();
         return;
       }
 
-      // Entree : si la section vient d'etre atteinte sans etre encore calee
-      // sur le cran 0 (gros scroll depuis la section precedente), le premier
-      // wheel aligne sur l'image 1 au lieu d'enchainer vers l'image 2.
-      // L'inertie restante est absorbee par le lock pose par goToStep.
-      if (dir > 0 && current === 0 && scrollYProgress.get() < 0.05 && Math.abs(rect.top) > 4) {
-        event.preventDefault();
-        goToStep(0);
-        return;
-      }
+      // Hors animation, la source fiable est le cran committe.
+      const current = currentStepRef.current;
 
       // Sortie basse : depuis l'image 4, descente manuelle progressive en
       // "instant" pour couper toute inertie native. Petit scroll = petite
@@ -232,7 +239,8 @@ export default function BuildSection() {
       // Sortie haute : depuis l'image 1, on laisse le scroll natif remonter.
       if (dir < 0 && current <= 0) return;
 
-      // Entre les crans : un wheel = un seul step, quel que soit deltaY.
+      // Hors animation : le wheel declenche exactement 1 step, premier scroll
+      // dans la section compris (jamais de preventDefault sans action ici).
       // goToStep recale aussi la section si elle n'etait pas parfaitement
       // alignee (targetY est calcule depuis la position reelle).
       event.preventDefault();
@@ -264,7 +272,7 @@ export default function BuildSection() {
       if (gestureEndTimeoutRef.current) clearTimeout(gestureEndTimeoutRef.current);
       if (animationFrameRef.current) cancelAnimationFrame(animationFrameRef.current);
     };
-  }, [prefersReducedMotion, scrollYProgress]);
+  }, [prefersReducedMotion]);
 
   const glowOpacity = useTransform(scrollYProgress, (v) => 0.4 + 0.5 * Math.sin(v * Math.PI));
 
