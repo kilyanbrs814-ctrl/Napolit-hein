@@ -38,14 +38,17 @@ const TEXT_RANGES = [
 const ACTIVE_THRESHOLDS = [0.29, 0.543, 0.782];
 
 // Points de repos du scroll par crans, un par etape.
-// Le dernier cran reste volontairement avant 1 : l'image 4 est stable
-// sans que la page ne descende automatiquement vers la section suivante.
-const STEP_POINTS = [0, 0.34, 0.67, 0.88];
+// Le dernier cran reste avant 1 (image 4 stable, opacity en plateau des 0.84)
+// mais proche, pour reduire la zone vide avant la sortie vers la section 04.
+const STEP_POINTS = [0, 0.34, 0.67, 0.94];
 // Duree du glissement entre deux crans, pilote en rAF pour garder un fondu
 // lent et premium (le smooth natif du navigateur est trop court).
 const STEP_ANIMATION_MS = 900;
 // Verrou anti-spam : un seul cran par action de molette, jamais plus.
 const STEP_LOCK_MS = STEP_ANIMATION_MS + 120;
+// Fin de geste : tant que des wheel arrivent a moins de cet intervalle,
+// ils appartiennent au meme geste (inertie) et restent bloques.
+const GESTURE_QUIET_MS = 220;
 
 // Depart immediat des le coup de molette, deceleration douce a la fin.
 const easeOutCubic = (t) => 1 - Math.pow(1 - t, 3);
@@ -92,6 +95,14 @@ export default function BuildSection() {
   // Le scroll par crans ne s'arme qu'apres stabilisation a l'entree :
   // un gros scroll venant de la section precedente ne doit pas enchainer 1->2.
   const entryArmedRef = useRef(false);
+  // Lock par geste : l'inertie trackpad/molette peut durer plus longtemps que
+  // le verrou d'animation, donc on bloque tous les wheel du meme geste jusqu'a
+  // GESTURE_QUIET_MS de silence ET la fin de l'animation. 1 geste = 1 cran.
+  const gestureLockedRef = useRef(false);
+  const gestureEndTimeoutRef = useRef(null);
+  // Cible du step en cours : index de reference fiable pendant l'animation,
+  // la ou activeRef peut refleter une lecture mi-transition des seuils.
+  const targetIndexRef = useRef(null);
 
   useMotionValueEvent(scrollYProgress, "change", (v) => {
     const next = ACTIVE_THRESHOLDS.findIndex((threshold) => v < threshold);
@@ -108,6 +119,20 @@ export default function BuildSection() {
     const section = sectionRef.current;
     if (!section) return undefined;
 
+    // Relance la fenetre de fin de geste : le lock ne se libere qu'apres
+    // GESTURE_QUIET_MS sans aucun wheel ET une fois l'animation terminee.
+    const armGestureEnd = () => {
+      if (gestureEndTimeoutRef.current) clearTimeout(gestureEndTimeoutRef.current);
+      const tryUnlock = () => {
+        if (isAnimatingRef.current) {
+          gestureEndTimeoutRef.current = setTimeout(tryUnlock, 100);
+        } else {
+          gestureLockedRef.current = false;
+        }
+      };
+      gestureEndTimeoutRef.current = setTimeout(tryUnlock, GESTURE_QUIET_MS);
+    };
+
     const goToStep = (index) => {
       const rect = section.getBoundingClientRect();
       const sectionTop = window.scrollY + rect.top;
@@ -118,6 +143,10 @@ export default function BuildSection() {
       const startTime = performance.now();
 
       isAnimatingRef.current = true;
+      targetIndexRef.current = index;
+      // Tous les wheel suivants du meme geste sont bloques : jamais 2 crans.
+      gestureLockedRef.current = true;
+      armGestureEnd();
       if (animationFrameRef.current) cancelAnimationFrame(animationFrameRef.current);
 
       // Micro-avance immediate avant le premier frame rAF : le mouvement
@@ -153,7 +182,19 @@ export default function BuildSection() {
       if (!isSticky) return;
 
       const dir = event.deltaY > 0 ? 1 : -1;
-      const current = activeRef.current;
+      // Pendant/apres une animation, l'index de reference est la cible du
+      // step en cours, pas une lecture mi-transition des seuils.
+      const current =
+        targetIndexRef.current !== null ? targetIndexRef.current : activeRef.current;
+
+      // Verrous AVANT les bords : l'inertie d'un geste qui vient de declencher
+      // un step est entierement absorbee (jamais 2 crans), et pas de sortie
+      // native accidentelle pendant la transition vers l'image 4.
+      if (isAnimatingRef.current || gestureLockedRef.current) {
+        event.preventDefault();
+        armGestureEnd();
+        return;
+      }
 
       // Guard d'entree : le premier wheel apres l'engagement du sticky est
       // absorbe si on vient d'arriver (progress < 0.08). On se cale sur le
@@ -162,17 +203,18 @@ export default function BuildSection() {
         entryArmedRef.current = true;
         if (current === 0 && dir > 0 && scrollYProgress.get() < 0.08) {
           event.preventDefault();
-          if (!isAnimatingRef.current) goToStep(0);
+          goToStep(0);
           return;
         }
       }
 
-      // Sortie basse : depuis l'image 4, descente progressive cappee au lieu
-      // d'un saut direct vers la section suivante sur un gros deltaY.
+      // Sortie basse : depuis l'image 4, descente manuelle progressive en
+      // "instant" pour couper toute inertie native. Petit scroll = petite
+      // descente, gros scroll cappe a 90px : pas de jump.
       if (dir > 0 && current >= STEP_POINTS.length - 1) {
         event.preventDefault();
-        if (isAnimatingRef.current) return;
-        window.scrollBy({ top: Math.min(Math.abs(event.deltaY), 260), behavior: "auto" });
+        const exitDelta = Math.min(Math.abs(event.deltaY), 90);
+        window.scrollBy({ top: exitDelta, behavior: "instant" });
         return;
       }
       // Sortie haute : depuis l'image 1, on laisse le scroll natif remonter.
@@ -180,7 +222,6 @@ export default function BuildSection() {
 
       // Entre les crans : un wheel = un seul step, quel que soit deltaY.
       event.preventDefault();
-      if (isAnimatingRef.current) return;
       goToStep(current + dir);
     };
 
@@ -189,7 +230,10 @@ export default function BuildSection() {
     const handleScrollArm = () => {
       const rect = section.getBoundingClientRect();
       const isSticky = rect.top <= 1 && rect.bottom >= window.innerHeight - 1;
-      if (!isSticky) entryArmedRef.current = false;
+      if (!isSticky) {
+        entryArmedRef.current = false;
+        targetIndexRef.current = null;
+      }
     };
 
     section.addEventListener("wheel", handleWheel, { passive: false });
@@ -198,6 +242,7 @@ export default function BuildSection() {
       section.removeEventListener("wheel", handleWheel);
       window.removeEventListener("scroll", handleScrollArm);
       if (lockTimeoutRef.current) clearTimeout(lockTimeoutRef.current);
+      if (gestureEndTimeoutRef.current) clearTimeout(gestureEndTimeoutRef.current);
       if (animationFrameRef.current) cancelAnimationFrame(animationFrameRef.current);
     };
   }, [prefersReducedMotion, scrollYProgress]);
