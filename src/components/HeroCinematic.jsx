@@ -253,10 +253,10 @@ export default function HeroCinematic() {
   const glowScale  = useTransform(scrollYProgress, [0, 1], [1, 1.5]);
 
   // ── Phase 2 : 02 · Le croustillant — commence APRÈS la disparition complète du hero.
-  // Dwell de 0.52 à 0.68 (02 pleinement visible et seul), puis fondu vers 0.1
-  // pendant la montée du handoff (qui n'apparaît qu'à partir de ~0.69 avec height: 420svh).
-  const crOpacity = useTransform(scrollYProgress, [0.36, 0.52, 0.68, 0.78], [0, 1, 1, 0.1]);
-  const crY       = useTransform(scrollYProgress, [0.36, 0.56], [44, 0]);
+  // Dwell de 0.52 à 0.64 (02 pleinement visible et seul), puis fondu jusqu'à 0
+  // AVANT la montée du handoff : aucun texte fantôme quand la bannière monte.
+  const crOpacity = useTransform(scrollYProgress, [0.36, 0.52, 0.64, 0.70], [0, 1, 1, 0]);
+  const crY       = useTransform(scrollYProgress, [0.36, 0.56, 0.70], [44, 0, -36]);
 
   // En reduced-motion : aucune transformation inline → affichage empilé lisible.
   const s = (style) => (isStatic ? undefined : style);

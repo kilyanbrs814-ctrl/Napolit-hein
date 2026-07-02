@@ -51,7 +51,9 @@ const STEP_LOCK_MS = STEP_ANIMATION_MS + 120;
 const STEP_COOLDOWN_MS = 750;
 // Deux wheels espaces de moins de cet intervalle appartiennent au meme
 // geste (inertie) ; au-dela, c'est une nouvelle intention utilisateur.
-const GESTURE_QUIET_MS = 220;
+// Seul le silence compte : les variations de deltaY (jitter des molettes
+// haute resolution) ne doivent jamais etre prises pour un nouveau geste.
+const GESTURE_QUIET_MS = 260;
 
 // Depart immediat des le coup de molette, deceleration douce a la fin.
 const easeOutCubic = (t) => 1 - Math.pow(1 - t, 3);
@@ -100,14 +102,18 @@ export default function BuildSection() {
   // ne sert plus qu'a l'affichage et a la resync au repos).
   const currentStepRef = useRef(0); // cran committe (au repos)
   const targetStepRef = useRef(null); // cran vise pendant l'animation, sinon null
-  // Suivi de geste 100% horodate (aucun timer, aucun lock qui peut rester
-  // coince) : un geste = chaine de wheels espaces de moins de
+  // Suivi de geste : un geste = chaine de wheels espaces de moins de
   // GESTURE_QUIET_MS. "Consomme" = ce geste a deja produit son step, ou il a
   // commence hors de la section (scroll d'arrivee) : son inertie est absorbee.
   const lastStepTimeRef = useRef(0);
   const lastWheelTimeRef = useRef(0);
-  const lastWheelDeltaRef = useRef(0);
   const gestureConsumedRef = useRef(false);
+  // Lock dur post-step : libere UNIQUEMENT quand l'animation est finie ET
+  // qu'aucun wheel n'est arrive depuis GESTURE_QUIET_MS. Regle stricte :
+  // 1 geste molette = 1 seule etape, jamais 2.
+  const gestureLockedRef = useRef(false);
+  const pendingUnlockRef = useRef(false);
+  const unlockTimeoutRef = useRef(null);
 
   useMotionValueEvent(scrollYProgress, "change", (v) => {
     const next = ACTIVE_THRESHOLDS.findIndex((threshold) => v < threshold);
@@ -129,6 +135,26 @@ export default function BuildSection() {
     const section = sectionRef.current;
     if (!section) return undefined;
 
+    // Libere le lock de geste UNIQUEMENT quand l'animation est finie ET
+    // qu'aucun wheel n'est arrive depuis GESTURE_QUIET_MS. Tant que l'inertie
+    // envoie des wheels, on repousse la liberation via un recheck court.
+    const tryUnlockGesture = () => {
+      if (unlockTimeoutRef.current) clearTimeout(unlockTimeoutRef.current);
+      if (isAnimatingRef.current) return; // relance a la fin de l'animation
+      if (performance.now() - lastWheelTimeRef.current < GESTURE_QUIET_MS) {
+        unlockTimeoutRef.current = setTimeout(tryUnlockGesture, 90);
+        return;
+      }
+      gestureLockedRef.current = false;
+      pendingUnlockRef.current = false;
+      // Commit : la cible devient le cran courant. Sans cette purge, une
+      // ancienne cible fausserait tous les wheels suivants.
+      if (targetStepRef.current !== null) {
+        currentStepRef.current = targetStepRef.current;
+        targetStepRef.current = null;
+      }
+    };
+
     const goToStep = (index) => {
       const rect = section.getBoundingClientRect();
       const sectionTop = window.scrollY + rect.top;
@@ -141,6 +167,9 @@ export default function BuildSection() {
       isAnimatingRef.current = true;
       targetStepRef.current = index;
       lastStepTimeRef.current = performance.now();
+      // Lock dur : tout wheel du meme geste est absorbe, jamais un 2e step.
+      gestureLockedRef.current = true;
+      pendingUnlockRef.current = true;
       if (animationFrameRef.current) cancelAnimationFrame(animationFrameRef.current);
 
       // Micro-avance immediate avant le premier frame rAF : le mouvement
@@ -165,13 +194,10 @@ export default function BuildSection() {
       if (lockTimeoutRef.current) clearTimeout(lockTimeoutRef.current);
       lockTimeoutRef.current = setTimeout(() => {
         isAnimatingRef.current = false;
-        // Commit : l'animation est finie, la cible devient le cran courant.
-        // Sans cette purge, une ancienne cible fausserait tous les wheels
-        // suivants (mauvaise branche, mauvais step).
-        if (targetStepRef.current !== null) {
-          currentStepRef.current = targetStepRef.current;
-          targetStepRef.current = null;
-        }
+        // Ne PAS liberer le lock tout de suite : la liberation (et le commit
+        // de la cible) passe par tryUnlockGesture, qui attend aussi le
+        // silence de la molette.
+        tryUnlockGesture();
       }, STEP_LOCK_MS);
     };
 
@@ -180,15 +206,11 @@ export default function BuildSection() {
 
       // Detection de geste AVANT le filtre de zone : un scroll d'arrivee
       // commence hors de la section et son inertie ne doit pas y declencher
-      // un step. Nouvelle intention = vrai silence, ou delta qui remonte
-      // nettement au-dessus du flux decroissant de l'inertie.
+      // un step. Nouvelle intention = vrai silence UNIQUEMENT (le jitter de
+      // deltaY des molettes haute resolution n'est pas un nouveau geste).
       const now = performance.now();
-      const absDelta = Math.abs(event.deltaY);
-      const isNewGesture =
-        now - lastWheelTimeRef.current > GESTURE_QUIET_MS ||
-        absDelta > lastWheelDeltaRef.current * 1.5;
+      const isNewGesture = now - lastWheelTimeRef.current > GESTURE_QUIET_MS;
       lastWheelTimeRef.current = now;
-      lastWheelDeltaRef.current = absDelta;
       if (isNewGesture) gestureConsumedRef.current = false;
 
       const rect = section.getBoundingClientRect();
@@ -205,8 +227,11 @@ export default function BuildSection() {
         return;
       }
 
-      // 1 step max par animation : pendant la transition, on absorbe.
-      if (isAnimatingRef.current) {
+      // Lock dur post-step : tant que l'animation court ou que la molette
+      // n'a pas marque GESTURE_QUIET_MS de silence, tout wheel est absorbe.
+      // Jamais un 2e goToStep dans le meme geste. (lastWheelTimeRef vient
+      // d'etre mis a jour : chaque wheel repousse la liberation.)
+      if (gestureLockedRef.current || isAnimatingRef.current) {
         event.preventDefault();
         return;
       }
@@ -216,8 +241,8 @@ export default function BuildSection() {
         return;
       }
       // Inertie d'un geste deja consomme (step deja produit, ou arrivee
-      // depuis une autre section) : absorbee. Un scroll rapide mais nouveau
-      // (silence > 220ms ou delta en hausse) n'est JAMAIS absorbe ici.
+      // depuis une autre section) : absorbee. Un geste nouveau (silence
+      // > GESTURE_QUIET_MS) n'est JAMAIS absorbe ici.
       if (gestureConsumedRef.current) {
         event.preventDefault();
         return;
@@ -258,6 +283,8 @@ export default function BuildSection() {
       if (!isBuildActive) {
         targetStepRef.current = null;
         currentStepRef.current = activeRef.current;
+        gestureLockedRef.current = false;
+        pendingUnlockRef.current = false;
       }
     };
 
@@ -269,6 +296,7 @@ export default function BuildSection() {
       window.removeEventListener("wheel", handleWheel);
       window.removeEventListener("scroll", handleScrollReset);
       if (lockTimeoutRef.current) clearTimeout(lockTimeoutRef.current);
+      if (unlockTimeoutRef.current) clearTimeout(unlockTimeoutRef.current);
       if (animationFrameRef.current) cancelAnimationFrame(animationFrameRef.current);
     };
   }, [prefersReducedMotion]);
