@@ -92,12 +92,8 @@ export default function BuildSection() {
   const isAnimatingRef = useRef(false);
   const lockTimeoutRef = useRef(null);
   const animationFrameRef = useRef(null);
-  // Le scroll par crans ne s'arme qu'apres stabilisation a l'entree :
-  // un gros scroll venant de la section precedente ne doit pas enchainer 1->2.
-  const entryArmedRef = useRef(false);
-  // Lock par geste : l'inertie trackpad/molette peut durer plus longtemps que
-  // le verrou d'animation, donc on bloque tous les wheel du meme geste jusqu'a
-  // GESTURE_QUIET_MS de silence ET la fin de l'animation. 1 geste = 1 cran.
+  // Lock par geste : ne s'active qu'apres un vrai changement d'etape, puis
+  // absorbe l'inertie du meme geste. Il ne bloque jamais le premier scroll.
   const gestureLockedRef = useRef(false);
   const gestureEndTimeoutRef = useRef(null);
   // Cible du step en cours : index de reference fiable pendant l'animation,
@@ -119,18 +115,14 @@ export default function BuildSection() {
     const section = sectionRef.current;
     if (!section) return undefined;
 
-    // Relance la fenetre de fin de geste : le lock ne se libere qu'apres
-    // GESTURE_QUIET_MS sans aucun wheel ET une fois l'animation terminee.
+    // Relance la fenetre de fin de geste : le lock se libere proprement apres
+    // GESTURE_QUIET_MS sans aucun wheel. (L'animation en cours reste couverte
+    // separement par isAnimatingRef.)
     const armGestureEnd = () => {
       if (gestureEndTimeoutRef.current) clearTimeout(gestureEndTimeoutRef.current);
-      const tryUnlock = () => {
-        if (isAnimatingRef.current) {
-          gestureEndTimeoutRef.current = setTimeout(tryUnlock, 100);
-        } else {
-          gestureLockedRef.current = false;
-        }
-      };
-      gestureEndTimeoutRef.current = setTimeout(tryUnlock, GESTURE_QUIET_MS);
+      gestureEndTimeoutRef.current = setTimeout(() => {
+        gestureLockedRef.current = false;
+      }, GESTURE_QUIET_MS);
     };
 
     const goToStep = (index) => {
@@ -171,15 +163,23 @@ export default function BuildSection() {
       if (lockTimeoutRef.current) clearTimeout(lockTimeoutRef.current);
       lockTimeoutRef.current = setTimeout(() => {
         isAnimatingRef.current = false;
+        // L'animation est finie : l'index de reference redevient celui des
+        // seuils (activeRef). Sans cette purge, un ancien index cible fausse
+        // tous les wheels suivants (mauvaise branche, mauvais step).
+        targetIndexRef.current = null;
       }, STEP_LOCK_MS);
     };
 
     const handleWheel = (event) => {
       if (event.deltaY === 0) return;
       const rect = section.getBoundingClientRect();
-      // N'intercepte que quand le stage est reellement sticky (plein ecran).
-      const isSticky = rect.top <= 1 && rect.bottom >= window.innerHeight - 1;
-      if (!isSticky) return;
+      // Zone d'activation tolerante : le scroll par crans repond des que la
+      // section occupe l'essentiel du viewport, sans exiger un sticky parfait
+      // au pixel pres (cause du "premier scroll qui ne marche pas").
+      const isBuildActive =
+        rect.top <= window.innerHeight * 0.15 &&
+        rect.bottom >= window.innerHeight * 0.85;
+      if (!isBuildActive) return;
 
       const dir = event.deltaY > 0 ? 1 : -1;
       // Pendant/apres une animation, l'index de reference est la cible du
@@ -196,18 +196,6 @@ export default function BuildSection() {
         return;
       }
 
-      // Guard d'entree : le premier wheel apres l'engagement du sticky est
-      // absorbe si on vient d'arriver (progress < 0.08). On se cale sur le
-      // cran 0, puis le scroll par crans s'arme pour les wheels suivants.
-      if (!entryArmedRef.current) {
-        entryArmedRef.current = true;
-        if (current === 0 && dir > 0 && scrollYProgress.get() < 0.08) {
-          event.preventDefault();
-          goToStep(0);
-          return;
-        }
-      }
-
       // Sortie basse : depuis l'image 4, descente manuelle progressive en
       // "instant" pour couper toute inertie native. Petit scroll = petite
       // descente, gros scroll cappe a 90px : pas de jump.
@@ -221,31 +209,37 @@ export default function BuildSection() {
       if (dir < 0 && current <= 0) return;
 
       // Entre les crans : un wheel = un seul step, quel que soit deltaY.
+      // goToStep recale aussi la section si elle n'etait pas parfaitement
+      // alignee (targetY est calcule depuis la position reelle).
       event.preventDefault();
       goToStep(current + dir);
     };
 
-    // Desarme le guard d'entree des que la section n'est plus sticky :
-    // le prochain wheel a l'interieur repassera par la stabilisation.
-    const handleScrollArm = () => {
+    // Hors de la zone active, on purge les etats : l'index cible redevient
+    // celui des seuils et aucun lock ne peut bloquer la prochaine entree.
+    const handleScrollReset = () => {
       const rect = section.getBoundingClientRect();
-      const isSticky = rect.top <= 1 && rect.bottom >= window.innerHeight - 1;
-      if (!isSticky) {
-        entryArmedRef.current = false;
+      const isBuildActive =
+        rect.top <= window.innerHeight * 0.15 &&
+        rect.bottom >= window.innerHeight * 0.85;
+      if (!isBuildActive) {
         targetIndexRef.current = null;
+        gestureLockedRef.current = false;
       }
     };
 
-    section.addEventListener("wheel", handleWheel, { passive: false });
-    window.addEventListener("scroll", handleScrollArm, { passive: true });
+    // Sur window (pas sur la section) : le wheel est capte meme si le curseur
+    // n'est pas exactement au-dessus du bon element.
+    window.addEventListener("wheel", handleWheel, { passive: false });
+    window.addEventListener("scroll", handleScrollReset, { passive: true });
     return () => {
-      section.removeEventListener("wheel", handleWheel);
-      window.removeEventListener("scroll", handleScrollArm);
+      window.removeEventListener("wheel", handleWheel);
+      window.removeEventListener("scroll", handleScrollReset);
       if (lockTimeoutRef.current) clearTimeout(lockTimeoutRef.current);
       if (gestureEndTimeoutRef.current) clearTimeout(gestureEndTimeoutRef.current);
       if (animationFrameRef.current) cancelAnimationFrame(animationFrameRef.current);
     };
-  }, [prefersReducedMotion, scrollYProgress]);
+  }, [prefersReducedMotion]);
 
   const glowOpacity = useTransform(scrollYProgress, (v) => 0.4 + 0.5 * Math.sin(v * Math.PI));
 
