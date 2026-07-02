@@ -7,6 +7,9 @@ const RAIL_DISHES = DISHES.slice(0, 3);
 const SNAP_DURATION = 720;
 const SWIPE_THRESHOLD = 48;
 const MIN_WHEEL_DELTA = 6;
+// Silence requis (en ms) après la fin d'animation avant qu'un nouveau geste
+// puisse sortir de la section. Protège contre l'inertie trackpad.
+const WHEEL_IDLE_MS = 350;
 
 function RailCard({ dish, index, count, isActive }) {
   return (
@@ -61,8 +64,13 @@ export default function RailSection() {
     let wasSectionActive = false;
     let wasAboveSection = section.getBoundingClientRect().top > 0;
     let wheelTimer = null;
+    // Timer qui réinitialise consumedCurrentWheelBurst après l'idle post-animation.
+    let wheelBurstTimer = null;
+    // Vrai dès qu'un changement de plat a eu lieu dans le geste courant.
+    // Bloque TOUT (nouveaux plats + sorties) jusqu'à idle post-animation.
+    let consumedCurrentWheelBurst = false;
 
-    // Vrai quand le stage sticky couvre tout le viewport (haut sorti, bas pas encore).
+    // Vrai quand le stage sticky couvre tout le viewport.
     const isSectionActive = () => {
       const rect = section.getBoundingClientRect();
       return rect.top <= 0 && rect.bottom >= window.innerHeight;
@@ -73,13 +81,22 @@ export default function RailSection() {
       setActiveIndex(nextIndex);
     };
 
-    // Cale le scroll sous-jacent exactement sur l'ancre du plat nextIndex.
     const scrollToIndexAnchor = (nextIndex) => {
       const rect = section.getBoundingClientRect();
       const sectionTop = window.scrollY + rect.top;
       const dishScrollable = Math.max(0, section.offsetHeight - 2 * window.innerHeight);
       const target = sectionTop + (nextIndex / (count - 1)) * dishScrollable;
       window.scrollTo({ top: target, behavior: "auto" });
+    };
+
+    // Démarre (ou redémarre) le décompte d'idle qui réinitialise consumedCurrentWheelBurst.
+    // N'est appelé qu'une fois l'animation terminée (depuis wheelTimer callback ou
+    // depuis les events d'inertie post-animation).
+    const restartBurstIdleTimer = () => {
+      window.clearTimeout(wheelBurstTimer);
+      wheelBurstTimer = window.setTimeout(() => {
+        consumedCurrentWheelBurst = false;
+      }, WHEEL_IDLE_MS);
     };
 
     const normalizeWheelDelta = (event) => {
@@ -105,14 +122,11 @@ export default function RailSection() {
       const dishScrollable = Math.max(0, section.offsetHeight - 2 * window.innerHeight);
 
       // ── Zone d'overlap 04 ↔ 05 ─────────────────────────────────────────────
-      // Quand scrollY dépasse l'ancre du dernier plat, le menu chevauche le rail.
-      // On laisse le scroll naturel passer vers le haut (symétrique à isLeavingDown).
+      // Scroll naturel autorisé vers le haut dans la zone de chevauchement menu.
       if (window.scrollY >= sectionTop + dishScrollable && direction < 0) return;
 
       // ── Pré-entrée depuis le haut ───────────────────────────────────────────
-      // Le haut de la section est visible dans le viewport mais pas encore sticky.
-      // On cale immédiatement sur l'ancre du plat 01 pour éviter qu'un gros wheel
-      // ne saute par-dessus sans passer par le carousel.
+      // Caler sur l'ancre du plat 01 avant que le stage soit sticky.
       if (direction > 0 && rect.top > 0 && rect.top < window.innerHeight) {
         if (event.cancelable) event.preventDefault();
         if (activeIndexRef.current !== 0) updateIndex(0);
@@ -120,28 +134,46 @@ export default function RailSection() {
         return;
       }
 
-      // ── Hors section active : ne pas interférer ─────────────────────────────
+      // ── Hors section active ─────────────────────────────────────────────────
       if (!isSectionActive()) return;
 
-      // ── Section active ──────────────────────────────────────────────────────
       const isLeavingUp   = current === 0         && direction < 0;
       const isLeavingDown = current === count - 1 && direction > 0;
 
-      // Sorties autorisées aux limites : scroll naturel vers section 03 ou 05.
-      if (isLeavingUp || isLeavingDown) return;
+      // ── Geste consommé ──────────────────────────────────────────────────────
+      // Un changement de plat vient d'avoir lieu dans ce geste.
+      // On bloque TOUT : inertie, nouveau plat, ET sortie de section.
+      // Le décompte d'idle ne commence qu'après la fin de l'animation
+      // (les events pendant l'animation ne font que confirmer le blocage).
+      if (consumedCurrentWheelBurst) {
+        if (event.cancelable) event.preventDefault();
+        if (!wheelLockedRef.current) restartBurstIdleTimer();
+        return;
+      }
 
-      // Dans la section, hors limites : TOUJOURS bloquer le scroll naturel,
-      // même si le verrou d'animation est actif.
+      // ── Sortie aux limites ──────────────────────────────────────────────────
+      // Autorisée uniquement si le geste est "frais" (non consommé)
+      // ET qu'aucune animation n'est en cours.
+      if ((isLeavingUp || isLeavingDown) && !wheelLockedRef.current) return;
+
+      // ── Dans la section, hors limites ───────────────────────────────────────
+      // (ou limite atteinte mais animation encore active)
+      // Toujours bloquer le scroll naturel.
       if (event.cancelable) event.preventDefault();
 
-      // Verrou actif (animation en cours) : scroll bloqué, pas de changement de plat.
+      // Animation en cours : bloquer sans changer de plat.
       if (wheelLockedRef.current) return;
 
-      // Avancer d'exactement un plat, jamais plus.
+      // ── Changer d'exactement un plat ────────────────────────────────────────
+      consumedCurrentWheelBurst = true;
       wheelLockedRef.current = true;
       window.clearTimeout(wheelTimer);
       wheelTimer = window.setTimeout(() => {
         wheelLockedRef.current = false;
+        // Animation terminée : démarrer le décompte d'idle post-animation.
+        // consumedCurrentWheelBurst se réinitialisera WHEEL_IDLE_MS après
+        // le dernier event d'inertie (ou tout de suite si pas d'inertie).
+        restartBurstIdleTimer();
       }, SNAP_DURATION + 100);
 
       const next = Math.max(0, Math.min(count - 1, current + direction));
@@ -198,17 +230,15 @@ export default function RailSection() {
     const handleScroll = () => {
       const nowActive = isSectionActive();
       const rect = section.getBoundingClientRect();
-      const aboveSection = rect.top > 0; // section encore sous le haut du viewport
+      const aboveSection = rect.top > 0;
 
       if (nowActive && !wasSectionActive) {
         if (wasAboveSection) {
-          // Filet de sécurité : gros scroll depuis le haut qui a sauté la pré-entrée.
-          // Force le plat 01 et cale l'ancre.
+          // Filet de sécurité : gros scroll depuis le haut → plat 01.
           if (activeIndexRef.current !== 0) updateIndex(0);
           scrollToIndexAnchor(0);
         } else {
-          // Entrée depuis le bas (retour depuis section 05 ou overlap) :
-          // synchroniser l'index sans snap forcé.
+          // Entrée depuis le bas : synchroniser l'index sans snap forcé.
           const sectionTopDoc = window.scrollY + rect.top;
           const ds = Math.max(1, section.offsetHeight - 2 * window.innerHeight);
           const progress = Math.min(1, Math.max(0, (window.scrollY - sectionTopDoc) / ds));
@@ -217,8 +247,12 @@ export default function RailSection() {
         }
       }
 
-      // Sortie de la section : relâcher le verrou par sécurité.
-      if (!nowActive && wasSectionActive) wheelLockedRef.current = false;
+      // Sortie de la section : relâcher le verrou et réinitialiser le burst.
+      if (!nowActive && wasSectionActive) {
+        wheelLockedRef.current = false;
+        consumedCurrentWheelBurst = false;
+        window.clearTimeout(wheelBurstTimer);
+      }
 
       wasSectionActive = nowActive;
       wasAboveSection = aboveSection;
@@ -244,6 +278,7 @@ export default function RailSection() {
 
     return () => {
       window.clearTimeout(wheelTimer);
+      window.clearTimeout(wheelBurstTimer);
       wheelLockedRef.current = false;
       window.removeEventListener("wheel", handleWheel);
       window.removeEventListener("scroll", handleScroll);
