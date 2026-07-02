@@ -45,6 +45,13 @@
   text-align: center;
   gap: 24px;
   margin-bottom: 56px;
+  /* Header sticky : reste visible pendant le scroll du menu, comme la nav
+     de categories. Le degrade masque les cards qui passent dessous. */
+  position: sticky;
+  top: 90px;
+  z-index: 6;
+  background: linear-gradient(180deg, #090d1c 0%, rgba(9, 13, 28, 0.96) 72%, rgba(9, 13, 28, 0) 100%);
+  padding: 18px 0 28px;
 }
 .nh-menu__eyebrow {
   color: var(--gold);
@@ -382,6 +389,10 @@
   .nh-menu__head {
     gap: 16px;
     margin-bottom: 30px;
+    /* Pas de header sticky sur mobile : layout empile classique. */
+    position: static;
+    background: transparent;
+    padding: 0;
   }
   .nh-menu__title {
     font-size: 18vw;
