@@ -43,12 +43,12 @@ const ACTIVE_THRESHOLDS = [0.29, 0.543, 0.782];
 const STEP_POINTS = [0, 0.34, 0.67, 0.88];
 // Duree du glissement entre deux crans, pilote en rAF pour garder un fondu
 // lent et premium (le smooth natif du navigateur est trop court).
-const STEP_ANIMATION_MS = 1050;
+const STEP_ANIMATION_MS = 900;
 // Verrou anti-spam : un seul cran par action de molette, jamais plus.
-const STEP_LOCK_MS = STEP_ANIMATION_MS + 150;
+const STEP_LOCK_MS = STEP_ANIMATION_MS + 120;
 
-const easeInOutCubic = (t) =>
-  t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2;
+// Depart immediat des le coup de molette, deceleration douce a la fin.
+const easeOutCubic = (t) => 1 - Math.pow(1 - t, 3);
 
 function Layer({ progress, range, image }) {
   const opacity = useTransform(progress, range.in, range.out);
@@ -117,12 +117,17 @@ export default function BuildSection() {
       isAnimatingRef.current = true;
       if (animationFrameRef.current) cancelAnimationFrame(animationFrameRef.current);
 
+      // Micro-avance immediate avant le premier frame rAF : le mouvement
+      // demarre des le coup de molette, sans impression de latence.
+      window.scrollTo({ top: startY + distance * 0.015, behavior: "instant" });
+
       // Animation pilotee en rAF : duree et easing controles, la ou le
-      // smooth natif est trop rapide. behavior "instant" a chaque frame
-      // pour ne pas se battre avec le scroll-behavior: smooth global.
+      // smooth natif est trop rapide. behavior "instant" a chaque frame :
+      // "auto" defererait au scroll-behavior: smooth global du site et
+      // relancerait un smooth natif par-dessus notre animation.
       const tick = (now) => {
         const t = Math.min((now - startTime) / STEP_ANIMATION_MS, 1);
-        window.scrollTo({ top: startY + distance * easeInOutCubic(t), behavior: "instant" });
+        window.scrollTo({ top: startY + distance * easeOutCubic(t), behavior: "instant" });
         if (t < 1) {
           animationFrameRef.current = requestAnimationFrame(tick);
         } else {
