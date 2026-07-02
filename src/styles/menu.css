@@ -45,13 +45,49 @@
   text-align: center;
   gap: 24px;
   margin-bottom: 56px;
-  /* Header sticky : reste visible pendant le scroll du menu, comme la nav
-     de categories. Le degrade masque les cards qui passent dessous. */
+  /* Header sticky sans panneau visible : aucun fond propre, il semble
+     integre au fond global de la section. Le masquage des cards est
+     delegue au ::after ci-dessous. */
   position: sticky;
   top: 90px;
-  z-index: 6;
-  background: linear-gradient(180deg, #090d1c 0%, rgba(9, 13, 28, 0.96) 72%, rgba(9, 13, 28, 0) 100%);
+  z-index: 20;
+  isolation: isolate;
   padding: 18px 0 28px;
+  /* Le header (et son masque) ne doit jamais intercepter les clics destines
+     aux tabs/cards qui passent dessous ; seuls ses textes restent cliquables. */
+  pointer-events: none;
+}
+
+/* Masque sous le header sticky : solide derriere le titre (les cards ne
+   passent jamais dedans), puis fondu sur les ~120 derniers px pour que les
+   cards disparaissent juste sous "Choisis ta categorie...". Couleur = ton
+   MOYEN du degrade de section (#090d1c -> #060912) : l'ecart avec le fond
+   reste imperceptible quelle que soit la profondeur de scroll, donc aucune
+   case visible. */
+.nh-menu__head::after {
+  content: "";
+  position: absolute;
+  /* Pleine largeur viewport : aucune couture verticale aux bords du masque. */
+  left: calc(50% - 50vw);
+  right: calc(50% - 50vw);
+  top: -110px;
+  bottom: -90px;
+  background: linear-gradient(
+    180deg,
+    #070b17 0%,
+    #070b17 calc(100% - 120px),
+    rgba(7, 11, 23, 0.96) calc(100% - 90px),
+    rgba(7, 11, 23, 0) 100%
+  );
+  pointer-events: none;
+  z-index: 1;
+}
+
+/* Le texte du header au-dessus du masque, les cards en dessous. */
+.nh-menu__head > * {
+  position: relative;
+  z-index: 2;
+  pointer-events: auto;
 }
 .nh-menu__eyebrow {
   color: var(--gold);
@@ -146,6 +182,8 @@
 
 /* ---- Grille de cards produits ---- */
 .nh-menu__grid {
+  position: relative;
+  z-index: 1;
   display: grid;
   grid-template-columns: repeat(3, 1fr);
   gap: 26px;
@@ -393,6 +431,9 @@
     position: static;
     background: transparent;
     padding: 0;
+  }
+  .nh-menu__head::after {
+    content: none;
   }
   .nh-menu__title {
     font-size: 18vw;
