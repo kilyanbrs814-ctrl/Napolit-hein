@@ -96,14 +96,21 @@ export default function BuildSection() {
   // absorbe l'inertie du meme geste. Il ne bloque jamais le premier scroll.
   const gestureLockedRef = useRef(false);
   const gestureEndTimeoutRef = useRef(null);
-  // Cible du step en cours : index de reference fiable pendant l'animation,
-  // la ou activeRef peut refleter une lecture mi-transition des seuils.
-  const targetIndexRef = useRef(null);
+  // Machine a etats des crans : source de verite pour decider du prochain
+  // step, immunisee contre les lectures mi-transition des seuils (activeRef
+  // ne sert plus qu'a l'affichage et a la resync au repos).
+  const currentStepRef = useRef(0); // cran committe (au repos)
+  const targetStepRef = useRef(null); // cran vise pendant l'animation, sinon null
 
   useMotionValueEvent(scrollYProgress, "change", (v) => {
     const next = ACTIVE_THRESHOLDS.findIndex((threshold) => v < threshold);
     const activeIndex = next === -1 ? TEXT_RANGES.length - 1 : next;
     activeRef.current = activeIndex;
+    // Au repos (aucune animation en vol), le cran committe suit le scroll
+    // reel : entrees/sorties natives et re-entrees restent synchronisees.
+    if (!isAnimatingRef.current && targetStepRef.current === null) {
+      currentStepRef.current = activeIndex;
+    }
     setActive((cur) => (cur === activeIndex ? cur : activeIndex));
   });
 
@@ -115,14 +122,18 @@ export default function BuildSection() {
     const section = sectionRef.current;
     if (!section) return undefined;
 
-    // Relance la fenetre de fin de geste : le lock se libere proprement apres
-    // GESTURE_QUIET_MS sans aucun wheel. (L'animation en cours reste couverte
-    // separement par isAnimatingRef.)
+    // Relance la fenetre de fin de geste : le lock ne se libere qu'apres
+    // GESTURE_QUIET_MS sans aucun wheel ET une fois l'animation terminee.
     const armGestureEnd = () => {
       if (gestureEndTimeoutRef.current) clearTimeout(gestureEndTimeoutRef.current);
-      gestureEndTimeoutRef.current = setTimeout(() => {
-        gestureLockedRef.current = false;
-      }, GESTURE_QUIET_MS);
+      const tryUnlock = () => {
+        if (isAnimatingRef.current) {
+          gestureEndTimeoutRef.current = setTimeout(tryUnlock, 100);
+        } else {
+          gestureLockedRef.current = false;
+        }
+      };
+      gestureEndTimeoutRef.current = setTimeout(tryUnlock, GESTURE_QUIET_MS);
     };
 
     const goToStep = (index) => {
@@ -135,7 +146,7 @@ export default function BuildSection() {
       const startTime = performance.now();
 
       isAnimatingRef.current = true;
-      targetIndexRef.current = index;
+      targetStepRef.current = index;
       // Tous les wheel suivants du meme geste sont bloques : jamais 2 crans.
       gestureLockedRef.current = true;
       armGestureEnd();
@@ -163,10 +174,13 @@ export default function BuildSection() {
       if (lockTimeoutRef.current) clearTimeout(lockTimeoutRef.current);
       lockTimeoutRef.current = setTimeout(() => {
         isAnimatingRef.current = false;
-        // L'animation est finie : l'index de reference redevient celui des
-        // seuils (activeRef). Sans cette purge, un ancien index cible fausse
-        // tous les wheels suivants (mauvaise branche, mauvais step).
-        targetIndexRef.current = null;
+        // Commit : l'animation est finie, la cible devient le cran courant.
+        // Sans cette purge, une ancienne cible fausserait tous les wheels
+        // suivants (mauvaise branche, mauvais step).
+        if (targetStepRef.current !== null) {
+          currentStepRef.current = targetStepRef.current;
+          targetStepRef.current = null;
+        }
       }, STEP_LOCK_MS);
     };
 
@@ -182,10 +196,10 @@ export default function BuildSection() {
       if (!isBuildActive) return;
 
       const dir = event.deltaY > 0 ? 1 : -1;
-      // Pendant/apres une animation, l'index de reference est la cible du
-      // step en cours, pas une lecture mi-transition des seuils.
+      // Source de verite : cible en vol si animation, sinon cran committe.
+      // Jamais activeRef directement (desync possible mi-transition).
       const current =
-        targetIndexRef.current !== null ? targetIndexRef.current : activeRef.current;
+        targetStepRef.current !== null ? targetStepRef.current : currentStepRef.current;
 
       // Verrous AVANT les bords : l'inertie d'un geste qui vient de declencher
       // un step est entierement absorbee (jamais 2 crans), et pas de sortie
@@ -193,6 +207,16 @@ export default function BuildSection() {
       if (isAnimatingRef.current || gestureLockedRef.current) {
         event.preventDefault();
         armGestureEnd();
+        return;
+      }
+
+      // Entree : si la section vient d'etre atteinte sans etre encore calee
+      // sur le cran 0 (gros scroll depuis la section precedente), le premier
+      // wheel aligne sur l'image 1 au lieu d'enchainer vers l'image 2.
+      // L'inertie restante est absorbee par le lock pose par goToStep.
+      if (dir > 0 && current === 0 && scrollYProgress.get() < 0.05 && Math.abs(rect.top) > 4) {
+        event.preventDefault();
+        goToStep(0);
         return;
       }
 
@@ -215,15 +239,16 @@ export default function BuildSection() {
       goToStep(current + dir);
     };
 
-    // Hors de la zone active, on purge les etats : l'index cible redevient
-    // celui des seuils et aucun lock ne peut bloquer la prochaine entree.
+    // Hors de la zone active, on purge les etats : le cran committe se
+    // resynchronise via les seuils et aucun lock ne bloque la prochaine entree.
     const handleScrollReset = () => {
       const rect = section.getBoundingClientRect();
       const isBuildActive =
         rect.top <= window.innerHeight * 0.15 &&
         rect.bottom >= window.innerHeight * 0.85;
       if (!isBuildActive) {
-        targetIndexRef.current = null;
+        targetStepRef.current = null;
+        currentStepRef.current = activeRef.current;
         gestureLockedRef.current = false;
       }
     };
@@ -239,7 +264,7 @@ export default function BuildSection() {
       if (gestureEndTimeoutRef.current) clearTimeout(gestureEndTimeoutRef.current);
       if (animationFrameRef.current) cancelAnimationFrame(animationFrameRef.current);
     };
-  }, [prefersReducedMotion]);
+  }, [prefersReducedMotion, scrollYProgress]);
 
   const glowOpacity = useTransform(scrollYProgress, (v) => 0.4 + 0.5 * Math.sin(v * Math.PI));
 
