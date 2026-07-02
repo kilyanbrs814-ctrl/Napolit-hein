@@ -16,33 +16,39 @@ import "../styles/build.css";
 
 const IMAGES = [build1, build2, build3, build4];
 
-// Plages d'opacite pour le crossfade des 4 couches.
-// L'image 4 est totalement visible des 0.82 : le dernier cran (0.88) tombe
-// sur son plateau, donc pas de crossfade fige ni de fin de section forcee.
+// Plages d'opacite pour le crossfade des 4 couches, elargies pour un fondu
+// plus progressif. L'image 4 est totalement visible des 0.84 : le dernier
+// cran (0.88) tombe sur son plateau, pas de fin de section forcee.
 const IMG_RANGES = [
-  { in: [0, 0.33], out: [1, 0] },
-  { in: [0, 0.33, 0.66], out: [0, 1, 0] },
-  { in: [0.33, 0.66, 0.82], out: [0, 1, 0] },
-  { in: [0.66, 0.82, 1], out: [0, 1, 1] },
+  { in: [0, 0.36], out: [1, 0] },
+  { in: [0, 0.34, 0.69], out: [0, 1, 0] },
+  { in: [0.31, 0.67, 0.84], out: [0, 1, 0] },
+  { in: [0.64, 0.84, 1], out: [0, 1, 1] },
 ];
 
 // Plages dediees aux textes : fade, plateau de lecture, puis fade.
 const TEXT_RANGES = [
-  { in: [0, 0.23, 0.3], out: [1, 1, 0] },
-  { in: [0.24, 0.31, 0.47, 0.55], out: [0, 1, 1, 0] },
-  { in: [0.49, 0.56, 0.72, 0.8], out: [0, 1, 1, 0] },
-  { in: [0.74, 0.82, 1], out: [0, 1, 1] },
+  { in: [0, 0.25, 0.34], out: [1, 1, 0] },
+  { in: [0.22, 0.34, 0.5, 0.6], out: [0, 1, 1, 0] },
+  { in: [0.47, 0.6, 0.74, 0.84], out: [0, 1, 1, 0] },
+  { in: [0.7, 0.84, 1], out: [0, 1, 1] },
 ];
 
 // Points ou le texte entrant devient plus visible que le texte sortant.
-const ACTIVE_THRESHOLDS = [0.27, 0.518, 0.77];
+const ACTIVE_THRESHOLDS = [0.29, 0.543, 0.782];
 
 // Points de repos du scroll par crans, un par etape.
 // Le dernier cran reste volontairement avant 1 : l'image 4 est stable
 // sans que la page ne descende automatiquement vers la section suivante.
 const STEP_POINTS = [0, 0.34, 0.67, 0.88];
+// Duree du glissement entre deux crans, pilote en rAF pour garder un fondu
+// lent et premium (le smooth natif du navigateur est trop court).
+const STEP_ANIMATION_MS = 1050;
 // Verrou anti-spam : un seul cran par action de molette, jamais plus.
-const STEP_LOCK_MS = 700;
+const STEP_LOCK_MS = STEP_ANIMATION_MS + 150;
+
+const easeInOutCubic = (t) =>
+  t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2;
 
 function Layer({ progress, range, image }) {
   const opacity = useTransform(progress, range.in, range.out);
@@ -82,6 +88,7 @@ export default function BuildSection() {
   const activeRef = useRef(0);
   const isAnimatingRef = useRef(false);
   const lockTimeoutRef = useRef(null);
+  const animationFrameRef = useRef(null);
 
   useMotionValueEvent(scrollYProgress, "change", (v) => {
     const next = ACTIVE_THRESHOLDS.findIndex((threshold) => v < threshold);
@@ -103,8 +110,27 @@ export default function BuildSection() {
       const sectionTop = window.scrollY + rect.top;
       const scrollRange = section.offsetHeight - window.innerHeight;
       const targetY = sectionTop + STEP_POINTS[index] * scrollRange;
+      const startY = window.scrollY;
+      const distance = targetY - startY;
+      const startTime = performance.now();
+
       isAnimatingRef.current = true;
-      window.scrollTo({ top: targetY, behavior: "smooth" });
+      if (animationFrameRef.current) cancelAnimationFrame(animationFrameRef.current);
+
+      // Animation pilotee en rAF : duree et easing controles, la ou le
+      // smooth natif est trop rapide. behavior "instant" a chaque frame
+      // pour ne pas se battre avec le scroll-behavior: smooth global.
+      const tick = (now) => {
+        const t = Math.min((now - startTime) / STEP_ANIMATION_MS, 1);
+        window.scrollTo({ top: startY + distance * easeInOutCubic(t), behavior: "instant" });
+        if (t < 1) {
+          animationFrameRef.current = requestAnimationFrame(tick);
+        } else {
+          animationFrameRef.current = null;
+        }
+      };
+      animationFrameRef.current = requestAnimationFrame(tick);
+
       if (lockTimeoutRef.current) clearTimeout(lockTimeoutRef.current);
       lockTimeoutRef.current = setTimeout(() => {
         isAnimatingRef.current = false;
@@ -136,6 +162,7 @@ export default function BuildSection() {
     return () => {
       section.removeEventListener("wheel", handleWheel);
       if (lockTimeoutRef.current) clearTimeout(lockTimeoutRef.current);
+      if (animationFrameRef.current) cancelAnimationFrame(animationFrameRef.current);
     };
   }, [prefersReducedMotion]);
 
