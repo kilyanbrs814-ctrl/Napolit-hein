@@ -43,7 +43,7 @@
   flex-direction: column;
   align-items: center;
   text-align: center;
-  gap: 24px;
+  gap: 18px;
   margin-bottom: 56px;
   /* Header sticky sans panneau visible : aucun fond propre, il semble
      integre au fond global de la section. Le masquage des cards est
@@ -52,7 +52,7 @@
   top: 90px;
   z-index: 20;
   isolation: isolate;
-  padding: 18px 0 28px;
+  padding: 12px 0 24px;
   /* Le header (et son masque) ne doit jamais intercepter les clics destines
      aux tabs/cards qui passent dessous ; seuls ses textes restent cliquables. */
   pointer-events: none;
@@ -91,6 +91,12 @@
 }
 .nh-menu__eyebrow {
   color: var(--gold);
+  /* Tout a gauche du header sticky (plus au-dessus du titre) : le titre
+     remonte et le header perd de la hauteur. top: 16px le place au-dessus
+     de la ligne des glyphes du titre, pour ne jamais mordre sur le "N". */
+  position: absolute;
+  left: 0;
+  top: 16px;
 }
 .nh-menu__title {
   font-family: var(--display);
@@ -117,20 +123,18 @@
 }
 
 /* ---- Navigation verticale des catégories ---- */
+/* Pas d'overflow-y: auto ici : ce serait un piege a scroll (curseur sur les
+   categories = page qui ne defile plus) et ca coupait la liste. Au-dessus du
+   masque du header (z:30 > z:20) pour ne jamais etre rognee par le fondu ;
+   le texte du header reste au-dessus car il ne la chevauche pas. */
 .nh-menu__side {
   position: sticky;
   top: 50%;
   transform: translateY(-50%);
   align-self: start;
-  z-index: 3;
-  max-height: calc(100svh - 120px);
-  overflow-y: auto;
-  scrollbar-width: none;
+  z-index: 30;
+  overflow: visible;
 }
-.nh-menu__side::-webkit-scrollbar {
-  display: none;
-}
-
 
 .nh-menu__side-list {
   list-style: none;
@@ -434,6 +438,10 @@
   }
   .nh-menu__head::after {
     content: none;
+  }
+  .nh-menu__eyebrow {
+    /* Layout empile : l'eyebrow reprend sa place au-dessus du titre. */
+    position: static;
   }
   .nh-menu__title {
     font-size: 18vw;
