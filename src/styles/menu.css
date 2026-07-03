@@ -44,7 +44,7 @@
   align-items: center;
   text-align: center;
   gap: 8px;
-  margin-bottom: 42px;
+  margin-bottom: 34px;
   /* Header sticky sans panneau visible : aucun fond propre, il semble
      integre au fond global de la section. Le masquage des cards est
      delegue au ::after ci-dessous. Compact et remonte au maximum vers la
@@ -53,7 +53,7 @@
   top: 72px;
   z-index: 20;
   isolation: isolate;
-  padding: 0 0 18px;
+  padding: 0 0 14px;
   /* Le header (et son masque) ne doit jamais intercepter les clics destines
      aux tabs/cards qui passent dessous ; seuls ses textes restent cliquables. */
   pointer-events: none;
@@ -92,19 +92,19 @@
 }
 .nh-menu__eyebrow {
   color: var(--gold);
-  /* Tout en haut a gauche, comme les eyebrows des autres scenes. -6px et
-     non -34px : avec le header stick a 72px, -34px le mettrait a y=38,
-     invisible derriere la navbar fixe (~60px). A -6px il affleure juste
-     sous la navbar, et ne chevauche jamais "NOTRE MENU." (titre reduit,
-     centre bien plus a droite). */
+  /* Meme emplacement visuel que "04 · Les incontournables" (rail : header
+     absolu top:76px, padding 0 40px => x=40 / y=76 viewport). Ici le header
+     stick a 72px, donc top: 4px => y=76 pile (top negatif = cache derriere
+     la navbar fixe). left en calc viewport : sort de l'alignement central
+     du bloc "NOTRE MENU." pour se coller au bord gauche de l'ecran. */
   position: absolute;
-  left: 0;
-  top: -6px;
+  left: calc(50% - 50vw + 40px);
+  top: 4px;
 }
 .nh-menu__title {
   font-family: var(--display);
-  font-size: clamp(82px, 8.2vw, 118px);
-  line-height: 0.88;
+  font-size: clamp(76px, 7.6vw, 108px);
+  line-height: 0.86;
   color: #fff;
   text-transform: uppercase;
   text-shadow: 0 0 60px rgba(255, 90, 31, 0.25);
