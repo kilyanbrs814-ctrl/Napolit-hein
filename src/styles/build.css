@@ -1,7 +1,9 @@
 /* ============ SCENE 03 - CONSTRUCTION DU PLAT ============ */
 .nh-build {
   position: relative;
-  height: 300vh;
+  /* Hauteur genereuse : le scroll naturel pilote les 4 etapes, chaque fondu
+     dispose de ~90vh de scroll pour rester fluide sans controle custom. */
+  height: 380vh;
   background: linear-gradient(180deg, var(--bg), #0a1024, var(--bg));
 }
 
@@ -160,7 +162,7 @@
 
 @media (max-width: 860px) {
   .nh-build {
-    height: 250vh;
+    height: 300vh;
   }
   .nh-build__eyebrow {
     top: 90px;
