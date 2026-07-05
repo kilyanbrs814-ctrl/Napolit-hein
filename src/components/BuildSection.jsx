@@ -15,6 +15,13 @@ const SNAP_SCROLL_DURATION_MS = 560;
 const STEP_TRANSITION_S = 0.98;
 const EASE_PREMIUM = [0.22, 1, 0.36, 1];
 const clampStepIndex = (index) => Math.max(0, Math.min(index, IMAGES.length - 1));
+const INITIAL_VISUAL_STATE = {
+  currentIndex: 0,
+  previousIndex: null,
+  targetIndex: 0,
+  isTransitioning: false,
+  direction: 0,
+};
 
 function Layer({ image, opacity, zIndex, transition }) {
   return (
@@ -51,59 +58,88 @@ function TextStep({ isActive, step, transition }) {
 export default function BuildSection() {
   const sectionRef = useRef(null);
   const reduceMotion = useReducedMotion();
-  const [visualState, setVisualState] = useState({
-    currentIndex: 0,
-    previousIndex: null,
-    targetIndex: 0,
-    isTransitioning: false,
-    direction: 0,
-  });
-  const visualIndexRef = useRef(0);
+  const [visualState, setVisualState] = useState(INITIAL_VISUAL_STATE);
+  const visualStateRef = useRef(INITIAL_VISUAL_STATE);
+  const logicalVisualIndexRef = useRef(0);
+  const expectedSnapIndexRef = useRef(null);
+  const activeSnapDirectionRef = useRef(0);
   const { scrollYProgress } = useScroll({
     target: sectionRef,
     offset: ["start start", "end end"],
   });
 
+  const commitVisualState = useCallback((nextState) => {
+    visualStateRef.current = nextState;
+    setVisualState(nextState);
+  }, []);
+
   const handleSnapStart = useCallback(({ fromIndex, toIndex, direction }) => {
-    const safeTargetIndex =
-      Number.isFinite(toIndex) ? clampStepIndex(toIndex) : visualIndexRef.current;
-    const logicalPreviousIndex = visualIndexRef.current;
-
-    if (logicalPreviousIndex === safeTargetIndex) return;
-
+    const latestState = visualStateRef.current;
+    const reliableStartIndex = latestState.isTransitioning
+      ? latestState.targetIndex
+      : latestState.currentIndex;
+    const lastLogicalIndex = logicalVisualIndexRef.current;
+    const rawTargetIndex = Number.isFinite(toIndex)
+      ? clampStepIndex(toIndex)
+      : lastLogicalIndex;
     const safeDirection =
       direction ||
-      Math.sign(safeTargetIndex - logicalPreviousIndex) ||
-      Math.sign(safeTargetIndex - fromIndex);
-    const previousIndex =
+      Math.sign(rawTargetIndex - reliableStartIndex) ||
+      Math.sign(rawTargetIndex - fromIndex);
+    const safeTargetIndex =
       safeDirection > 0
-        ? clampStepIndex(Math.max(logicalPreviousIndex, safeTargetIndex - 1))
+        ? clampStepIndex(Math.max(rawTargetIndex, lastLogicalIndex))
         : safeDirection < 0
-          ? clampStepIndex(Math.min(logicalPreviousIndex, safeTargetIndex + 1))
-          : logicalPreviousIndex;
+          ? clampStepIndex(Math.min(rawTargetIndex, lastLogicalIndex))
+          : rawTargetIndex;
 
-    visualIndexRef.current = safeTargetIndex;
+    logicalVisualIndexRef.current = safeTargetIndex;
+    expectedSnapIndexRef.current = safeTargetIndex;
+    activeSnapDirectionRef.current = safeDirection;
 
-    setVisualState({
-      currentIndex: previousIndex,
-      previousIndex,
+    if (reliableStartIndex === safeTargetIndex) return;
+
+    commitVisualState({
+      currentIndex: reliableStartIndex,
+      previousIndex: reliableStartIndex,
       targetIndex: safeTargetIndex,
       isTransitioning: true,
       direction: safeDirection,
     });
-  }, []);
+  }, [commitVisualState]);
 
   const handleSnapComplete = useCallback((index) => {
-    const safeIndex = Number.isFinite(index) ? clampStepIndex(index) : visualIndexRef.current;
-    visualIndexRef.current = safeIndex;
-    setVisualState({
+    const safeIndex = Number.isFinite(index) ? clampStepIndex(index) : logicalVisualIndexRef.current;
+    const latestState = visualStateRef.current;
+    const expectedIndex = expectedSnapIndexRef.current;
+    const activeDirection = activeSnapDirectionRef.current;
+    const logicalIndex = logicalVisualIndexRef.current;
+
+    if (
+      (activeDirection > 0 && safeIndex < logicalIndex) ||
+      (activeDirection < 0 && safeIndex > logicalIndex)
+    ) {
+      return;
+    }
+
+    if (expectedIndex !== null && safeIndex !== expectedIndex) {
+      expectedSnapIndexRef.current = null;
+      return;
+    }
+
+    if (latestState.isTransitioning && latestState.targetIndex !== safeIndex) return;
+
+    logicalVisualIndexRef.current = safeIndex;
+    expectedSnapIndexRef.current = null;
+    activeSnapDirectionRef.current = 0;
+    commitVisualState({
       currentIndex: safeIndex,
       previousIndex: null,
       targetIndex: safeIndex,
       isTransitioning: false,
       direction: 0,
     });
-  }, []);
+  }, [commitVisualState]);
 
   useSteppedScrollSnap({
     sectionRef,
