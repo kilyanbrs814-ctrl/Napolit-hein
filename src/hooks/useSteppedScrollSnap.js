@@ -54,7 +54,9 @@ export default function useSteppedScrollSnap({
   const pendingEntryIndexRef = useRef(null);
   const lastRegionRef = useRef(null);
   const stableIndexRef = useRef(null);
+  const inputIntentRef = useRef(null);
   const lastIntentRef = useRef(null);
+  const completedIndexRef = useRef(null);
   const scrollTimerRef = useRef(null);
   const cooldownTimerRef = useRef(null);
   const rafRef = useRef(null);
@@ -67,6 +69,7 @@ export default function useSteppedScrollSnap({
     const SNAP_DEBOUNCE_MS = 120;
     const SETTLE_TIMEOUT_MS = 820;
     const COOLDOWN_MS = 140;
+    const ENTRY_INTENT_MS = 700;
     const SNAP_TOLERANCE_PX = 2;
     const TOUCH_THRESHOLD_PX = 36;
     const REGION_EPSILON = 0.003;
@@ -142,9 +145,25 @@ export default function useSteppedScrollSnap({
     };
 
     const emitSnapComplete = (index) => {
+      if (completedIndexRef.current === index) return;
+      completedIndexRef.current = index;
+
       if (typeof onSnapComplete === "function") {
         onSnapComplete(index);
       }
+    };
+
+    const rememberInputIntent = (direction) => {
+      inputIntentRef.current = {
+        direction: Math.sign(direction),
+        time: performance.now(),
+      };
+    };
+
+    const hasRecentInputIntent = (direction) => {
+      const intent = inputIntentRef.current;
+      if (!intent || intent.direction !== Math.sign(direction)) return false;
+      return performance.now() - intent.time <= ENTRY_INTENT_MS;
     };
 
     const animateScrollTo = (targetY, onComplete) => {
@@ -248,6 +267,9 @@ export default function useSteppedScrollSnap({
       if (cleanIndex !== null) {
         cleanIndexRef.current = cleanIndex;
         stableIndexRef.current = cleanIndex;
+        if (!lockRef.current) {
+          emitSnapComplete(cleanIndex);
+        }
         if (pendingEntryIndexRef.current === cleanIndex) {
           pendingEntryIndexRef.current = null;
         }
@@ -326,6 +348,7 @@ export default function useSteppedScrollSnap({
 
     const onWheel = (event) => {
       if (Math.abs(event.deltaY) < 1) return;
+      rememberInputIntent(event.deltaY > 0 ? 1 : -1);
       stepInDirection(event.deltaY > 0 ? 1 : -1, event);
     };
 
@@ -368,7 +391,9 @@ export default function useSteppedScrollSnap({
       }
 
       const direction = getTouchDirection(event.touches[0]);
-      if (direction === null || !isInside) return;
+      if (direction === null) return;
+      rememberInputIntent(direction);
+      if (!isInside) return;
 
       if (touchHandledRef.current) {
         preventEvent(event);
@@ -386,6 +411,7 @@ export default function useSteppedScrollSnap({
       const direction = touch ? getTouchDirection(touch) : null;
 
       if (direction !== null && !touchHandledRef.current) {
+        rememberInputIntent(direction);
         stepInDirection(direction, event);
       }
 
@@ -407,14 +433,24 @@ export default function useSteppedScrollSnap({
 
       if (region !== previousRegion) {
         if (region === "inside" && previousRegion === "before") {
-          pendingEntryIndexRef.current = 0;
-          stableIndexRef.current = 0;
+          if (hasRecentInputIntent(1)) {
+            pendingEntryIndexRef.current = 0;
+            stableIndexRef.current = 0;
+          } else {
+            pendingEntryIndexRef.current = null;
+            stableIndexRef.current = null;
+          }
           releaseRef.current = null;
         }
 
         if (region === "inside" && previousRegion === "after") {
-          pendingEntryIndexRef.current = lastIndex;
-          stableIndexRef.current = lastIndex;
+          if (hasRecentInputIntent(-1)) {
+            pendingEntryIndexRef.current = lastIndex;
+            stableIndexRef.current = lastIndex;
+          } else {
+            pendingEntryIndexRef.current = null;
+            stableIndexRef.current = null;
+          }
           releaseRef.current = null;
         }
 
@@ -423,7 +459,9 @@ export default function useSteppedScrollSnap({
           cleanIndexRef.current = null;
           pendingEntryIndexRef.current = null;
           stableIndexRef.current = null;
+          inputIntentRef.current = null;
           lastIntentRef.current = null;
+          completedIndexRef.current = null;
           releaseRef.current = null;
         }
 
@@ -461,7 +499,8 @@ export default function useSteppedScrollSnap({
         if (
           entryIndex === null &&
           recentIntent &&
-          performance.now() - recentIntent.time < 1600
+          performance.now() - recentIntent.time < 1600 &&
+          hasRecentInputIntent(recentIntent.direction)
         ) {
           if (recentIntent.direction > 0) {
             snapIndex = Math.max(snapIndex, recentIntent.toIndex);
@@ -512,6 +551,8 @@ export default function useSteppedScrollSnap({
       cleanIndexRef.current = null;
       stableIndexRef.current = null;
       lastIntentRef.current = null;
+      completedIndexRef.current = null;
+      inputIntentRef.current = null;
       touchStartRef.current = null;
       touchHandledRef.current = false;
     };
