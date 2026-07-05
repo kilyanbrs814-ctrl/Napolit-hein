@@ -10,28 +10,29 @@ import build4 from "../assets/images/build-4-final.png";
 import "../styles/build.css";
 
 const IMAGES = [build1, build2, build3, build4];
-const SNAP_POINTS = [0.2, 0.47, 0.72, 0.94];
+const SNAP_POINTS = [0.2, 0.5, 0.74, 0.95];
+const SNAP_DURATION_MS = 1100;
 
 // Plages d'opacite pour le crossfade des 4 couches, elargies pour un fondu
 // progressif. Le hook de snap bloque la wheel et les swipes aux crans
 // ou image et texte sont lisibles ensemble.
 const IMG_RANGES = [
-  { in: [0, 0.2, 0.45], out: [1, 1, 0] },
-  { in: [0.2, 0.45, 0.54, 0.7], out: [0, 1, 1, 0] },
-  { in: [0.54, 0.7, 0.78, 0.92], out: [0, 1, 1, 0] },
-  { in: [0.78, 0.92, 1], out: [0, 1, 1] },
+  { in: [0, 0.2, 0.32, 0.5], out: [1, 1, 1, 0] },
+  { in: [0.2, 0.5, 0.6, 0.74], out: [0, 1, 1, 0] },
+  { in: [0.56, 0.74, 0.82, 0.95], out: [0, 1, 1, 0] },
+  { in: [0.79, 0.95, 1], out: [0, 1, 1] },
 ];
 
 // Plages dediees aux textes : fade, plateau de lecture, puis fade.
 const TEXT_RANGES = [
-  { in: [0, 0.2, 0.45], out: [1, 1, 0] },
-  { in: [0.2, 0.45, 0.54, 0.7], out: [0, 1, 1, 0] },
-  { in: [0.54, 0.7, 0.78, 0.92], out: [0, 1, 1, 0] },
-  { in: [0.78, 0.92, 1], out: [0, 1, 1] },
+  { in: [0, 0.2, 0.44], out: [1, 1, 0] },
+  { in: [0.28, 0.5, 0.62, 0.7], out: [0, 1, 1, 0] },
+  { in: [0.62, 0.74, 0.82, 0.91], out: [0, 1, 1, 0] },
+  { in: [0.82, 0.95, 1], out: [0, 1, 1] },
 ];
 
-// Points ou le texte entrant devient plus visible que le texte sortant.
-const ACTIVE_THRESHOLDS = [0.325, 0.62, 0.85];
+// Points ou l'image entrante devient plus visible que l'image sortante.
+const ACTIVE_THRESHOLDS = [0.39, 0.66, 0.88];
 
 function Layer({ progress, range, image }) {
   const opacity = useTransform(progress, range.in, range.out);
@@ -69,6 +70,7 @@ export default function BuildSection() {
   useSteppedScrollSnap({
     sectionRef,
     snapPoints: SNAP_POINTS,
+    durationMs: SNAP_DURATION_MS,
   });
 
   useMotionValueEvent(scrollYProgress, "change", (v) => {

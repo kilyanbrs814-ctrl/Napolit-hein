@@ -24,7 +24,16 @@ function getClosestIndex(progress, points) {
   return closest;
 }
 
-export default function useSteppedScrollSnap({ sectionRef, snapPoints, enabled = true }) {
+function easeInOutCubic(t) {
+  return t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2;
+}
+
+export default function useSteppedScrollSnap({
+  sectionRef,
+  snapPoints,
+  enabled = true,
+  durationMs = null,
+}) {
   const points = useMemo(() => normalizeSnapPoints(snapPoints), [snapPoints]);
   const lockRef = useRef(false);
   const cleanIndexRef = useRef(null);
@@ -48,6 +57,9 @@ export default function useSteppedScrollSnap({ sectionRef, snapPoints, enabled =
     const REGION_EPSILON = 0.003;
     const lastIndex = points.length - 1;
     const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    const customDuration = Number(durationMs);
+    const useCustomSmoothScroll =
+      !reduceMotion && Number.isFinite(customDuration) && customDuration > 0;
 
     const clearScrollTimer = () => {
       if (scrollTimerRef.current !== null) {
@@ -101,6 +113,40 @@ export default function useSteppedScrollSnap({ sectionRef, snapPoints, enabled =
       return index === -1 ? null : index;
     };
 
+    const animateScrollTo = (targetY, onComplete) => {
+      if (!useCustomSmoothScroll) {
+        window.scrollTo({
+          top: targetY,
+          left: 0,
+          behavior: reduceMotion ? "auto" : "smooth",
+        });
+        onComplete();
+        return;
+      }
+
+      const startY = window.scrollY || window.pageYOffset;
+      const distance = targetY - startY;
+      const startedAt = performance.now();
+
+      const step = () => {
+        const elapsed = performance.now() - startedAt;
+        const progress = clamp(elapsed / customDuration, 0, 1);
+        const nextY = startY + distance * easeInOutCubic(progress);
+
+        window.scrollTo({ top: nextY, left: 0, behavior: "auto" });
+
+        if (progress < 1) {
+          rafRef.current = window.requestAnimationFrame(step);
+          return;
+        }
+
+        rafRef.current = null;
+        onComplete();
+      };
+
+      rafRef.current = window.requestAnimationFrame(step);
+    };
+
     const snapToIndex = (index, metrics = getMetrics()) => {
       if (!metrics) return;
 
@@ -113,36 +159,32 @@ export default function useSteppedScrollSnap({ sectionRef, snapPoints, enabled =
       releaseRef.current = null;
       pendingEntryIndexRef.current = null;
 
-      window.scrollTo({
-        top: targetY,
-        left: 0,
-        behavior: reduceMotion ? "auto" : "smooth",
-      });
+      animateScrollTo(targetY, () => {
+        const startedAt = performance.now();
 
-      const startedAt = performance.now();
+        const settle = () => {
+          const distance = Math.abs((window.scrollY || window.pageYOffset) - targetY);
+          const timedOut = performance.now() - startedAt >= SETTLE_TIMEOUT_MS;
 
-      const settle = () => {
-        const distance = Math.abs((window.scrollY || window.pageYOffset) - targetY);
-        const timedOut = performance.now() - startedAt >= SETTLE_TIMEOUT_MS;
+          if (distance <= SNAP_TOLERANCE_PX || timedOut || reduceMotion) {
+            if (distance > SNAP_TOLERANCE_PX) {
+              window.scrollTo({ top: targetY, left: 0, behavior: "auto" });
+            }
 
-        if (distance <= SNAP_TOLERANCE_PX || timedOut || reduceMotion) {
-          if (distance > SNAP_TOLERANCE_PX) {
-            window.scrollTo({ top: targetY, left: 0, behavior: "auto" });
+            cleanIndexRef.current = targetIndex;
+            cooldownTimerRef.current = window.setTimeout(() => {
+              lockRef.current = false;
+              cooldownTimerRef.current = null;
+            }, COOLDOWN_MS);
+            rafRef.current = null;
+            return;
           }
 
-          cleanIndexRef.current = targetIndex;
-          cooldownTimerRef.current = window.setTimeout(() => {
-            lockRef.current = false;
-            cooldownTimerRef.current = null;
-          }, COOLDOWN_MS);
-          rafRef.current = null;
-          return;
-        }
+          rafRef.current = window.requestAnimationFrame(settle);
+        };
 
         rafRef.current = window.requestAnimationFrame(settle);
-      };
-
-      rafRef.current = window.requestAnimationFrame(settle);
+      });
     };
 
     const updateCleanState = (metrics) => {
@@ -383,5 +425,5 @@ export default function useSteppedScrollSnap({ sectionRef, snapPoints, enabled =
       touchStartRef.current = null;
       touchHandledRef.current = false;
     };
-  }, [enabled, points, sectionRef]);
+  }, [durationMs, enabled, points, sectionRef]);
 }
