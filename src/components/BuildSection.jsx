@@ -1,5 +1,5 @@
-import { useRef, useState } from "react";
-import { motion, useScroll, useTransform, useMotionValueEvent } from "framer-motion";
+import { useCallback, useEffect, useRef, useState } from "react";
+import { motion, useScroll, useTransform } from "framer-motion";
 import { BUILD_STEPS } from "../data/content.js";
 import useSteppedScrollSnap from "../hooks/useSteppedScrollSnap.js";
 import logo from "../assets/images/logo-napolithein.png";
@@ -12,41 +12,31 @@ import "../styles/build.css";
 const IMAGES = [build1, build2, build3, build4];
 const SNAP_POINTS = [0.2, 0.5, 0.74, 0.95];
 const SNAP_DURATION_MS = 1150;
+const VISUAL_TRANSITION_S = 1.12;
+const TEXT_TRANSITION_S = 0.42;
+const TEXT_SWAP_DELAY_MS = 420;
+const EASE_PREMIUM = [0.22, 1, 0.36, 1];
 
-// Les visuels sont parfaitement alignes : on garde les couches precedentes
-// dessous et on revele progressivement la couche suivante par-dessus.
-const IMG_RANGES = [
-  { in: [0, 1], out: [1, 1] },
-  { in: [0.2, 0.5, 1], out: [0, 1, 1] },
-  { in: [0.5, 0.74, 1], out: [0, 1, 1] },
-  { in: [0.74, 0.95, 1], out: [0, 1, 1] },
-];
-
-// Plages dediees aux textes : fade, plateau de lecture, puis fade.
-const TEXT_RANGES = [
-  { in: [0, 0.2, 0.44], out: [1, 1, 0] },
-  { in: [0.28, 0.5, 0.62, 0.7], out: [0, 1, 1, 0] },
-  { in: [0.62, 0.74, 0.82, 0.91], out: [0, 1, 1, 0] },
-  { in: [0.82, 0.95, 1], out: [0, 1, 1] },
-];
-
-// Points ou l'image entrante devient majoritaire.
-const ACTIVE_THRESHOLDS = [0.35, 0.62, 0.845];
-
-function Layer({ progress, range, image }) {
-  const opacity = useTransform(progress, range.in, range.out);
+function Layer({ image, opacity }) {
   return (
     <motion.div
       className="nh-build__img"
-      style={{ backgroundImage: `url(${image})`, opacity }}
+      style={{ backgroundImage: `url(${image})` }}
+      initial={false}
+      animate={{ opacity }}
+      transition={{ duration: VISUAL_TRANSITION_S, ease: EASE_PREMIUM }}
     />
   );
 }
 
-function TextStep({ progress, range, step }) {
-  const opacity = useTransform(progress, range.in, range.out);
+function TextStep({ isActive, step }) {
   return (
-    <motion.div className="nh-build__txt" style={{ opacity }}>
+    <motion.div
+      className="nh-build__txt"
+      initial={false}
+      animate={{ opacity: isActive ? 1 : 0 }}
+      transition={{ duration: TEXT_TRANSITION_S, ease: EASE_PREMIUM }}
+    >
       {step.lead && <div className="nh-build__txt-lead">{step.lead}</div>}
       {step.isLogo ? (
         <img src={logo} alt="Napolit'hein Crousty" className="nh-build__txt-logo" />
@@ -61,22 +51,56 @@ function TextStep({ progress, range, step }) {
 export default function BuildSection() {
   const sectionRef = useRef(null);
   const [active, setActive] = useState(0);
+  const [currentVisualIndex, setCurrentVisualIndex] = useState(0);
+  const visualIndexRef = useRef(0);
+  const textTimerRef = useRef(null);
   const { scrollYProgress } = useScroll({
     target: sectionRef,
     offset: ["start start", "end end"],
   });
+
+  const clearTextTimer = useCallback(() => {
+    if (textTimerRef.current !== null) {
+      window.clearTimeout(textTimerRef.current);
+      textTimerRef.current = null;
+    }
+  }, []);
+
+  const handleSnapStart = useCallback(
+    ({ fromIndex, toIndex }) => {
+      if (fromIndex === toIndex) return;
+
+      clearTextTimer();
+      visualIndexRef.current = toIndex;
+      setCurrentVisualIndex(toIndex);
+
+      textTimerRef.current = window.setTimeout(() => {
+        setActive(toIndex);
+        textTimerRef.current = null;
+      }, TEXT_SWAP_DELAY_MS);
+    },
+    [clearTextTimer]
+  );
+
+  const handleSnapComplete = useCallback(
+    (index) => {
+      clearTextTimer();
+      visualIndexRef.current = index;
+      setActive(index);
+      setCurrentVisualIndex(index);
+    },
+    [clearTextTimer]
+  );
+
+  useEffect(() => clearTextTimer, [clearTextTimer]);
 
   useSteppedScrollSnap({
     sectionRef,
     snapPoints: SNAP_POINTS,
     durationMs: SNAP_DURATION_MS,
     easing: "easeOutCubic",
-  });
-
-  useMotionValueEvent(scrollYProgress, "change", (v) => {
-    const next = ACTIVE_THRESHOLDS.findIndex((threshold) => v < threshold);
-    const activeIndex = next === -1 ? TEXT_RANGES.length - 1 : next;
-    setActive((cur) => (cur === activeIndex ? cur : activeIndex));
+    onSnapStart: handleSnapStart,
+    onSnapComplete: handleSnapComplete,
   });
 
   const glowOpacity = useTransform(scrollYProgress, (v) => 0.4 + 0.5 * Math.sin(v * Math.PI));
@@ -89,7 +113,11 @@ export default function BuildSection() {
           <div className="nh-build__bowl-wrap">
             <motion.div className="nh-build__glow" style={{ opacity: glowOpacity }} />
             {IMAGES.map((img, i) => (
-              <Layer key={i} progress={scrollYProgress} range={IMG_RANGES[i]} image={img} />
+              <Layer
+                key={i}
+                image={img}
+                opacity={i === currentVisualIndex ? 1 : 0}
+              />
             ))}
           </div>
 
@@ -97,7 +125,7 @@ export default function BuildSection() {
             <div className="nh-build__num">{"0" + (active + 1)}</div>
             <div className="nh-build__txt-stack">
               {BUILD_STEPS.map((step, i) => (
-                <TextStep key={i} progress={scrollYProgress} range={TEXT_RANGES[i]} step={step} />
+                <TextStep key={i} isActive={i === active} step={step} />
               ))}
             </div>
             <div className="nh-build__dots">

@@ -44,6 +44,8 @@ export default function useSteppedScrollSnap({
   enabled = true,
   durationMs = null,
   easing = "easeInOutCubic",
+  onSnapStart = null,
+  onSnapComplete = null,
 }) {
   const points = useMemo(() => normalizeSnapPoints(snapPoints), [snapPoints]);
   const lockRef = useRef(false);
@@ -125,6 +127,18 @@ export default function useSteppedScrollSnap({
       return index === -1 ? null : index;
     };
 
+    const emitSnapStart = (payload) => {
+      if (typeof onSnapStart === "function") {
+        onSnapStart(payload);
+      }
+    };
+
+    const emitSnapComplete = (index) => {
+      if (typeof onSnapComplete === "function") {
+        onSnapComplete(index);
+      }
+    };
+
     const animateScrollTo = (targetY, onComplete) => {
       if (!useCustomSmoothScroll) {
         window.scrollTo({
@@ -159,10 +173,18 @@ export default function useSteppedScrollSnap({
       rafRef.current = window.requestAnimationFrame(step);
     };
 
-    const snapToIndex = (index, metrics = getMetrics()) => {
+    const snapToIndex = (index, metrics = getMetrics(), snapMeta = {}) => {
       if (!metrics) return;
 
       const targetIndex = clamp(index, 0, lastIndex);
+      const fromIndex =
+        typeof snapMeta.fromIndex === "number"
+          ? clamp(snapMeta.fromIndex, 0, lastIndex)
+          : getClosestIndex(metrics.progress, points);
+      const direction =
+        typeof snapMeta.direction === "number"
+          ? Math.sign(snapMeta.direction)
+          : Math.sign(targetIndex - fromIndex);
       const targetY = getSnapScrollY(targetIndex, metrics);
 
       clearScrollTimer();
@@ -170,6 +192,12 @@ export default function useSteppedScrollSnap({
       lockRef.current = true;
       releaseRef.current = null;
       pendingEntryIndexRef.current = null;
+
+      emitSnapStart({
+        fromIndex,
+        toIndex: targetIndex,
+        direction,
+      });
 
       animateScrollTo(targetY, () => {
         const startedAt = performance.now();
@@ -184,6 +212,7 @@ export default function useSteppedScrollSnap({
             }
 
             cleanIndexRef.current = targetIndex;
+            emitSnapComplete(targetIndex);
             cooldownTimerRef.current = window.setTimeout(() => {
               lockRef.current = false;
               cooldownTimerRef.current = null;
@@ -239,7 +268,10 @@ export default function useSteppedScrollSnap({
         getCleanIndex(metrics) !== pendingEntryIndex
       ) {
         preventEvent(event);
-        snapToIndex(pendingEntryIndex, metrics);
+        snapToIndex(pendingEntryIndex, metrics, {
+          fromIndex: getClosestIndex(metrics.progress, points),
+          direction: pendingEntryIndex - getClosestIndex(metrics.progress, points),
+        });
         return true;
       }
 
@@ -250,7 +282,10 @@ export default function useSteppedScrollSnap({
 
       if (targetIndex >= 0 && targetIndex <= lastIndex) {
         preventEvent(event);
-        snapToIndex(targetIndex, metrics);
+        snapToIndex(targetIndex, metrics, {
+          fromIndex: currentIndex,
+          direction,
+        });
         return true;
       }
 
@@ -265,7 +300,10 @@ export default function useSteppedScrollSnap({
       }
 
       preventEvent(event);
-      snapToIndex(direction > 0 ? lastIndex : 0, metrics);
+      snapToIndex(direction > 0 ? lastIndex : 0, metrics, {
+        fromIndex: currentIndex,
+        direction,
+      });
       return true;
     };
 
@@ -398,7 +436,10 @@ export default function useSteppedScrollSnap({
         const snapIndex =
           entryIndex !== null ? entryIndex : getClosestIndex(latestMetrics.progress, points);
 
-        snapToIndex(snapIndex, latestMetrics);
+        snapToIndex(snapIndex, latestMetrics, {
+          fromIndex: getClosestIndex(latestMetrics.progress, points),
+          direction: snapIndex - getClosestIndex(latestMetrics.progress, points),
+        });
       }, SNAP_DEBOUNCE_MS);
     };
 
@@ -437,5 +478,5 @@ export default function useSteppedScrollSnap({
       touchStartRef.current = null;
       touchHandledRef.current = false;
     };
-  }, [durationMs, easing, enabled, points, sectionRef]);
+  }, [durationMs, easing, enabled, onSnapComplete, onSnapStart, points, sectionRef]);
 }
