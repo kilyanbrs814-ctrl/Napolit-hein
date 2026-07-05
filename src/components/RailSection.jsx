@@ -1,14 +1,16 @@
-import { useRef, useState } from "react";
+import { useMemo, useRef, useState } from "react";
 import { motion, useScroll, useTransform, useMotionValueEvent } from "framer-motion";
 import { DISHES, LINKS } from "../data/content.js";
+import useIsMobile from "../hooks/useIsMobile.js";
+import useSteppedScrollSnap from "../hooks/useSteppedScrollSnap.js";
 import "../styles/rail.css";
 
 const RAIL_DISHES = DISHES.slice(0, 3);
 const CARD_ANIM_S = 0.72;
 
 /*
- * Scroll naturel + useScroll/useTransform, meme logique robuste que la
- * section 07 : aucun wheel listener, aucun preventDefault, aucun lock.
+ * useScroll/useTransform garde l'animation du rail. Sur desktop, un hook local
+ * bloque uniquement la wheel dans cette section pour avancer plat par plat.
  *
  * La section fait 320vh, le stage sticky 100vh. Le menu (section 05) recouvre
  * les 100 derniers vh (margin-top: -100vh), donc l'animation des plats doit
@@ -25,9 +27,12 @@ function buildTrackKeyframes(count) {
   const keys = [0];
   const vals = ["0vw"];
   const thresholds = [];
+  const snapPoints = [];
   let t = 0;
   for (let i = 0; i < count; i++) {
+    const dwellStart = t;
     t += DWELL_FRAC; // fin de la pause sur le plat i
+    snapPoints.push(((dwellStart + t) / 2) * DISH_PHASE);
     keys.push(t * DISH_PHASE);
     vals.push(`${-i * 100}vw`);
     if (i < count - 1) {
@@ -41,7 +46,7 @@ function buildTrackKeyframes(count) {
   // Plateau final : plat 3 stable pendant la montee du menu.
   keys.push(1);
   vals.push(`${-(count - 1) * 100}vw`);
-  return { keys, vals, thresholds };
+  return { keys, vals, thresholds, snapPoints };
 }
 
 function RailCard({ dish, index, count, isActive }) {
@@ -82,6 +87,7 @@ function RailCard({ dish, index, count, isActive }) {
 export default function RailSection() {
   const sectionRef = useRef(null);
   const count = RAIL_DISHES.length;
+  const isMobile = useIsMobile();
   const [activeIndex, setActiveIndex] = useState(0);
 
   const { scrollYProgress } = useScroll({
@@ -89,8 +95,17 @@ export default function RailSection() {
     offset: ["start start", "end end"],
   });
 
-  const { keys, vals, thresholds } = buildTrackKeyframes(count);
+  const { keys, vals, thresholds, snapPoints } = useMemo(
+    () => buildTrackKeyframes(count),
+    [count]
+  );
   const trackX = useTransform(scrollYProgress, keys, vals);
+
+  useSteppedScrollSnap({
+    sectionRef,
+    snapPoints,
+    enabled: !isMobile,
+  });
 
   // Le plat actif depend du scroll, pas d'un wheel lock.
   useMotionValueEvent(scrollYProgress, "change", (v) => {

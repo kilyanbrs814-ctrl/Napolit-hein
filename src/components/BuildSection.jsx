@@ -1,6 +1,8 @@
 import { useRef, useState } from "react";
 import { motion, useScroll, useTransform, useMotionValueEvent } from "framer-motion";
 import { BUILD_STEPS } from "../data/content.js";
+import useIsMobile from "../hooks/useIsMobile.js";
+import useSteppedScrollSnap from "../hooks/useSteppedScrollSnap.js";
 import logo from "../assets/images/logo-napolithein.png";
 import build1 from "../assets/images/build-1-rice.png";
 import build2 from "../assets/images/build-2-chicken.png";
@@ -9,10 +11,11 @@ import build4 from "../assets/images/build-4-final.png";
 import "../styles/build.css";
 
 const IMAGES = [build1, build2, build3, build4];
+const SNAP_POINTS = [0.06, 0.4, 0.67, 0.9];
 
 // Plages d'opacite pour le crossfade des 4 couches, elargies pour un fondu
-// progressif pilote par le scroll naturel (aucun controle wheel custom :
-// meme logique robuste que la section 07).
+// progressif. Le hook de snap bloque seulement la wheel desktop aux crans
+// ou image et texte sont lisibles ensemble.
 const IMG_RANGES = [
   { in: [0, 0.36], out: [1, 0] },
   { in: [0, 0.34, 0.69], out: [0, 1, 0] },
@@ -58,10 +61,17 @@ function TextStep({ progress, range, step }) {
 
 export default function BuildSection() {
   const sectionRef = useRef(null);
+  const isMobile = useIsMobile();
   const [active, setActive] = useState(0);
   const { scrollYProgress } = useScroll({
     target: sectionRef,
     offset: ["start start", "end end"],
+  });
+
+  useSteppedScrollSnap({
+    sectionRef,
+    snapPoints: SNAP_POINTS,
+    enabled: !isMobile,
   });
 
   useMotionValueEvent(scrollYProgress, "change", (v) => {
