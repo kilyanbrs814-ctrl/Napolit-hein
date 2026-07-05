@@ -1,61 +1,37 @@
-import { useMemo, useRef, useState } from "react";
-import { motion, useScroll, useTransform, useMotionValueEvent } from "framer-motion";
+import { useEffect, useRef, useState } from "react";
+import {
+  animate,
+  motion,
+  useMotionValue,
+  useMotionValueEvent,
+  useReducedMotion,
+  useTransform,
+} from "framer-motion";
 import { DISHES, LINKS } from "../data/content.js";
-import useSteppedScrollSnap from "../hooks/useSteppedScrollSnap.js";
+import useLockedSceneSteps from "../hooks/useLockedSceneSteps.js";
 import "../styles/rail.css";
 
 const RAIL_DISHES = DISHES.slice(0, 3);
-const CARD_ANIM_S = 0.72;
+const RAIL_TRANSITION_S = 0.75;
+const NATIVE_TRANSITION_S = 0.18;
+const EASE_PREMIUM = [0.22, 1, 0.36, 1];
 
-/*
- * useScroll/useTransform garde l'animation du rail. Un hook local bloque
- * uniquement la wheel et les swipes dans cette section pour avancer plat par plat.
- *
- * La section fait 320vh, le stage sticky 100vh. Le menu (section 05) recouvre
- * les 100 derniers vh (margin-top: -100vh), donc l'animation des plats doit
- * etre terminee avant : phase utile = (320 - 200) / (320 - 100) = 6/11 du
- * scrollYProgress. Ensuite le plat 3 reste en place pendant le handoff.
- */
-const DISH_PHASE = 6 / 11;
-// Part de la phase passee en pause sur chaque plat (le reste = glissements).
-const DWELL_FRAC = 0.18;
+const clamp = (value, min, max) => Math.min(Math.max(value, min), max);
 
-// Keyframes de translation du track : pause sur chaque plat, glissement entre.
-function buildTrackKeyframes(count) {
-  const trans = (1 - count * DWELL_FRAC) / (count - 1);
-  const keys = [0];
-  const vals = ["0vw"];
-  const thresholds = [];
-  const snapPoints = [];
-  let t = 0;
-  for (let i = 0; i < count; i++) {
-    const dwellStart = t;
-    t += DWELL_FRAC; // fin de la pause sur le plat i
-    snapPoints.push(((dwellStart + t) / 2) * DISH_PHASE);
-    keys.push(t * DISH_PHASE);
-    vals.push(`${-i * 100}vw`);
-    if (i < count - 1) {
-      // seuil d'index actif au milieu du glissement i -> i+1
-      thresholds.push((t + trans / 2) * DISH_PHASE);
-      t += trans; // fin du glissement vers le plat i+1
-      keys.push(t * DISH_PHASE);
-      vals.push(`${-(i + 1) * 100}vw`);
-    }
-  }
-  // Plateau final : plat 3 stable pendant la montee du menu.
-  keys.push(1);
-  vals.push(`${-(count - 1) * 100}vw`);
-  return { keys, vals, thresholds, snapPoints };
-}
+function RailCard({ dish, index, count, floatingIndex }) {
+  const opacity = useTransform(floatingIndex, (value) => {
+    const distance = Math.abs(index - value);
+    return clamp(1 - distance * 0.55, 0.25, 1);
+  });
+  const scale = useTransform(floatingIndex, (value) => {
+    const distance = Math.abs(index - value);
+    return 1 - Math.min(distance, 1) * 0.07;
+  });
 
-function RailCard({ dish, index, count, isActive }) {
   return (
     <motion.div
       className="nh-rail__card"
-      style={{ "--dish-color": dish.glow }}
-      initial={false}
-      animate={{ opacity: isActive ? 1 : 0.3, scale: isActive ? 1 : 0.93 }}
-      transition={{ duration: CARD_ANIM_S, ease: [0.22, 1, 0.36, 1] }}
+      style={{ "--dish-color": dish.glow, opacity, scale }}
     >
       <div className="nh-rail__media">
         <img className="nh-rail__dish" src={dish.img} alt={dish.name} />
@@ -85,30 +61,34 @@ function RailCard({ dish, index, count, isActive }) {
 
 export default function RailSection() {
   const sectionRef = useRef(null);
+  const reduceMotion = useReducedMotion();
   const count = RAIL_DISHES.length;
+  const lastIndex = count - 1;
   const [activeIndex, setActiveIndex] = useState(0);
-
-  const { scrollYProgress } = useScroll({
-    target: sectionRef,
-    offset: ["start start", "end end"],
-  });
-
-  const { keys, vals, thresholds, snapPoints } = useMemo(
-    () => buildTrackKeyframes(count),
-    [count]
-  );
-  const trackX = useTransform(scrollYProgress, keys, vals);
-
-  useSteppedScrollSnap({
+  const sceneProgress = useMotionValue(0);
+  const floatingIndex = useTransform(sceneProgress, (value) => value * lastIndex);
+  const trackX = useTransform(sceneProgress, (value) => `${-value * lastIndex * 100}vw`);
+  const { step, progress, isNative } = useLockedSceneSteps({
     sectionRef,
-    snapPoints,
+    steps: count,
+    enabled: !reduceMotion,
+    wheelCooldownMs: 840,
+    touchThreshold: 42,
   });
 
-  // Le plat actif depend du scroll, pas d'un wheel lock.
-  useMotionValueEvent(scrollYProgress, "change", (v) => {
-    let next = 0;
-    for (const th of thresholds) if (v >= th) next += 1;
-    setActiveIndex((cur) => (cur === next ? cur : next));
+  useEffect(() => {
+    const target = isNative ? progress : step / lastIndex;
+    const controls = animate(sceneProgress, target, {
+      duration: reduceMotion ? 0.01 : isNative ? NATIVE_TRANSITION_S : RAIL_TRANSITION_S,
+      ease: EASE_PREMIUM,
+    });
+
+    return () => controls.stop();
+  }, [isNative, lastIndex, progress, reduceMotion, sceneProgress, step]);
+
+  useMotionValueEvent(floatingIndex, "change", (value) => {
+    const nextIndex = clamp(Math.round(value), 0, lastIndex);
+    setActiveIndex((current) => (current === nextIndex ? current : nextIndex));
   });
 
   return (
@@ -131,7 +111,7 @@ export default function RailSection() {
               dish={dish}
               index={index}
               count={count}
-              isActive={index === activeIndex}
+              floatingIndex={floatingIndex}
             />
           ))}
         </motion.div>

@@ -1,7 +1,14 @@
-import { useCallback, useRef, useState } from "react";
-import { motion, useReducedMotion, useScroll, useTransform } from "framer-motion";
+import { useEffect, useRef, useState } from "react";
+import {
+  animate,
+  motion,
+  useMotionValue,
+  useMotionValueEvent,
+  useReducedMotion,
+  useTransform,
+} from "framer-motion";
 import { BUILD_STEPS } from "../data/content.js";
-import useSteppedScrollSnap from "../hooks/useSteppedScrollSnap.js";
+import useLockedSceneSteps from "../hooks/useLockedSceneSteps.js";
 import logo from "../assets/images/logo-napolithein.png";
 import build1 from "../assets/images/build-1-rice.png";
 import build2 from "../assets/images/build-2-chicken.png";
@@ -10,39 +17,50 @@ import build4 from "../assets/images/build-4-final.png";
 import "../styles/build.css";
 
 const IMAGES = [build1, build2, build3, build4];
-const SNAP_POINTS = [0.2, 0.5, 0.74, 0.95];
-const SNAP_SCROLL_DURATION_MS = 560;
-const STEP_TRANSITION_S = 0.98;
+const LAST_BUILD_INDEX = IMAGES.length - 1;
+const STEP_TRANSITION_S = 1.0;
+const NATIVE_TRANSITION_S = 0.22;
 const EASE_PREMIUM = [0.22, 1, 0.36, 1];
-const clampStepIndex = (index) => Math.max(0, Math.min(index, IMAGES.length - 1));
-const INITIAL_VISUAL_STATE = {
-  currentIndex: 0,
-  previousIndex: null,
-  targetIndex: 0,
-  isTransitioning: false,
-  direction: 0,
-};
 
-function Layer({ image, opacity, zIndex, transition }) {
+const clamp = (value, min, max) => Math.min(Math.max(value, min), max);
+const smoothstep = (value) => value * value * (3 - 2 * value);
+
+function BuildImageLayer({ image, index, floatingIndex }) {
+  const opacity = useTransform(floatingIndex, (value) => {
+    const raw = clamp(1 - Math.abs(value - index) * 1.05, 0, 1);
+    return smoothstep(raw);
+  });
+  const scale = useTransform(floatingIndex, (value) => {
+    const raw = clamp(1 - Math.abs(value - index) * 1.05, 0, 1);
+    return 0.965 + 0.035 * smoothstep(raw);
+  });
+  const rotate = useTransform(floatingIndex, (value) => `${(index - value) * 2.4}deg`);
+
   return (
     <motion.div
       className="nh-build__img"
-      style={{ backgroundImage: `url(${image})`, zIndex }}
-      initial={false}
-      animate={{ opacity }}
-      transition={transition}
+      style={{ backgroundImage: `url(${image})`, opacity, scale, rotate, zIndex: index + 1 }}
       aria-hidden="true"
     />
   );
 }
 
-function TextStep({ isActive, step, transition }) {
+function TextStep({ index, step, floatingIndex }) {
+  const opacity = useTransform(floatingIndex, (value) => {
+    const raw = clamp(1 - Math.abs(value - index) * 2.2, 0, 1);
+    return smoothstep(raw);
+  });
+  const y = useTransform(floatingIndex, (value) => {
+    const raw = clamp(1 - Math.abs(value - index) * 2.2, 0, 1);
+    const eased = smoothstep(raw);
+    return (1 - eased) * 18 * (index < value ? -1 : 1);
+  });
+
   return (
     <motion.div
       className="nh-build__txt"
-      initial={false}
-      animate={{ opacity: isActive ? 1 : 0 }}
-      transition={transition}
+      style={{ opacity, y }}
+      aria-hidden={false}
     >
       {step.lead && <div className="nh-build__txt-lead">{step.lead}</div>}
       {step.isLogo ? (
@@ -58,111 +76,33 @@ function TextStep({ isActive, step, transition }) {
 export default function BuildSection() {
   const sectionRef = useRef(null);
   const reduceMotion = useReducedMotion();
-  const [visualState, setVisualState] = useState(INITIAL_VISUAL_STATE);
-  const visualStateRef = useRef(INITIAL_VISUAL_STATE);
-  const logicalVisualIndexRef = useRef(0);
-  const expectedSnapIndexRef = useRef(null);
-  const activeSnapDirectionRef = useRef(0);
-  const { scrollYProgress } = useScroll({
-    target: sectionRef,
-    offset: ["start start", "end end"],
-  });
-
-  const commitVisualState = useCallback((nextState) => {
-    visualStateRef.current = nextState;
-    setVisualState(nextState);
-  }, []);
-
-  const handleSnapStart = useCallback(({ fromIndex, toIndex, direction }) => {
-    const latestState = visualStateRef.current;
-    const reliableStartIndex = latestState.isTransitioning
-      ? latestState.targetIndex
-      : latestState.currentIndex;
-    const lastLogicalIndex = logicalVisualIndexRef.current;
-    const rawTargetIndex = Number.isFinite(toIndex)
-      ? clampStepIndex(toIndex)
-      : lastLogicalIndex;
-    const safeDirection =
-      direction ||
-      Math.sign(rawTargetIndex - reliableStartIndex) ||
-      Math.sign(rawTargetIndex - fromIndex);
-    const safeTargetIndex =
-      safeDirection > 0
-        ? clampStepIndex(Math.max(rawTargetIndex, lastLogicalIndex))
-        : safeDirection < 0
-          ? clampStepIndex(Math.min(rawTargetIndex, lastLogicalIndex))
-          : rawTargetIndex;
-
-    logicalVisualIndexRef.current = safeTargetIndex;
-    expectedSnapIndexRef.current = safeTargetIndex;
-    activeSnapDirectionRef.current = safeDirection;
-
-    if (reliableStartIndex === safeTargetIndex) return;
-
-    commitVisualState({
-      currentIndex: reliableStartIndex,
-      previousIndex: reliableStartIndex,
-      targetIndex: safeTargetIndex,
-      isTransitioning: true,
-      direction: safeDirection,
-    });
-  }, [commitVisualState]);
-
-  const handleSnapComplete = useCallback((index) => {
-    const safeIndex = Number.isFinite(index) ? clampStepIndex(index) : logicalVisualIndexRef.current;
-    const latestState = visualStateRef.current;
-    const expectedIndex = expectedSnapIndexRef.current;
-    const activeDirection = activeSnapDirectionRef.current;
-    const logicalIndex = logicalVisualIndexRef.current;
-
-    if (
-      (activeDirection > 0 && safeIndex < logicalIndex) ||
-      (activeDirection < 0 && safeIndex > logicalIndex)
-    ) {
-      return;
-    }
-
-    if (expectedIndex !== null && safeIndex !== expectedIndex) {
-      expectedSnapIndexRef.current = null;
-      return;
-    }
-
-    if (latestState.isTransitioning && latestState.targetIndex !== safeIndex) return;
-
-    logicalVisualIndexRef.current = safeIndex;
-    expectedSnapIndexRef.current = null;
-    activeSnapDirectionRef.current = 0;
-    commitVisualState({
-      currentIndex: safeIndex,
-      previousIndex: null,
-      targetIndex: safeIndex,
-      isTransitioning: false,
-      direction: 0,
-    });
-  }, [commitVisualState]);
-
-  useSteppedScrollSnap({
+  const sceneProgress = useMotionValue(0);
+  const floatingIndex = useTransform(sceneProgress, (value) => value * LAST_BUILD_INDEX);
+  const [displayIndex, setDisplayIndex] = useState(0);
+  const { step, progress, isNative } = useLockedSceneSteps({
     sectionRef,
-    snapPoints: SNAP_POINTS,
-    durationMs: SNAP_SCROLL_DURATION_MS,
-    easing: "easeOutCubic",
-    onSnapStart: handleSnapStart,
-    onSnapComplete: handleSnapComplete,
+    steps: IMAGES.length,
+    enabled: !reduceMotion,
+    wheelCooldownMs: 880,
+    touchThreshold: 42,
   });
 
-  const glowOpacity = useTransform(scrollYProgress, (v) => 0.4 + 0.5 * Math.sin(v * Math.PI));
-  const stepTransition = {
-    duration: reduceMotion ? 0.01 : STEP_TRANSITION_S,
-    ease: EASE_PREMIUM,
-  };
-  const settleTransition = {
-    duration: 0.01,
-    ease: EASE_PREMIUM,
-  };
-  const visualTransition = visualState.isTransitioning ? stepTransition : settleTransition;
-  const displayIndex = visualState.isTransitioning
-    ? visualState.targetIndex
-    : visualState.currentIndex;
+  useEffect(() => {
+    const target = isNative ? progress : step / LAST_BUILD_INDEX;
+    const controls = animate(sceneProgress, target, {
+      duration: reduceMotion ? 0.01 : isNative ? NATIVE_TRANSITION_S : STEP_TRANSITION_S,
+      ease: EASE_PREMIUM,
+    });
+
+    return () => controls.stop();
+  }, [isNative, progress, reduceMotion, sceneProgress, step]);
+
+  useMotionValueEvent(floatingIndex, "change", (value) => {
+    const nextIndex = clamp(Math.round(value), 0, LAST_BUILD_INDEX);
+    setDisplayIndex((current) => (current === nextIndex ? current : nextIndex));
+  });
+
+  const glowOpacity = useTransform(sceneProgress, (value) => 0.4 + 0.5 * Math.sin(value * Math.PI));
 
   return (
     <section id="couches" ref={sectionRef} className="nh-build" data-screen-label="03 Construction">
@@ -171,43 +111,16 @@ export default function BuildSection() {
         <div className="nh-build__grid">
           <div className="nh-build__bowl-wrap">
             <motion.div className="nh-build__glow" style={{ opacity: glowOpacity }} />
-            {IMAGES.map((img, i) => {
-              const isTarget = i === visualState.targetIndex;
-              const isPrevious = i === visualState.previousIndex;
-              const isStableCurrent = !visualState.isTransitioning && i === visualState.currentIndex;
-              const opacity = isStableCurrent || (visualState.isTransitioning && isTarget) ? 1 : 0;
-              const zIndex = visualState.isTransitioning
-                ? isTarget
-                  ? 3
-                  : isPrevious
-                    ? 2
-                    : 1
-                : isStableCurrent
-                  ? 2
-                  : 1;
-
-              return (
-                <Layer
-                  key={i}
-                  image={img}
-                  zIndex={zIndex}
-                  opacity={opacity}
-                  transition={visualTransition}
-                />
-              );
-            })}
+            {IMAGES.map((img, i) => (
+              <BuildImageLayer key={img} image={img} index={i} floatingIndex={floatingIndex} />
+            ))}
           </div>
 
           <div className="nh-build__side">
             <div className="nh-build__num">{"0" + (displayIndex + 1)}</div>
             <div className="nh-build__txt-stack">
               {BUILD_STEPS.map((step, i) => (
-                <TextStep
-                  key={i}
-                  isActive={i === displayIndex}
-                  step={step}
-                  transition={visualTransition}
-                />
+                <TextStep key={i} index={i} step={step} floatingIndex={floatingIndex} />
               ))}
             </div>
             <div className="nh-build__dots">

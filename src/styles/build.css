@@ -1,9 +1,9 @@
 /* ============ SCENE 03 - CONSTRUCTION DU PLAT ============ */
 .nh-build {
   position: relative;
-  /* Hauteur genereuse : le scroll naturel pilote les 4 etapes, chaque fondu
-     dispose de ~90vh de scroll pour rester fluide sans controle custom. */
-  height: 380vh;
+  /* Desktop : la scene est verrouillee, la progression vient du step interne. */
+  height: 100vh;
+  height: 100svh;
   background: linear-gradient(180deg, var(--bg), #0a1024, var(--bg));
 }
 
@@ -69,7 +69,7 @@
   background-repeat: no-repeat;
   background-position: center;
   filter: drop-shadow(0 26px 42px rgba(0, 0, 0, 0.55));
-  will-change: opacity;
+  will-change: transform, opacity;
 }
 
 .nh-build__side {

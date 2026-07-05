@@ -1,10 +1,9 @@
 /* ============ SCENE 04 - LES INCONTOURNABLES (RAIL) ============ */
 .nh-rail {
   position: relative;
-  /* 320vh : 3 plats pilotes par le scroll naturel (phase utile 220vh dont
-     100vh recouverts par le menu). Meme hauteur sur mobile pour que les
-     fractions de keyframes (DISH_PHASE = 6/11) restent exactes. */
-  height: 320vh;
+  z-index: 22;
+  height: 100vh;
+  height: 100svh;
   background: var(--bg);
 }
 
@@ -209,8 +208,8 @@
 
 @media (max-width: 860px) {
   .nh-rail {
-    /* Meme 320vh que desktop : les fractions DISH_PHASE restent valides. */
     height: 320vh;
+    z-index: auto;
   }
   .nh-rail__header {
     top: 78px;
