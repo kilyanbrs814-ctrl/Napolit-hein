@@ -11,9 +11,10 @@ import "../styles/build.css";
 
 const IMAGES = [build1, build2, build3, build4];
 const SNAP_POINTS = [0.2, 0.5, 0.74, 0.95];
-const SNAP_DURATION_MS = 1150;
-const STEP_TRANSITION_S = SNAP_DURATION_MS / 1000;
+const SNAP_SCROLL_DURATION_MS = 560;
+const STEP_TRANSITION_S = 0.98;
 const EASE_PREMIUM = [0.22, 1, 0.36, 1];
+const clampStepIndex = (index) => Math.max(0, Math.min(index, IMAGES.length - 1));
 
 function Layer({ image, opacity, zIndex, transition }) {
   return (
@@ -64,14 +65,24 @@ export default function BuildSection() {
   });
 
   const handleSnapStart = useCallback(({ fromIndex, toIndex, direction }) => {
-    const previousIndex = visualIndexRef.current;
     const safeTargetIndex =
-      Number.isFinite(toIndex) ? Math.max(0, Math.min(toIndex, IMAGES.length - 1)) : previousIndex;
+      Number.isFinite(toIndex) ? clampStepIndex(toIndex) : visualIndexRef.current;
+    const logicalPreviousIndex = visualIndexRef.current;
 
-    if (previousIndex === safeTargetIndex) return;
+    if (logicalPreviousIndex === safeTargetIndex) return;
 
     const safeDirection =
-      direction || Math.sign(safeTargetIndex - previousIndex) || Math.sign(safeTargetIndex - fromIndex);
+      direction ||
+      Math.sign(safeTargetIndex - logicalPreviousIndex) ||
+      Math.sign(safeTargetIndex - fromIndex);
+    const previousIndex =
+      safeDirection > 0
+        ? clampStepIndex(Math.max(logicalPreviousIndex, safeTargetIndex - 1))
+        : safeDirection < 0
+          ? clampStepIndex(Math.min(logicalPreviousIndex, safeTargetIndex + 1))
+          : logicalPreviousIndex;
+
+    visualIndexRef.current = safeTargetIndex;
 
     setVisualState({
       currentIndex: previousIndex,
@@ -83,11 +94,12 @@ export default function BuildSection() {
   }, []);
 
   const handleSnapComplete = useCallback((index) => {
-    visualIndexRef.current = index;
+    const safeIndex = Number.isFinite(index) ? clampStepIndex(index) : visualIndexRef.current;
+    visualIndexRef.current = safeIndex;
     setVisualState({
-      currentIndex: index,
+      currentIndex: safeIndex,
       previousIndex: null,
-      targetIndex: index,
+      targetIndex: safeIndex,
       isTransitioning: false,
       direction: 0,
     });
@@ -96,7 +108,7 @@ export default function BuildSection() {
   useSteppedScrollSnap({
     sectionRef,
     snapPoints: SNAP_POINTS,
-    durationMs: SNAP_DURATION_MS,
+    durationMs: SNAP_SCROLL_DURATION_MS,
     easing: "easeOutCubic",
     onSnapStart: handleSnapStart,
     onSnapComplete: handleSnapComplete,
