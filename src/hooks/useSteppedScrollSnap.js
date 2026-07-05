@@ -28,11 +28,22 @@ function easeInOutCubic(t) {
   return t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2;
 }
 
+function easeOutCubic(t) {
+  return 1 - Math.pow(1 - t, 3);
+}
+
+const EASINGS = {
+  easeInOutCubic,
+  easeOutCubic,
+  linear: (t) => t,
+};
+
 export default function useSteppedScrollSnap({
   sectionRef,
   snapPoints,
   enabled = true,
   durationMs = null,
+  easing = "easeInOutCubic",
 }) {
   const points = useMemo(() => normalizeSnapPoints(snapPoints), [snapPoints]);
   const lockRef = useRef(false);
@@ -60,6 +71,7 @@ export default function useSteppedScrollSnap({
     const customDuration = Number(durationMs);
     const useCustomSmoothScroll =
       !reduceMotion && Number.isFinite(customDuration) && customDuration > 0;
+    const ease = EASINGS[easing] || EASINGS.easeInOutCubic;
 
     const clearScrollTimer = () => {
       if (scrollTimerRef.current !== null) {
@@ -131,7 +143,7 @@ export default function useSteppedScrollSnap({
       const step = () => {
         const elapsed = performance.now() - startedAt;
         const progress = clamp(elapsed / customDuration, 0, 1);
-        const nextY = startY + distance * easeInOutCubic(progress);
+        const nextY = startY + distance * ease(progress);
 
         window.scrollTo({ top: nextY, left: 0, behavior: "auto" });
 
@@ -425,5 +437,5 @@ export default function useSteppedScrollSnap({
       touchStartRef.current = null;
       touchHandledRef.current = false;
     };
-  }, [durationMs, enabled, points, sectionRef]);
+  }, [durationMs, easing, enabled, points, sectionRef]);
 }
