@@ -1,6 +1,81 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 
 const clamp = (value, min, max) => Math.min(Math.max(value, min), max);
+const GLOBAL_HANDOFF_GUARD_MS = 420;
+const GLOBAL_HANDOFF_QUIET_MS = 160;
+
+const globalHandoffGuard = {
+  active: false,
+  blockedUntil: 0,
+  quietUntil: 0,
+  releaseDirection: 0,
+  timer: null,
+};
+
+function getNow() {
+  return typeof performance !== "undefined" ? performance.now() : Date.now();
+}
+
+function clearGlobalHandoffTimer() {
+  if (globalHandoffGuard.timer !== null && typeof window !== "undefined") {
+    window.clearTimeout(globalHandoffGuard.timer);
+    globalHandoffGuard.timer = null;
+  }
+}
+
+function isGlobalHandoffGuardActive() {
+  if (!globalHandoffGuard.active) return false;
+
+  const now = getNow();
+  const guardedUntil = Math.max(globalHandoffGuard.blockedUntil, globalHandoffGuard.quietUntil);
+
+  if (now < guardedUntil) return true;
+
+  globalHandoffGuard.active = false;
+  globalHandoffGuard.releaseDirection = 0;
+  clearGlobalHandoffTimer();
+  return false;
+}
+
+function scheduleGlobalHandoffRelease() {
+  if (typeof window === "undefined") return;
+
+  clearGlobalHandoffTimer();
+
+  const now = getNow();
+  const guardedUntil = Math.max(globalHandoffGuard.blockedUntil, globalHandoffGuard.quietUntil);
+  const delay = Math.max(0, guardedUntil - now) + 16;
+
+  globalHandoffGuard.timer = window.setTimeout(() => {
+    globalHandoffGuard.timer = null;
+    if (isGlobalHandoffGuardActive()) {
+      scheduleGlobalHandoffRelease();
+    }
+  }, delay);
+}
+
+function startGlobalHandoffGuard(direction, quietMs) {
+  const now = getNow();
+  const quietWindow = Math.max(quietMs, GLOBAL_HANDOFF_QUIET_MS);
+
+  globalHandoffGuard.active = true;
+  globalHandoffGuard.releaseDirection = Math.sign(direction);
+  globalHandoffGuard.blockedUntil = Math.max(
+    globalHandoffGuard.blockedUntil,
+    now + GLOBAL_HANDOFF_GUARD_MS
+  );
+  globalHandoffGuard.quietUntil = Math.max(globalHandoffGuard.quietUntil, now + quietWindow);
+  scheduleGlobalHandoffRelease();
+}
+
+function noteGlobalHandoffInput(quietMs) {
+  if (!globalHandoffGuard.active) return;
+
+  const now = getNow();
+  const quietWindow = Math.max(quietMs, GLOBAL_HANDOFF_QUIET_MS);
+  globalHandoffGuard.quietUntil = now + quietWindow;
+  scheduleGlobalHandoffRelease();
+}
 
 function normalizeWheelDelta(event, viewportHeight) {
   if (!event) return 0;
@@ -155,7 +230,7 @@ export default function useLockedSceneSteps({
     };
 
     const lockScene = (fromBelow, metrics = getMetrics()) => {
-      if (!metrics || !lockEnabledRef.current) return;
+      if (!metrics || !lockEnabledRef.current || isGlobalHandoffGuardActive()) return false;
 
       releaseDirectionRef.current = 0;
       lockedRef.current = true;
@@ -169,6 +244,7 @@ export default function useLockedSceneSteps({
       window.scrollTo({ top: metrics.lockY, left: 0, behavior: "auto" });
       lastScrollYRef.current = metrics.lockY;
       armAfterQuiet();
+      return true;
     };
 
     const releaseScene = (releaseDirection) => {
@@ -180,6 +256,7 @@ export default function useLockedSceneSteps({
       setIsLocked(false);
       setDirection(releaseDirection);
       commitProgress(releaseDirection > 0 ? 1 : 0);
+      startGlobalHandoffGuard(releaseDirection, quietMs);
       armAfterQuiet();
     };
 
@@ -210,6 +287,7 @@ export default function useLockedSceneSteps({
 
     const shouldLockFromWheel = (metrics, wheelDirection, deltaY) => {
       if (!metrics) return false;
+      if (isGlobalHandoffGuardActive()) return false;
 
       if (releaseDirectionRef.current === wheelDirection) return false;
       if (releaseDirectionRef.current !== 0 && releaseDirectionRef.current !== wheelDirection) {
@@ -227,11 +305,9 @@ export default function useLockedSceneSteps({
       if (crossesDown || crossesUp) return true;
       if (!isInSceneBand(metrics)) return false;
 
-      const alreadyInside =
-        metrics.rect.top <= lockOffset + 2 &&
-        metrics.rect.bottom >= Math.min(metrics.viewportHeight, metrics.viewportHeight * 0.45);
+      const nearEntryLine = Math.abs(metrics.rect.top - lockOffset) <= 8;
 
-      return atLockLine || alreadyInside;
+      return atLockLine || nearEntryLine;
     };
 
     const onWheel = (event) => {
@@ -244,6 +320,7 @@ export default function useLockedSceneSteps({
 
       const wheelDirection = deltaY > 0 ? 1 : -1;
       const now = performance.now();
+      noteGlobalHandoffInput(quietMs);
       armAfterQuiet();
 
       if (lockedRef.current) {
@@ -303,6 +380,9 @@ export default function useLockedSceneSteps({
 
       const directionFromTouch = getTouchDirection(event.touches[0]);
       const metrics = getMetrics();
+      if (directionFromTouch !== 0) {
+        noteGlobalHandoffInput(quietMs);
+      }
 
       if (lockedRef.current) {
         const now = performance.now();
@@ -355,6 +435,7 @@ export default function useLockedSceneSteps({
 
       const metrics = getMetrics();
       const now = performance.now();
+      noteGlobalHandoffInput(quietMs);
 
       if (lockedRef.current) {
         const canAct = now >= cooldownUntilRef.current;
@@ -396,9 +477,15 @@ export default function useLockedSceneSteps({
         return;
       }
 
+      const previousScrollY = lastScrollYRef.current;
       const scrollY = metrics.scrollY;
-      const scrollDirection = Math.sign(scrollY - lastScrollYRef.current);
+      const scrollDelta = scrollY - previousScrollY;
+      const scrollDirection = Math.sign(scrollDelta);
       lastScrollYRef.current = scrollY;
+
+      if (isGlobalHandoffGuardActive()) {
+        return;
+      }
 
       if (!isInSceneBand(metrics)) {
         releaseDirectionRef.current = 0;
@@ -412,18 +499,11 @@ export default function useLockedSceneSteps({
         return;
       }
 
-      if (
-        scrollDirection > 0 &&
-        metrics.rect.top <= lockOffset + 1 &&
-        metrics.rect.bottom >= metrics.viewportHeight * 0.5
-      ) {
-        lockScene(false, metrics);
-      } else if (
-        scrollDirection < 0 &&
-        Math.abs(metrics.scrollY - metrics.lockY) <= 2 &&
-        metrics.rect.bottom >= metrics.viewportHeight * 0.5
-      ) {
-        lockScene(true, metrics);
+      const nearEntryLine = Math.abs(metrics.rect.top - lockOffset) <= 2;
+      const nearLockY = Math.abs(metrics.scrollY - metrics.lockY) <= 2;
+
+      if (scrollDirection !== 0 && nearEntryLine && nearLockY) {
+        lockScene(scrollDirection < 0, metrics);
       }
     };
 
