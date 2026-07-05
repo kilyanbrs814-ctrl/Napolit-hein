@@ -1,7 +1,6 @@
 import { useRef, useState } from "react";
 import { motion, useScroll, useTransform, useMotionValueEvent } from "framer-motion";
 import { BUILD_STEPS } from "../data/content.js";
-import useIsMobile from "../hooks/useIsMobile.js";
 import useSteppedScrollSnap from "../hooks/useSteppedScrollSnap.js";
 import logo from "../assets/images/logo-napolithein.png";
 import build1 from "../assets/images/build-1-rice.png";
@@ -11,28 +10,28 @@ import build4 from "../assets/images/build-4-final.png";
 import "../styles/build.css";
 
 const IMAGES = [build1, build2, build3, build4];
-const SNAP_POINTS = [0.06, 0.4, 0.67, 0.9];
+const SNAP_POINTS = [0.2, 0.47, 0.72, 0.94];
 
 // Plages d'opacite pour le crossfade des 4 couches, elargies pour un fondu
-// progressif. Le hook de snap bloque seulement la wheel desktop aux crans
+// progressif. Le hook de snap bloque la wheel et les swipes aux crans
 // ou image et texte sont lisibles ensemble.
 const IMG_RANGES = [
-  { in: [0, 0.36], out: [1, 0] },
-  { in: [0, 0.34, 0.69], out: [0, 1, 0] },
-  { in: [0.31, 0.67, 0.84], out: [0, 1, 0] },
-  { in: [0.64, 0.84, 1], out: [0, 1, 1] },
+  { in: [0, 0.2, 0.45], out: [1, 1, 0] },
+  { in: [0.2, 0.45, 0.54, 0.7], out: [0, 1, 1, 0] },
+  { in: [0.54, 0.7, 0.78, 0.92], out: [0, 1, 1, 0] },
+  { in: [0.78, 0.92, 1], out: [0, 1, 1] },
 ];
 
 // Plages dediees aux textes : fade, plateau de lecture, puis fade.
 const TEXT_RANGES = [
-  { in: [0, 0.25, 0.34], out: [1, 1, 0] },
-  { in: [0.22, 0.34, 0.5, 0.6], out: [0, 1, 1, 0] },
-  { in: [0.47, 0.6, 0.74, 0.84], out: [0, 1, 1, 0] },
-  { in: [0.7, 0.84, 1], out: [0, 1, 1] },
+  { in: [0, 0.2, 0.45], out: [1, 1, 0] },
+  { in: [0.2, 0.45, 0.54, 0.7], out: [0, 1, 1, 0] },
+  { in: [0.54, 0.7, 0.78, 0.92], out: [0, 1, 1, 0] },
+  { in: [0.78, 0.92, 1], out: [0, 1, 1] },
 ];
 
 // Points ou le texte entrant devient plus visible que le texte sortant.
-const ACTIVE_THRESHOLDS = [0.29, 0.543, 0.782];
+const ACTIVE_THRESHOLDS = [0.325, 0.62, 0.85];
 
 function Layer({ progress, range, image }) {
   const opacity = useTransform(progress, range.in, range.out);
@@ -61,7 +60,6 @@ function TextStep({ progress, range, step }) {
 
 export default function BuildSection() {
   const sectionRef = useRef(null);
-  const isMobile = useIsMobile();
   const [active, setActive] = useState(0);
   const { scrollYProgress } = useScroll({
     target: sectionRef,
@@ -71,7 +69,6 @@ export default function BuildSection() {
   useSteppedScrollSnap({
     sectionRef,
     snapPoints: SNAP_POINTS,
-    enabled: !isMobile,
   });
 
   useMotionValueEvent(scrollYProgress, "change", (v) => {

@@ -1,7 +1,6 @@
 import { useMemo, useRef, useState } from "react";
 import { motion, useScroll, useTransform, useMotionValueEvent } from "framer-motion";
 import { DISHES, LINKS } from "../data/content.js";
-import useIsMobile from "../hooks/useIsMobile.js";
 import useSteppedScrollSnap from "../hooks/useSteppedScrollSnap.js";
 import "../styles/rail.css";
 
@@ -9,8 +8,8 @@ const RAIL_DISHES = DISHES.slice(0, 3);
 const CARD_ANIM_S = 0.72;
 
 /*
- * useScroll/useTransform garde l'animation du rail. Sur desktop, un hook local
- * bloque uniquement la wheel dans cette section pour avancer plat par plat.
+ * useScroll/useTransform garde l'animation du rail. Un hook local bloque
+ * uniquement la wheel et les swipes dans cette section pour avancer plat par plat.
  *
  * La section fait 320vh, le stage sticky 100vh. Le menu (section 05) recouvre
  * les 100 derniers vh (margin-top: -100vh), donc l'animation des plats doit
@@ -87,7 +86,6 @@ function RailCard({ dish, index, count, isActive }) {
 export default function RailSection() {
   const sectionRef = useRef(null);
   const count = RAIL_DISHES.length;
-  const isMobile = useIsMobile();
   const [activeIndex, setActiveIndex] = useState(0);
 
   const { scrollYProgress } = useScroll({
@@ -104,7 +102,6 @@ export default function RailSection() {
   useSteppedScrollSnap({
     sectionRef,
     snapPoints,
-    enabled: !isMobile,
   });
 
   // Le plat actif depend du scroll, pas d'un wheel lock.
