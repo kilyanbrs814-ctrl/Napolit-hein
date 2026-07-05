@@ -17,11 +17,11 @@ const TEXT_TRANSITION_S = 0.42;
 const TEXT_SWAP_DELAY_MS = 420;
 const EASE_PREMIUM = [0.22, 1, 0.36, 1];
 
-function Layer({ image, opacity }) {
+function Layer({ image, opacity, index }) {
   return (
     <motion.div
       className="nh-build__img"
-      style={{ backgroundImage: `url(${image})` }}
+      style={{ backgroundImage: `url(${image})`, zIndex: index + 1 }}
       initial={false}
       animate={{ opacity }}
       transition={{ duration: VISUAL_TRANSITION_S, ease: EASE_PREMIUM }}
@@ -51,7 +51,11 @@ function TextStep({ isActive, step }) {
 export default function BuildSection() {
   const sectionRef = useRef(null);
   const [active, setActive] = useState(0);
-  const [currentVisualIndex, setCurrentVisualIndex] = useState(0);
+  const [visualState, setVisualState] = useState({
+    currentIndex: 0,
+    previousIndex: null,
+    direction: 0,
+  });
   const visualIndexRef = useRef(0);
   const textTimerRef = useRef(null);
   const { scrollYProgress } = useScroll({
@@ -67,12 +71,17 @@ export default function BuildSection() {
   }, []);
 
   const handleSnapStart = useCallback(
-    ({ fromIndex, toIndex }) => {
+    ({ fromIndex, toIndex, direction }) => {
       if (fromIndex === toIndex) return;
 
       clearTextTimer();
+      const previousIndex = visualIndexRef.current;
       visualIndexRef.current = toIndex;
-      setCurrentVisualIndex(toIndex);
+      setVisualState({
+        currentIndex: toIndex,
+        previousIndex,
+        direction,
+      });
 
       textTimerRef.current = window.setTimeout(() => {
         setActive(toIndex);
@@ -87,7 +96,11 @@ export default function BuildSection() {
       clearTextTimer();
       visualIndexRef.current = index;
       setActive(index);
-      setCurrentVisualIndex(index);
+      setVisualState({
+        currentIndex: index,
+        previousIndex: null,
+        direction: 0,
+      });
     },
     [clearTextTimer]
   );
@@ -112,13 +125,20 @@ export default function BuildSection() {
         <div className="nh-build__grid">
           <div className="nh-build__bowl-wrap">
             <motion.div className="nh-build__glow" style={{ opacity: glowOpacity }} />
-            {IMAGES.map((img, i) => (
-              <Layer
-                key={i}
-                image={img}
-                opacity={i === currentVisualIndex ? 1 : 0}
-              />
-            ))}
+            {IMAGES.map((img, i) => {
+              const isCurrent = i === visualState.currentIndex;
+              const isPrevious = i === visualState.previousIndex;
+              const keepPreviousVisible = visualState.direction > 0 && isPrevious;
+
+              return (
+                <Layer
+                  key={i}
+                  image={img}
+                  index={i}
+                  opacity={isCurrent || keepPreviousVisible ? 1 : 0}
+                />
+              );
+            })}
           </div>
 
           <div className="nh-build__side">
