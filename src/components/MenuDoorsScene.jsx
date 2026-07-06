@@ -27,13 +27,36 @@ export default function MenuDoorsScene() {
     if (!wrapper || !scene) return;
 
     const update = () => {
-      scene.style.setProperty("--menu-h", wrapper.offsetHeight + "px");
+      const menu = wrapper.querySelector(".nh-menu");
+      const viewportH = window.innerHeight || 800;
+      const minDesktopH = viewportH * 1.35;
+      const minMobileH = viewportH;
+      const minSceneH = window.innerWidth > 860 ? minDesktopH : minMobileH;
+      const measuredH = Math.max(
+        wrapper.offsetHeight,
+        wrapper.scrollHeight,
+        wrapper.getBoundingClientRect().height,
+        menu?.offsetHeight || 0,
+        menu?.scrollHeight || 0,
+        menu?.getBoundingClientRect().height || 0,
+        minSceneH
+      );
+
+      scene.style.setProperty("--menu-h", `${Math.ceil(measuredH)}px`);
     };
 
     const ro = new ResizeObserver(update);
     ro.observe(wrapper);
+    const menu = wrapper.querySelector(".nh-menu");
+    if (menu) ro.observe(menu);
+    window.addEventListener("resize", update, { passive: true });
     update();
-    return () => ro.disconnect();
+    const frame = window.requestAnimationFrame(update);
+    return () => {
+      ro.disconnect();
+      window.removeEventListener("resize", update);
+      window.cancelAnimationFrame(frame);
+    };
   }, []);
 
   return (
