@@ -20,51 +20,49 @@ import "../styles/menuDoorsScene.css";
 export default function MenuDoorsScene() {
   const menuRef = useRef(null);
   const sceneRef = useRef(null);
-  const maxMenuHeightRef = useRef(0);
-  const lastWidthRef = useRef(0);
 
   useLayoutEffect(() => {
     const wrapper = menuRef.current;
     const scene = sceneRef.current;
     if (!wrapper || !scene) return;
 
+    let frame = 0;
+
     const update = () => {
       const menu = wrapper.querySelector(".nh-menu");
       const viewportH = window.innerHeight || 800;
-      const viewportW = window.innerWidth || 0;
-      const minDesktopH = viewportH * 1.7;
-      const minMobileH = viewportH;
-      const minSceneH = viewportW > 860 ? minDesktopH : minMobileH;
+      if (!menu) return;
+
       const measuredH = Math.max(
-        wrapper.offsetHeight,
-        wrapper.scrollHeight,
-        wrapper.getBoundingClientRect().height,
         menu?.offsetHeight || 0,
         menu?.scrollHeight || 0,
         menu?.getBoundingClientRect().height || 0,
-        minSceneH
+        viewportH
       );
 
-      if (Math.abs(viewportW - lastWidthRef.current) > 16) {
-        maxMenuHeightRef.current = 0;
-        lastWidthRef.current = viewportW;
-      }
-
-      maxMenuHeightRef.current = Math.max(maxMenuHeightRef.current, measuredH);
-      scene.style.setProperty("--menu-h", `${Math.ceil(maxMenuHeightRef.current)}px`);
+      scene.style.setProperty("--menu-h", `${Math.ceil(measuredH)}px`);
     };
 
-    const ro = new ResizeObserver(update);
-    ro.observe(wrapper);
+    const scheduleUpdate = () => {
+      if (frame) window.cancelAnimationFrame(frame);
+      frame = window.requestAnimationFrame(() => {
+        frame = 0;
+        update();
+      });
+    };
+
     const menu = wrapper.querySelector(".nh-menu");
+    const ro = new ResizeObserver(scheduleUpdate);
     if (menu) ro.observe(menu);
-    window.addEventListener("resize", update, { passive: true });
+    window.addEventListener("resize", scheduleUpdate, { passive: true });
     update();
-    const frame = window.requestAnimationFrame(update);
+    scheduleUpdate();
+    document.fonts?.ready?.then(scheduleUpdate);
+
     return () => {
       ro.disconnect();
-      window.removeEventListener("resize", update);
-      window.cancelAnimationFrame(frame);
+      window.removeEventListener("resize", scheduleUpdate);
+      if (frame) window.cancelAnimationFrame(frame);
     };
   }, []);
 
