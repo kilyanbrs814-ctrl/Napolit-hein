@@ -76,11 +76,7 @@
 }
 
 .nh-build__ring {
-  position: absolute;
-  inset: -3%;
-  border-radius: 50%;
-  border: 1px solid rgba(255, 180, 38, 0.25);
-  pointer-events: none;
+  display: none;
 }
 
 .nh-build__side {
@@ -175,6 +171,14 @@
   .nh-build {
     height: 220vh;
     height: 220svh;
+  }
+  /* On atteint la section 03 en scrollant → barre Safari repliée → écran = lvh.
+     Le stage doit couvrir lvh (statique) pour que le flex-center existant centre
+     le contenu dans le vrai espace visible, sans vide sous les dots.
+     Le titre (eyebrow) est en absolute : il ne bouge pas. */
+  .nh-build__stage {
+    height: 100vh;
+    height: 100lvh;
   }
   .nh-build__eyebrow {
     top: 78px;
