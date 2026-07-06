@@ -45,7 +45,10 @@ export default function Header({ onCavemanTrigger }) {
         <a href="#ambiance" className="nh-header__link">Ambiance</a>
       </nav>
       <div className="nh-header__end">
-        <a href={LINKS.tel} className="nh-header__pill">06 04 65 94 06</a>
+        <a href={LINKS.tel} className="nh-header__pill">
+          <span className="nh-header__pill-label">06 04 65 94 06</span>
+          <span className="nh-header__pill-mobile">Appeler</span>
+        </a>
       </div>
     </header>
   );

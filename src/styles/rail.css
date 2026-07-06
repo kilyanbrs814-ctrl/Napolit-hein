@@ -212,45 +212,84 @@
 
 @media (max-width: 860px) {
   .nh-rail {
-    height: 300vh;
+    height: 245vh;
+    height: 245svh;
     z-index: auto;
   }
   .nh-rail__header {
-    top: 78px;
+    top: 74px;
     padding: 0 22px;
+  }
+  .nh-rail__hint {
+    font-size: 10px;
+    letter-spacing: 0.18em;
   }
   .nh-rail__card,
   .nh-rail__card:nth-child(even) {
     flex-direction: column;
-    gap: 18px;
-    padding: 24px 22px;
+    gap: 14px;
+    padding: 76px 22px 44px;
   }
   .nh-rail__card::before {
-    width: 100vw;
-    height: 50vh;
+    width: 112vw;
+    height: 46vh;
     left: 50%;
-    top: 42%;
+    top: 38%;
+    filter: blur(34px);
   }
   .nh-rail__media {
-    width: 62vw;
-    height: 62vw;
+    width: min(58vw, 252px);
+    height: min(58vw, 252px);
+  }
+  .nh-rail__dish {
+    width: 108%;
   }
   .nh-rail__info {
     max-width: 100%;
     text-align: center;
     align-items: center;
-    gap: 10px;
+    gap: 9px;
   }
   .nh-rail__name {
-    font-size: 40px;
+    font-size: clamp(38px, 12vw, 52px);
+    line-height: 0.94;
   }
   .nh-rail__desc {
     font-size: 15px;
+    line-height: 1.48;
+    max-width: 320px;
   }
   .nh-rail__price {
-    font-size: 28px;
+    font-size: 30px;
+  }
+  .nh-rail__row {
+    flex-direction: column;
+    gap: 10px;
+    margin-top: 2px;
+  }
+  .nh-rail__btn {
+    min-height: 46px;
+    padding: 13px 22px;
+    font-size: 14px;
   }
   .nh-rail__index {
     bottom: 16px;
+  }
+}
+
+@media (max-width: 380px) {
+  .nh-rail__header {
+    padding: 0 18px;
+  }
+  .nh-rail__card,
+  .nh-rail__card:nth-child(even) {
+    padding: 74px 18px 42px;
+  }
+  .nh-rail__media {
+    width: min(54vw, 220px);
+    height: min(54vw, 220px);
+  }
+  .nh-rail__desc {
+    font-size: 14px;
   }
 }

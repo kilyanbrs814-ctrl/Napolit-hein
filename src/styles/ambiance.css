@@ -91,27 +91,53 @@
 
 @media (max-width: 860px) {
   .nh-amb {
-    padding: 70px 0 80px;
+    padding: 72px 0 78px;
   }
   .nh-amb__inner {
     grid-template-columns: 1fr;
-    gap: 28px;
+    gap: 24px;
     padding: 0 18px;
   }
+  .nh-amb__text {
+    gap: 16px;
+  }
   .nh-amb__title {
-    font-size: 38px;
+    font-size: clamp(38px, 11vw, 52px);
+    line-height: 0.96;
   }
   .nh-amb__p {
     font-size: 16px;
+    line-height: 1.55;
   }
   .nh-amb__info-row {
-    gap: 20px;
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 10px;
+    width: 100%;
+  }
+  .nh-amb__info {
+    padding: 14px 15px;
+    border: 1px solid var(--line);
+    border-radius: 14px;
+    background: rgba(255, 255, 255, 0.04);
   }
   .nh-amb__photo {
-    height: 240px;
+    height: clamp(220px, 62vw, 300px);
+    border-radius: 16px;
     background-position: center 60%;
   }
   .nh-amb__map {
-    height: 160px;
+    height: 190px;
+    border-radius: 14px;
+  }
+}
+
+@media (max-width: 380px) {
+  .nh-amb__inner {
+    padding: 0 16px;
+  }
+  .nh-amb__p,
+  .nh-amb__info-v {
+    font-size: 15px;
   }
 }

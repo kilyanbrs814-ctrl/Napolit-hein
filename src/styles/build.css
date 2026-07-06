@@ -173,43 +173,71 @@
 
 @media (max-width: 860px) {
   .nh-build {
-    height: 250vh;
+    height: 220vh;
+    height: 220svh;
   }
   .nh-build__eyebrow {
-    top: 90px;
+    top: 78px;
     left: 22px;
   }
   .nh-build__grid {
     grid-template-columns: 1fr;
-    gap: 20px;
-    padding: 0 22px;
+    gap: 16px;
+    padding: 52px 22px 24px;
   }
   .nh-build__bowl-wrap {
+    width: min(68vw, 300px);
     max-width: 300px;
   }
   .nh-build__side {
     align-items: center;
     text-align: center;
-    min-height: 170px;
-    gap: 14px;
+    min-height: 158px;
+    gap: 12px;
   }
   .nh-build__txt {
     align-items: center;
   }
   .nh-build__num {
-    font-size: 60px;
+    font-size: clamp(50px, 15vw, 64px);
   }
   .nh-build__txt-stack {
-    height: 150px;
+    height: 136px;
   }
   .nh-build__txt-title {
-    font-size: 28px;
+    font-size: clamp(27px, 8.6vw, 36px);
+    line-height: 0.96;
   }
   .nh-build__txt-logo {
-    height: 40px;
+    height: clamp(34px, 10vw, 44px);
     max-width: 74vw;
   }
   .nh-build__txt-desc {
     font-size: 15px;
+    line-height: 1.48;
+    max-width: 310px;
+  }
+  .nh-build__dots {
+    gap: 10px;
+    margin-top: 0;
+  }
+  .nh-build__dot {
+    width: 9px;
+    height: 9px;
+  }
+}
+
+@media (max-width: 380px) {
+  .nh-build__grid {
+    padding-inline: 18px;
+  }
+  .nh-build__bowl-wrap {
+    width: min(64vw, 244px);
+  }
+  .nh-build__txt-stack {
+    height: 126px;
+  }
+  .nh-build__txt-desc {
+    font-size: 14px;
   }
 }

@@ -166,32 +166,62 @@
 
 @media (max-width: 860px) {
   .nh-doors {
-    padding: 70px 0 80px;
+    padding: 72px 0 78px;
   }
   .nh-doors__inner {
     padding: 0 18px;
   }
   .nh-doors__head {
-    margin-bottom: 34px;
+    gap: 12px;
+    margin-bottom: 28px;
   }
   .nh-doors__title {
-    font-size: 38px;
+    font-size: clamp(38px, 11vw, 52px);
+    line-height: 0.96;
   }
   .nh-doors__grid {
     grid-template-columns: 1fr;
-    gap: 16px;
+    gap: 14px;
   }
   .nh-door {
-    padding: 28px 24px;
+    border-radius: 17px;
+    padding: 22px 20px;
     min-height: 0;
+    gap: 10px;
   }
   .nh-door__num {
-    font-size: 38px;
+    font-size: 34px;
   }
   .nh-door__title {
-    font-size: 34px;
+    font-size: clamp(31px, 9vw, 40px);
   }
   .nh-door__desc {
     font-size: 15px;
+    line-height: 1.5;
+  }
+  .nh-door__actions {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 9px;
+    margin-top: 4px;
+  }
+  .nh-door__action {
+    min-height: 46px;
+    justify-content: center;
+    padding: 12px 16px;
+    font-size: 14px;
+  }
+  .nh-door__action-logo {
+    height: 17px;
+    max-width: 90px;
+  }
+}
+
+@media (max-width: 380px) {
+  .nh-doors__inner {
+    padding: 0 16px;
+  }
+  .nh-door {
+    padding: 20px 18px;
   }
 }
