@@ -1,37 +1,25 @@
-import { useEffect, useRef, useState } from "react";
-import {
-  animate,
-  motion,
-  useMotionValue,
-  useMotionValueEvent,
-  useReducedMotion,
-  useTransform,
-} from "framer-motion";
+import { useRef } from "react";
 import { DISHES, LINKS } from "../data/content.js";
-import useLockedSceneSteps from "../hooks/useLockedSceneSteps.js";
+import useClaudeStepScene from "../hooks/useClaudeStepScene.js";
 import "../styles/rail.css";
 
 const RAIL_DISHES = DISHES.slice(0, 3);
-const RAIL_TRANSITION_S = 0.75;
-const NATIVE_TRANSITION_S = 0.18;
-const EASE_PREMIUM = [0.22, 1, 0.36, 1];
 
 const clamp = (value, min, max) => Math.min(Math.max(value, min), max);
 
 function RailCard({ dish, index, count, floatingIndex }) {
-  const opacity = useTransform(floatingIndex, (value) => {
-    const distance = Math.abs(index - value);
-    return clamp(1 - distance * 0.55, 0.25, 1);
-  });
-  const scale = useTransform(floatingIndex, (value) => {
-    const distance = Math.abs(index - value);
-    return 1 - Math.min(distance, 1) * 0.07;
-  });
+  const distance = Math.abs(index - floatingIndex);
+  const opacity = clamp(1 - distance * 0.55, 0.25, 1);
+  const scale = 1 - Math.min(distance, 1) * 0.07;
 
   return (
-    <motion.div
+    <div
       className="nh-rail__card"
-      style={{ "--dish-color": dish.glow, opacity, scale }}
+      style={{
+        "--dish-color": dish.glow,
+        opacity,
+        transform: `scale(${scale})`,
+      }}
     >
       <div className="nh-rail__media">
         <img className="nh-rail__dish" src={dish.img} alt={dish.name} />
@@ -55,41 +43,22 @@ function RailCard({ dish, index, count, floatingIndex }) {
       <div className="nh-rail__index">
         {"0" + (index + 1)} / {"0" + count}
       </div>
-    </motion.div>
+    </div>
   );
 }
 
 export default function RailSection() {
   const sectionRef = useRef(null);
-  const reduceMotion = useReducedMotion();
   const count = RAIL_DISHES.length;
   const lastIndex = count - 1;
-  const [activeIndex, setActiveIndex] = useState(0);
-  const sceneProgress = useMotionValue(0);
-  const floatingIndex = useTransform(sceneProgress, (value) => value * lastIndex);
-  const trackX = useTransform(sceneProgress, (value) => `${-value * lastIndex * 100}vw`);
-  const { step, progress, isNative } = useLockedSceneSteps({
+  const { progress } = useClaudeStepScene({
+    sceneKey: "railScene",
     sectionRef,
     steps: count,
-    enabled: !reduceMotion,
-    wheelCooldownMs: 840,
-    touchThreshold: 42,
   });
-
-  useEffect(() => {
-    const target = isNative ? progress : step / lastIndex;
-    const controls = animate(sceneProgress, target, {
-      duration: reduceMotion ? 0.01 : isNative ? NATIVE_TRANSITION_S : RAIL_TRANSITION_S,
-      ease: EASE_PREMIUM,
-    });
-
-    return () => controls.stop();
-  }, [isNative, lastIndex, progress, reduceMotion, sceneProgress, step]);
-
-  useMotionValueEvent(floatingIndex, "change", (value) => {
-    const nextIndex = clamp(Math.round(value), 0, lastIndex);
-    setActiveIndex((current) => (current === nextIndex ? current : nextIndex));
-  });
+  const floatingIndex = progress * lastIndex;
+  const activeIndex = clamp(Math.round(floatingIndex), 0, lastIndex);
+  const trackX = -progress * lastIndex * 100;
 
   return (
     <section
@@ -104,7 +73,10 @@ export default function RailSection() {
           <div className="nh-eyebrow nh-rail__eyebrow">04 · Les incontournables</div>
           <div className="nh-eyebrow nh-rail__hint">Scroll →</div>
         </div>
-        <motion.div className="nh-rail__track" style={{ x: trackX }}>
+        <div
+          className="nh-rail__track"
+          style={{ transform: `translate3d(${trackX}vw, 0, 0)` }}
+        >
           {RAIL_DISHES.map((dish, index) => (
             <RailCard
               key={dish.name}
@@ -114,7 +86,7 @@ export default function RailSection() {
               floatingIndex={floatingIndex}
             />
           ))}
-        </motion.div>
+        </div>
       </div>
     </section>
   );

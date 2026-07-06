@@ -231,17 +231,6 @@ export default function useLockedSceneSteps({
       return scrollToY(targetY);
     };
 
-    const scrollAfterRelease = (releaseDirection, metrics = getMetrics()) => {
-      if (!metrics) return;
-
-      const targetY =
-        releaseDirection > 0
-          ? metrics.sectionTop + metrics.sectionHeight + 1
-          : metrics.sectionTop - metrics.viewportHeight + 1;
-
-      scrollToY(targetY);
-    };
-
     const isInSceneBand = (metrics) =>
       metrics.rect.bottom > lockOffset + 1 &&
       metrics.rect.top < metrics.viewportHeight - 1;
@@ -372,13 +361,6 @@ export default function useLockedSceneSteps({
       const now = performance.now();
       noteGlobalHandoffInput(quietMs);
 
-      if (!lockedRef.current && isGlobalHandoffGuardActive()) {
-        preventEvent(event);
-        event.__nhLockedSceneHandled = true;
-        armAfterQuiet();
-        return;
-      }
-
       armAfterQuiet();
 
       if (lockedRef.current) {
@@ -391,7 +373,6 @@ export default function useLockedSceneSteps({
           event.__nhLockedSceneReleased = true;
           event.__nhLockedSceneHandled = true;
           releaseScene(wheelDirection);
-          scrollAfterRelease(wheelDirection, metrics);
           return;
         }
 
@@ -407,8 +388,6 @@ export default function useLockedSceneSteps({
 
       const captureState = getCaptureState(metrics, wheelDirection, deltaY);
       if (captureState === "blocked") {
-        preventEvent(event);
-        event.__nhLockedSceneHandled = true;
         return;
       }
 
@@ -456,15 +435,6 @@ export default function useLockedSceneSteps({
         noteGlobalHandoffInput(quietMs);
       }
 
-      if (
-        directionFromTouch !== 0 &&
-        !lockedRef.current &&
-        isGlobalHandoffGuardActive()
-      ) {
-        preventEvent(event);
-        return;
-      }
-
       if (lockedRef.current) {
         const now = performance.now();
         const canAct =
@@ -479,7 +449,6 @@ export default function useLockedSceneSteps({
           event.__nhLockedSceneReleased = true;
           event.__nhLockedSceneHandled = true;
           releaseScene(directionFromTouch);
-          scrollAfterRelease(directionFromTouch, metrics);
           return;
         }
 
@@ -495,7 +464,6 @@ export default function useLockedSceneSteps({
       const captureState =
         directionFromTouch === 0 ? "none" : getCaptureState(metrics, directionFromTouch);
       if (captureState === "blocked") {
-        preventEvent(event);
         return;
       }
 
@@ -533,12 +501,6 @@ export default function useLockedSceneSteps({
       const now = performance.now();
       noteGlobalHandoffInput(quietMs);
 
-      if (!lockedRef.current && isGlobalHandoffGuardActive()) {
-        preventEvent(event);
-        event.__nhLockedSceneHandled = true;
-        return;
-      }
-
       if (lockedRef.current) {
         const canAct = now >= cooldownUntilRef.current;
         const atForwardExit = keyDirection > 0 && stepRef.current >= lastStep;
@@ -549,7 +511,6 @@ export default function useLockedSceneSteps({
           event.__nhLockedSceneReleased = true;
           event.__nhLockedSceneHandled = true;
           releaseScene(keyDirection);
-          scrollAfterRelease(keyDirection, metrics);
           return;
         }
 
@@ -567,8 +528,6 @@ export default function useLockedSceneSteps({
         ? getCaptureState(metrics, keyDirection, keyProjectedDelta)
         : "none";
       if (captureState === "blocked") {
-        preventEvent(event);
-        event.__nhLockedSceneHandled = true;
         return;
       }
 
