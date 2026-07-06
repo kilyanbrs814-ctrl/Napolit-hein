@@ -316,6 +316,14 @@ function createSceneEngine() {
       return clamp(targetY, 0, maxScrollY);
     },
 
+    captureBounds(scene, viewportHeight = this.viewportHeight()) {
+      const top = scene.top ?? this.sceneTop(scene);
+      const height = scene.height ?? this.sceneHeight(scene);
+      const end = top + Math.max(0, height - viewportHeight);
+
+      return { top, end };
+    },
+
     findCaptureScene(currentY, projectedY, direction) {
       this.clearReleasedSceneIfNeeded(currentY);
 
@@ -323,44 +331,64 @@ function createSceneEngine() {
       const scenes = this.orderedScenes();
 
       const containing = scenes.find((scene) => {
-        const bottom = scene.top + Math.min(scene.height, viewportHeight);
-        return currentY >= scene.top - 1 && currentY < bottom - 1;
+        const { top, end } = this.captureBounds(scene, viewportHeight);
+        return currentY >= top - 1 && currentY <= end + 1;
       });
 
       if (containing && !this.shouldIgnoreScene(containing, direction, currentY)) {
-        return containing;
+        const { top, end } = this.captureBounds(containing, viewportHeight);
+        return {
+          scene: containing,
+          lockY: clamp(currentY, top, end),
+        };
       }
 
       if (direction > 0) {
-        return (
-          scenes.find(
-            (scene) =>
-              !this.shouldIgnoreScene(scene, direction, currentY) &&
-              scene.top > currentY + 1 &&
-              scene.top <= projectedY + 1
-          ) || null
-        );
+        const crossed = scenes.find((scene) => {
+          if (this.shouldIgnoreScene(scene, direction, currentY)) return false;
+
+          const { top } = this.captureBounds(scene, viewportHeight);
+
+          return top > currentY + 1 && top <= projectedY + 1;
+        });
+
+        if (!crossed) return null;
+
+        const { top, end } = this.captureBounds(crossed, viewportHeight);
+        return {
+          scene: crossed,
+          lockY: clamp(projectedY, top, end),
+        };
       }
 
       const crossed = scenes.filter((scene) => {
         if (this.shouldIgnoreScene(scene, direction, currentY)) return false;
 
-        const sceneEnd = scene.top + Math.min(scene.height, viewportHeight);
+        const { end } = this.captureBounds(scene, viewportHeight);
 
-        return sceneEnd < currentY - 1 && sceneEnd >= projectedY - 1;
+        return end < currentY - 1 && end >= projectedY - 1;
       });
 
-      return crossed.length ? crossed[crossed.length - 1] : null;
+      if (!crossed.length) return null;
+
+      const scene = crossed[crossed.length - 1];
+      const { top, end } = this.captureBounds(scene, viewportHeight);
+      return {
+        scene,
+        lockY: clamp(projectedY, top, end),
+      };
     },
 
-    lockScene(key, fromBelow) {
+    lockScene(key, fromBelow, lockY) {
       const scene = this.sceneByKey(key);
       if (!scene || !this.enabled) return;
 
       const top = this.sceneTop(scene);
+      const end = top + Math.max(0, this.sceneHeight(scene) - this.viewportHeight());
+      const frozenY = Number.isFinite(lockY) ? clamp(lockY, top, end) : top;
       this.mode = "locked";
       this.activeScene = key;
-      this.frozenY = top;
+      this.frozenY = frozenY;
       this.step = fromBelow ? scene.steps - 1 : 0;
       this.armed = false;
       this.touchConsumed = true;
@@ -368,10 +396,10 @@ function createSceneEngine() {
       if (this.releasedScene?.key === key) this.releasedScene = null;
       this.handoffDirection = 0;
       this.setSceneProgress(key, fromBelow ? 1 : 0, true);
-      if (Math.abs((window.scrollY || 0) - top) > 1) {
-        this.instantScrollTo(top);
+      if (Math.abs((window.scrollY || 0) - frozenY) > 1) {
+        this.instantScrollTo(frozenY);
       }
-      this.lockBody(top);
+      this.lockBody(frozenY);
       this.armAfterQuiet();
     },
 
@@ -461,11 +489,11 @@ function createSceneEngine() {
 
       const currentY = window.scrollY || 0;
       const projectedY = this.clampY(currentY + deltaY);
-      const scene = this.findCaptureScene(currentY, projectedY, direction);
+      const capture = this.findCaptureScene(currentY, projectedY, direction);
 
-      if (!scene) return false;
+      if (!capture) return false;
 
-      this.lockScene(scene.key, direction < 0);
+      this.lockScene(capture.scene.key, direction < 0, capture.lockY);
       return true;
     },
 

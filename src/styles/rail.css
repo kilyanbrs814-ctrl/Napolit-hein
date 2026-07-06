@@ -1,19 +1,21 @@
 /* ============ SCENE 04 - LES INCONTOURNABLES (RAIL) ============ */
 .nh-rail {
+  --nh-step-capture: clamp(96px, 14svh, 160px);
   position: relative;
   z-index: 22;
-  height: 100vh;
-  height: 100svh;
-  overflow: hidden;
+  height: calc(100vh + var(--nh-step-capture));
+  height: calc(100svh + var(--nh-step-capture));
+  overflow: clip;
   background: var(--bg);
 }
 
 .nh-rail__stage {
-  position: relative;
+  position: sticky;
   top: 0;
   height: 100vh;
+  height: 100svh;
   width: 100%;
-  overflow: hidden;
+  overflow: clip;
   display: flex;
   flex-direction: column;
   align-items: stretch;
@@ -212,9 +214,6 @@
   .nh-rail {
     height: 300vh;
     z-index: auto;
-  }
-  .nh-rail__stage {
-    position: sticky;
   }
   .nh-rail__header {
     top: 78px;
