@@ -4,9 +4,8 @@ const clamp = (value, min, max) => Math.min(Math.max(value, min), max);
 
 const COOL_MS = 450;
 const QUIET_MS = 130;
-const HANDOFF_MS = 360;
+const HANDOFF_MS = 340;
 const STEP_EASE = 0.18;
-const LOCK_SCROLL_TOLERANCE_PX = 3;
 const MOBILE_BREAKPOINT = 860;
 
 function normalizeWheelDelta(event, viewportHeight) {
@@ -48,6 +47,7 @@ function createSceneEngine() {
     releasedScene: null,
     handoffDirection: 0,
     handoffUntil: 0,
+    bodyLock: null,
     rafId: null,
 
     viewportHeight() {
@@ -76,6 +76,60 @@ function createSceneEngine() {
       const element = scene?.ref?.current;
       if (!element) return this.viewportHeight();
       return Math.max(element.offsetHeight, element.getBoundingClientRect().height, 1);
+    },
+
+    preventEvent(event) {
+      if (event?.cancelable) event.preventDefault();
+    },
+
+    lockBody(scrollY) {
+      if (this.bodyLock || typeof document === "undefined") return;
+
+      const body = document.body;
+      const html = document.documentElement;
+      this.bodyLock = {
+        scrollY,
+        maxScrollY: this.maxScrollY(),
+        bodyPosition: body.style.position,
+        bodyTop: body.style.top,
+        bodyLeft: body.style.left,
+        bodyRight: body.style.right,
+        bodyWidth: body.style.width,
+        bodyOverscrollBehavior: body.style.overscrollBehavior,
+        htmlOverscrollBehavior: html.style.overscrollBehavior,
+      };
+
+      html.style.overscrollBehavior = "none";
+      body.style.overscrollBehavior = "none";
+      body.style.position = "fixed";
+      body.style.top = `-${scrollY}px`;
+      body.style.left = "0";
+      body.style.right = "0";
+      body.style.width = "100%";
+      body.classList.add("nh-scene-hard-locked");
+    },
+
+    unlockBody(targetY) {
+      if (!this.bodyLock || typeof document === "undefined") {
+        window.scrollTo(0, this.clampY(targetY));
+        return;
+      }
+
+      const lock = this.bodyLock;
+      const safeY = clamp(targetY, 0, lock.maxScrollY);
+      const body = document.body;
+      const html = document.documentElement;
+
+      body.classList.remove("nh-scene-hard-locked");
+      body.style.position = lock.bodyPosition;
+      body.style.top = lock.bodyTop;
+      body.style.left = lock.bodyLeft;
+      body.style.right = lock.bodyRight;
+      body.style.width = lock.bodyWidth;
+      body.style.overscrollBehavior = lock.bodyOverscrollBehavior;
+      html.style.overscrollBehavior = lock.htmlOverscrollBehavior;
+      this.bodyLock = null;
+      window.scrollTo(0, safeY);
     },
 
     orderedScenes() {
@@ -186,6 +240,18 @@ function createSceneEngine() {
       return isActive;
     },
 
+    getReleaseTargetY(direction) {
+      const scene = this.sceneByKey(this.activeScene);
+      const top = this.frozenY;
+      const maxScrollY = this.bodyLock?.maxScrollY ?? this.maxScrollY();
+      const targetY =
+        direction > 0
+          ? top + this.sceneHeight(scene) + 1
+          : top - this.viewportHeight() + 1;
+
+      return clamp(targetY, 0, maxScrollY);
+    },
+
     findCaptureScene(currentY, projectedY, direction) {
       this.clearReleasedSceneIfNeeded(currentY);
 
@@ -237,7 +303,10 @@ function createSceneEngine() {
       this.releasedScene = null;
       this.handoffDirection = 0;
       this.setSceneProgress(key, fromBelow ? 1 : 0, true);
-      window.scrollTo(0, top);
+      if (Math.abs((window.scrollY || 0) - top) > 1) {
+        window.scrollTo(0, top);
+      }
+      this.lockBody(top);
       this.armAfterQuiet();
     },
 
@@ -245,6 +314,7 @@ function createSceneEngine() {
       const key = this.activeScene;
       if (!key) return;
 
+      const targetY = this.getReleaseTargetY(direction);
       this.setSceneProgress(key, direction > 0 ? 1 : 0, true);
       this.mode = "free";
       this.activeScene = null;
@@ -253,6 +323,7 @@ function createSceneEngine() {
       this.armed = false;
       this.touchConsumed = true;
       this.beginHandoff(direction);
+      this.unlockBody(targetY);
       this.armAfterQuiet();
     },
 
@@ -294,6 +365,7 @@ function createSceneEngine() {
         this.activeScene = null;
         this.releasedScene = null;
         this.handoffDirection = 0;
+        if (this.bodyLock) this.unlockBody(this.bodyLock.scrollY);
       }
 
       this.updateProgressFromNativeScroll();
@@ -334,7 +406,7 @@ function createSceneEngine() {
       const direction = deltaY > 0 ? 1 : -1;
 
       if (this.mode === "locked") {
-        event.preventDefault();
+        this.preventEvent(event);
         this.armAfterQuiet();
 
         const now = performance.now();
@@ -346,8 +418,13 @@ function createSceneEngine() {
         return;
       }
 
+      if (this.isHandoffActive(direction)) {
+        this.preventEvent(event);
+        return;
+      }
+
       if (this.captureIfCrossing(deltaY, direction)) {
-        event.preventDefault();
+        this.preventEvent(event);
       }
     },
 
@@ -371,7 +448,7 @@ function createSceneEngine() {
       this.touchY = y;
 
       if (this.mode === "locked") {
-        event.preventDefault();
+        this.preventEvent(event);
         this.touchDeltaY += delta;
 
         const now = performance.now();
@@ -389,8 +466,14 @@ function createSceneEngine() {
 
       if (Math.abs(delta) < 1) return;
 
-      if (this.captureIfCrossing(delta, delta > 0 ? 1 : -1)) {
-        event.preventDefault();
+      const direction = delta > 0 ? 1 : -1;
+      if (this.isHandoffActive(direction)) {
+        this.preventEvent(event);
+        return;
+      }
+
+      if (this.captureIfCrossing(delta, direction)) {
+        this.preventEvent(event);
       }
     },
 
@@ -403,13 +486,13 @@ function createSceneEngine() {
       if (!this.enabled) return;
 
       if (this.mode === "locked" && (event.key === "Home" || event.key === "End")) {
-        event.preventDefault();
+        this.preventEvent(event);
         const targetY = event.key === "Home" ? 0 : this.maxScrollY();
         this.mode = "free";
         this.activeScene = null;
         this.releasedScene = null;
         this.handoffDirection = 0;
-        window.scrollTo(0, targetY);
+        this.unlockBody(targetY);
         return;
       }
 
@@ -428,7 +511,7 @@ function createSceneEngine() {
       }
 
       if (this.mode === "locked") {
-        event.preventDefault();
+        this.preventEvent(event);
 
         const now = performance.now();
         if (now - this.coolAt < COOL_MS) return;
@@ -439,7 +522,7 @@ function createSceneEngine() {
       }
 
       if (this.captureIfCrossing(direction * Math.round(this.viewportHeight() * 0.85), direction)) {
-        event.preventDefault();
+        this.preventEvent(event);
       }
     },
 
@@ -471,10 +554,6 @@ function createSceneEngine() {
 
     onNativeScroll() {
       if (this.enabled && this.mode === "locked") {
-        const scrollY = window.scrollY || 0;
-        if (Math.abs(scrollY - this.frozenY) > LOCK_SCROLL_TOLERANCE_PX) {
-          window.scrollTo(0, this.frozenY);
-        }
         return;
       }
 
@@ -557,6 +636,7 @@ function createSceneEngine() {
       this.activeScene = null;
       this.releasedScene = null;
       this.handoffDirection = 0;
+      if (this.bodyLock) this.unlockBody(this.bodyLock.scrollY);
     },
 
     registerScene(scene) {
@@ -581,6 +661,7 @@ function createSceneEngine() {
         if (this.activeScene === scene.key) {
           this.mode = "free";
           this.activeScene = null;
+          if (this.bodyLock) this.unlockBody(this.bodyLock.scrollY);
         }
 
         if (this.releasedScene?.key === scene.key) this.releasedScene = null;

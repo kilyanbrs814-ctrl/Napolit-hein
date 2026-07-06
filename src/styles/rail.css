@@ -9,7 +9,7 @@
 }
 
 .nh-rail__stage {
-  position: sticky;
+  position: relative;
   top: 0;
   height: 100vh;
   width: 100%;
@@ -212,6 +212,9 @@
   .nh-rail {
     height: 300vh;
     z-index: auto;
+  }
+  .nh-rail__stage {
+    position: sticky;
   }
   .nh-rail__header {
     top: 78px;
