@@ -152,217 +152,26 @@ function RailDesktop() {
   );
 }
 
-/* ---- Mobile : scène bloquante step-by-step, steps DISCRETS ----
-   Le scroll vertical amène la section, un mini-moteur local la verrouille
-   (body fixed, comme le scroll-lock desktop), puis chaque swipe vertical
-   = 1 plat max. Le rail ne bouge qu'au changement de step : la position
-   cible est discrète (0 / -100vw / -200vw) et c'est une transition CSS qui
-   anime — aucun recalcul JS pixel-par-pixel, donc aucune saccade.
-   Le hook global n'est pas utilisé ici : il est désactivé sur mobile et
-   le modifier impacterait la section 03. */
-const SWIPE_THRESHOLD_PX = 36;
-const STEP_COOLDOWN_MS = 520;
-
+/* ---- Mobile : même principe que la section 03 mobile ----
+   Aucun verrouillage du scroll : la section est simplement plus haute qu'un
+   écran, son stage sticky s'épingle naturellement, et la progression native
+   du scroll (fournie par le hook partagé, qui est en mode natif sous 860px —
+   exactement comme la section 03) pilote le plat affiché. Le rail ne reçoit
+   qu'une position cible discrète (0 / -100vw / -200vw) : c'est la transition
+   CSS qui anime le glissement, composée par le GPU.
+   Plus aucun body position:fixed ni scrollTo : c'est ce hard-lock custom qui
+   basculait le système de scroll au moment du lock, reconstruisait le rendu
+   (flash / disparition de la section) et recalait la page. */
 function RailMobile() {
   const sectionRef = useRef(null);
   const count = RAIL_DISHES.length;
   const lastIndex = count - 1;
-  const [activeIndex, setActiveIndex] = useState(0);
-  const stateRef = useRef({
-    locked: false,
-    index: 0,
-    lockY: 0,
-    lastScrollY: 0,
-    coolAt: 0,
-    touchY: 0,
-    touchDelta: 0,
-    consumed: false,
-    released: false,
-    bodyRestore: null,
+  const { progress } = useClaudeStepScene({
+    sceneKey: "railScene",
+    sectionRef,
+    steps: count,
   });
-
-  useEffect(() => {
-    const st = stateRef.current;
-    st.lastScrollY = window.scrollY || 0;
-
-    const setIndex = (i) => {
-      st.index = i;
-      setActiveIndex(i);
-    };
-
-    const instantScrollTo = (y) => {
-      const html = document.documentElement;
-      const body = document.body;
-      const prevHtml = html.style.scrollBehavior;
-      const prevBody = body.style.scrollBehavior;
-      html.style.scrollBehavior = "auto";
-      body.style.scrollBehavior = "auto";
-      window.scrollTo(0, y);
-      html.style.scrollBehavior = prevHtml;
-      body.style.scrollBehavior = prevBody;
-    };
-
-    /* Zone de verrouillage = plage où le stage sticky est épinglé :
-       n'importe quel Y dedans affiche exactement le même écran. */
-    const zoneBounds = () => {
-      const el = sectionRef.current;
-      if (!el) return null;
-      const top = el.getBoundingClientRect().top + (window.scrollY || 0);
-      const stage = el.firstElementChild;
-      const stageH = stage ? stage.offsetHeight : window.innerHeight || 1;
-      return { top, end: top + Math.max(0, el.offsetHeight - stageH) };
-    };
-
-    const lock = (startIndex, freezeY) => {
-      if (st.locked) return;
-      const el = sectionRef.current;
-      if (!el) return;
-
-      /* Freeze à la position visuelle ACTUELLE : le stage sticky rend tout Y
-         de la zone identique à l'écran → aucun scrollTo d'alignement. */
-      const top = freezeY;
-      const body = document.body;
-      const html = document.documentElement;
-
-      st.bodyRestore = {
-        position: body.style.position,
-        top: body.style.top,
-        left: body.style.left,
-        right: body.style.right,
-        width: body.style.width,
-        bodyOverscroll: body.style.overscrollBehavior,
-        htmlOverscroll: html.style.overscrollBehavior,
-      };
-      html.style.overscrollBehavior = "none";
-      body.style.overscrollBehavior = "none";
-      body.style.position = "fixed";
-      body.style.top = `-${top}px`;
-      body.style.left = "0";
-      body.style.right = "0";
-      body.style.width = "100%";
-      body.classList.add("nh-scene-hard-locked");
-
-      st.locked = true;
-      st.lockY = top;
-      st.coolAt = performance.now();
-      st.touchDelta = 0;
-      st.consumed = true;
-      setIndex(startIndex);
-    };
-
-    const unlock = () => {
-      if (!st.locked) return;
-      const body = document.body;
-      const html = document.documentElement;
-      const restore = st.bodyRestore;
-
-      body.classList.remove("nh-scene-hard-locked");
-      if (restore) {
-        body.style.position = restore.position;
-        body.style.top = restore.top;
-        body.style.left = restore.left;
-        body.style.right = restore.right;
-        body.style.width = restore.width;
-        body.style.overscrollBehavior = restore.bodyOverscroll;
-        html.style.overscrollBehavior = restore.htmlOverscroll;
-      }
-      st.bodyRestore = null;
-      st.locked = false;
-      st.released = true;
-      instantScrollTo(st.lockY);
-      st.lastScrollY = st.lockY;
-    };
-
-    /* Capture : le scroll natif amène la section, le stage sticky s'épingle
-       tout seul ; dès qu'un event scroll tombe dans la zone épinglée, on gèle
-       sur place. Direction d'entrée : par le haut → plat 1, par le bas → plat 3. */
-    const onScroll = () => {
-      if (st.locked) return;
-      const y = window.scrollY || 0;
-      const prev = st.lastScrollY;
-      st.lastScrollY = y;
-      const dir = y > prev ? 1 : y < prev ? -1 : 0;
-      if (dir === 0) return;
-
-      const bounds = zoneBounds();
-      if (!bounds) return;
-
-      /* Le flag anti-recapture se lève une fois la zone vraiment quittée. */
-      if (y < bounds.top - 50 || y > bounds.end + 50) st.released = false;
-      if (st.released) return;
-
-      if (y >= bounds.top && y <= bounds.end) {
-        lock(dir > 0 ? 0 : lastIndex, y);
-        return;
-      }
-
-      /* Flick extrême : toute la zone sautée entre deux events (rare).
-         Petite correction technique vers le bord le plus proche. */
-      if (dir > 0 && prev < bounds.top && y > bounds.end && y - bounds.end < 200) {
-        instantScrollTo(bounds.end);
-        st.lastScrollY = bounds.end;
-        lock(0, bounds.end);
-      } else if (dir < 0 && prev > bounds.end && y < bounds.top && bounds.top - y < 200) {
-        instantScrollTo(bounds.top);
-        st.lastScrollY = bounds.top;
-        lock(lastIndex, bounds.top);
-      }
-    };
-
-    const onTouchStart = (event) => {
-      const touch = event.touches?.[0];
-      if (!touch) return;
-      st.touchY = touch.clientY;
-      st.touchDelta = 0;
-      st.consumed = false;
-    };
-
-    const onTouchMove = (event) => {
-      if (!st.locked) return;
-      if (event.cancelable) event.preventDefault();
-
-      const touch = event.touches?.[0];
-      if (!touch) return;
-      st.touchDelta += st.touchY - touch.clientY;
-      st.touchY = touch.clientY;
-
-      if (st.consumed || Math.abs(st.touchDelta) < SWIPE_THRESHOLD_PX) return;
-      const now = performance.now();
-      if (now - st.coolAt < STEP_COOLDOWN_MS) return;
-
-      /* 1 geste = 1 plat max (consumed), + cooldown entre deux gestes. */
-      st.consumed = true;
-      st.coolAt = now;
-
-      if (st.touchDelta > 0) {
-        if (st.index < lastIndex) setIndex(st.index + 1);
-        else unlock();
-      } else {
-        if (st.index > 0) setIndex(st.index - 1);
-        else unlock();
-      }
-    };
-
-    const onTouchEnd = () => {
-      st.touchDelta = 0;
-      st.consumed = false;
-    };
-
-    window.addEventListener("scroll", onScroll, { passive: true });
-    window.addEventListener("touchstart", onTouchStart, { passive: true });
-    window.addEventListener("touchmove", onTouchMove, { passive: false });
-    window.addEventListener("touchend", onTouchEnd, { passive: true });
-    window.addEventListener("touchcancel", onTouchEnd, { passive: true });
-
-    return () => {
-      window.removeEventListener("scroll", onScroll);
-      window.removeEventListener("touchstart", onTouchStart);
-      window.removeEventListener("touchmove", onTouchMove);
-      window.removeEventListener("touchend", onTouchEnd);
-      window.removeEventListener("touchcancel", onTouchEnd);
-      unlock();
-    };
-  }, [lastIndex]);
+  const activeIndex = clamp(Math.round(progress * lastIndex), 0, lastIndex);
 
   return (
     <section

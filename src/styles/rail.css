@@ -213,19 +213,19 @@
   white-space: nowrap;
 }
 
-/* ============ MOBILE : scène bloquante à steps discrets ============
-   La section fait un écran (100lvh) ; RailMobile la verrouille et pilote
-   activeIndex (0/1/2). Le rail ne reçoit qu'une position cible discrète
-   (0 / -100vw / -200vw) : c'est cette transition CSS qui anime, composée
-   par le GPU — aucun recalcul JS pixel-par-pixel, aucune saccade. */
+/* ============ MOBILE : sticky + progression native (comme la section 03) ============
+   Aucun verrouillage du scroll : la section est haute de 200lvh, le stage
+   sticky s'épingle naturellement, et la progression native du scroll pilote
+   activeIndex (0/1/2) — même principe que .nh-build (220svh) sur mobile.
+   Le rail ne reçoit qu'une position cible discrète (0 / -100vw / -200vw) :
+   c'est cette transition CSS qui anime, composée par le GPU — aucun recalcul
+   JS pixel-par-pixel, aucune saccade. */
 @media (max-width: 860px) {
   .nh-rail {
-    /* Section = un écran + une zone de capture : le stage sticky s'épingle
-       naturellement au scroll, et le lock gèle sur place n'importe où dans
-       la zone → entrée/sortie sans aucun recalage visible. */
-    --nh-rail-capture-m: clamp(180px, 26svh, 300px);
-    height: calc(100vh + var(--nh-rail-capture-m));
-    height: calc(100lvh + var(--nh-rail-capture-m));
+    /* 100lvh d'écran épinglé + 100lvh de course de scroll pour les 3 plats
+       (changements à 25lvh et 75lvh de progression). */
+    height: 200vh;
+    height: 200lvh;
     z-index: auto;
     overflow: clip;
   }
