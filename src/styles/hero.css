@@ -667,12 +667,16 @@
   }
 
   .nh-hero__stage {
+    /* iPhone/Safari : dvh suit la barre d'adresse quand elle se replie au scroll.
+       Sans ça (svh figé), une bande vide apparaît sous les widgets barre repliée. */
     height: 100vh;
-    height: 100svh;
+    height: 100dvh;
+    min-height: 100svh;
     background-image:
       linear-gradient(180deg, rgba(4, 7, 16, 0.3) 0%, rgba(4, 7, 16, 0.44) 72%, rgba(4, 7, 16, 0.62) 100%),
       url("../assets/images/hero-bg-mobile.png");
-    background-position: center top;
+    /* 62% : le recadrage vertical sacrifie le plafond (haut) et préserve le bol (bas-milieu). */
+    background-position: center 62%;
   }
 
   .nh-hero__glow {
