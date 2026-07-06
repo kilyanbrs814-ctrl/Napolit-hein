@@ -4,7 +4,9 @@ const clamp = (value, min, max) => Math.min(Math.max(value, min), max);
 
 const COOL_MS = 450;
 const QUIET_MS = 130;
+const HANDOFF_MS = 360;
 const STEP_EASE = 0.18;
+const LOCK_SCROLL_TOLERANCE_PX = 3;
 const MOBILE_BREAKPOINT = 860;
 
 function normalizeWheelDelta(event, viewportHeight) {
@@ -44,6 +46,8 @@ function createSceneEngine() {
     touchDeltaY: 0,
     touchConsumed: false,
     releasedScene: null,
+    handoffDirection: 0,
+    handoffUntil: 0,
     rafId: null,
 
     viewportHeight() {
@@ -169,6 +173,19 @@ function createSceneEngine() {
       );
     },
 
+    beginHandoff(direction) {
+      this.handoffDirection = direction;
+      this.handoffUntil = performance.now() + HANDOFF_MS;
+    },
+
+    isHandoffActive(direction) {
+      if (this.handoffDirection !== direction) return false;
+
+      const isActive = performance.now() < this.handoffUntil || !this.armed;
+      if (!isActive) this.handoffDirection = 0;
+      return isActive;
+    },
+
     findCaptureScene(currentY, projectedY, direction) {
       this.clearReleasedSceneIfNeeded(currentY);
 
@@ -218,6 +235,7 @@ function createSceneEngine() {
       this.touchConsumed = true;
       this.coolAt = performance.now();
       this.releasedScene = null;
+      this.handoffDirection = 0;
       this.setSceneProgress(key, fromBelow ? 1 : 0, true);
       window.scrollTo(0, top);
       this.armAfterQuiet();
@@ -234,6 +252,7 @@ function createSceneEngine() {
       this.coolAt = performance.now();
       this.armed = false;
       this.touchConsumed = true;
+      this.beginHandoff(direction);
       this.armAfterQuiet();
     },
 
@@ -274,6 +293,7 @@ function createSceneEngine() {
         this.mode = "free";
         this.activeScene = null;
         this.releasedScene = null;
+        this.handoffDirection = 0;
       }
 
       this.updateProgressFromNativeScroll();
@@ -290,6 +310,11 @@ function createSceneEngine() {
     },
 
     captureIfCrossing(deltaY, direction) {
+      if (this.isHandoffActive(direction)) {
+        this.armAfterQuiet();
+        return false;
+      }
+
       const currentY = window.scrollY || 0;
       const projectedY = this.clampY(currentY + deltaY);
       const scene = this.findCaptureScene(currentY, projectedY, direction);
@@ -383,6 +408,7 @@ function createSceneEngine() {
         this.mode = "free";
         this.activeScene = null;
         this.releasedScene = null;
+        this.handoffDirection = 0;
         window.scrollTo(0, targetY);
         return;
       }
@@ -446,7 +472,7 @@ function createSceneEngine() {
     onNativeScroll() {
       if (this.enabled && this.mode === "locked") {
         const scrollY = window.scrollY || 0;
-        if (Math.abs(scrollY - this.frozenY) > 0.5) {
+        if (Math.abs(scrollY - this.frozenY) > LOCK_SCROLL_TOLERANCE_PX) {
           window.scrollTo(0, this.frozenY);
         }
         return;
@@ -530,6 +556,7 @@ function createSceneEngine() {
       this.mode = "free";
       this.activeScene = null;
       this.releasedScene = null;
+      this.handoffDirection = 0;
     },
 
     registerScene(scene) {
@@ -555,6 +582,8 @@ function createSceneEngine() {
           this.mode = "free";
           this.activeScene = null;
         }
+
+        if (this.releasedScene?.key === scene.key) this.releasedScene = null;
 
         if (this.scenes.size === 0) this.stop();
       };
