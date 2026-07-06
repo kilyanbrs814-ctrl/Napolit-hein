@@ -1,8 +1,8 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 
 const clamp = (value, min, max) => Math.min(Math.max(value, min), max);
-const LOCK_ALIGNMENT_TOLERANCE_PX = 10;
-const LOCK_MAINTAIN_TOLERANCE_PX = 1;
+const CAPTURE_OFFSET_PX = 80;
+const CAPTURE_MIN_VISIBLE_RATIO = 0.35;
 const GLOBAL_HANDOFF_GUARD_MS = 420;
 const GLOBAL_HANDOFF_QUIET_MS = 160;
 
@@ -86,10 +86,6 @@ function normalizeWheelDelta(event, viewportHeight) {
   return event.deltaY;
 }
 
-function getMaxScrollY() {
-  return Math.max(0, document.documentElement.scrollHeight - window.innerHeight);
-}
-
 export default function useLockedSceneSteps({
   sectionRef,
   steps,
@@ -111,7 +107,6 @@ export default function useLockedSceneSteps({
   const stepRef = useRef(0);
   const progressRef = useRef(0);
   const lockedRef = useRef(false);
-  const lockYRef = useRef(0);
   const cooldownUntilRef = useRef(0);
   const wheelArmedRef = useRef(true);
   const quietTimerRef = useRef(null);
@@ -203,13 +198,72 @@ export default function useLockedSceneSteps({
         viewportHeight,
         sectionTop,
         sectionHeight,
-        lockY: clamp(sectionTop - lockOffset, 0, getMaxScrollY()),
       };
+    };
+
+    const getMaxScrollY = () => {
+      const documentElement = document.documentElement;
+      const body = document.body;
+      const documentHeight = Math.max(
+        documentElement?.scrollHeight || 0,
+        body?.scrollHeight || 0,
+        documentElement?.offsetHeight || 0,
+        body?.offsetHeight || 0
+      );
+
+      return Math.max(0, documentHeight - (window.innerHeight || 1));
+    };
+
+    const scrollToY = (targetY) => {
+      const safeY = clamp(targetY, 0, getMaxScrollY());
+      window.scrollTo({ top: safeY, left: 0, behavior: "auto" });
+      lastScrollYRef.current = safeY;
+      return safeY;
+    };
+
+    const scrollToEntry = (metrics, fromBelow) => {
+      if (!metrics) return window.scrollY || window.pageYOffset || 0;
+
+      const targetY = fromBelow
+        ? metrics.sectionTop + metrics.sectionHeight - metrics.viewportHeight + lockOffset
+        : metrics.sectionTop - lockOffset;
+
+      return scrollToY(targetY);
+    };
+
+    const scrollAfterRelease = (releaseDirection, metrics = getMetrics()) => {
+      if (!metrics) return;
+
+      const targetY =
+        releaseDirection > 0
+          ? metrics.sectionTop + metrics.sectionHeight + 1
+          : metrics.sectionTop - metrics.viewportHeight + 1;
+
+      scrollToY(targetY);
     };
 
     const isInSceneBand = (metrics) =>
       metrics.rect.bottom > lockOffset + 1 &&
       metrics.rect.top < metrics.viewportHeight - 1;
+
+    const isInCaptureZoneAtScrollY = (metrics, scrollY) => {
+      const rectTop = metrics.sectionTop - scrollY;
+      const rectBottom = rectTop + metrics.sectionHeight;
+
+      return (
+        rectTop <= lockOffset + CAPTURE_OFFSET_PX &&
+        rectBottom > metrics.viewportHeight * CAPTURE_MIN_VISIBLE_RATIO
+      );
+    };
+
+    const isInCaptureZone = (metrics) => isInCaptureZoneAtScrollY(metrics, metrics.scrollY);
+
+    const isInProjectedCaptureZone = (metrics, projectedDeltaY) => {
+      if (!metrics || !Number.isFinite(projectedDeltaY) || projectedDeltaY === 0) return false;
+
+      const projectedScrollY = clamp(metrics.scrollY + projectedDeltaY, 0, getMaxScrollY());
+      return isInCaptureZoneAtScrollY(metrics, projectedScrollY);
+    };
 
     const nativeProgressFromMetrics = (metrics) => {
       const travel = Math.max(metrics.sectionHeight - metrics.viewportHeight, 1);
@@ -231,26 +285,21 @@ export default function useLockedSceneSteps({
       }
     };
 
-    const lockScene = (fromBelow, metrics = getMetrics()) => {
+    const lockScene = (fromBelow, metrics = getMetrics(), options = {}) => {
       if (!metrics || !lockEnabledRef.current || isGlobalHandoffGuardActive()) return false;
 
-      const currentScrollY = window.scrollY || window.pageYOffset || 0;
-      const distanceToLock = Math.abs(currentScrollY - metrics.lockY);
-      if (distanceToLock > LOCK_ALIGNMENT_TOLERANCE_PX) return false;
-
+      const currentScrollY = options.alignToEntry
+        ? scrollToEntry(metrics, fromBelow)
+        : window.scrollY || window.pageYOffset || 0;
       releaseDirectionRef.current = 0;
       lockedRef.current = true;
-      lockYRef.current = metrics.lockY;
       wheelArmedRef.current = false;
       touchConsumedRef.current = true;
       cooldownUntilRef.current = performance.now() + wheelCooldownMs;
       setIsLocked(true);
       commitStep(fromBelow ? lastStep : 0, fromBelow ? -1 : 1);
 
-      if (distanceToLock > LOCK_MAINTAIN_TOLERANCE_PX) {
-        window.scrollTo({ top: metrics.lockY, left: 0, behavior: "auto" });
-      }
-      lastScrollYRef.current = metrics.lockY;
+      lastScrollYRef.current = currentScrollY;
       armAfterQuiet();
       return true;
     };
@@ -293,20 +342,22 @@ export default function useLockedSceneSteps({
       if (event?.cancelable) event.preventDefault();
     };
 
-    const shouldLockFromWheel = (metrics, wheelDirection) => {
-      if (!metrics) return false;
-      if (isGlobalHandoffGuardActive()) return false;
+    const getCaptureState = (metrics, direction, projectedDeltaY = 0) => {
+      if (!metrics) return "none";
 
-      if (releaseDirectionRef.current === wheelDirection) return false;
-      if (releaseDirectionRef.current !== 0 && releaseDirectionRef.current !== wheelDirection) {
+      const inCaptureZone = isInCaptureZone(metrics);
+      const inProjectedCaptureZone =
+        !inCaptureZone && isInProjectedCaptureZone(metrics, projectedDeltaY);
+
+      if (!inCaptureZone && !inProjectedCaptureZone) return "none";
+
+      if (releaseDirectionRef.current === direction) return "none";
+      if (releaseDirectionRef.current !== 0 && releaseDirectionRef.current !== direction) {
         releaseDirectionRef.current = 0;
       }
 
-      const nearLockY = Math.abs(metrics.scrollY - metrics.lockY) <= LOCK_ALIGNMENT_TOLERANCE_PX;
-      const nearEntryLine =
-        Math.abs(metrics.rect.top - lockOffset) <= LOCK_ALIGNMENT_TOLERANCE_PX;
-
-      return nearLockY && nearEntryLine;
+      if (isGlobalHandoffGuardActive()) return "blocked";
+      return inProjectedCaptureZone ? "projected" : "capture";
     };
 
     const onWheel = (event) => {
@@ -320,6 +371,14 @@ export default function useLockedSceneSteps({
       const wheelDirection = deltaY > 0 ? 1 : -1;
       const now = performance.now();
       noteGlobalHandoffInput(quietMs);
+
+      if (!lockedRef.current && isGlobalHandoffGuardActive()) {
+        preventEvent(event);
+        event.__nhLockedSceneHandled = true;
+        armAfterQuiet();
+        return;
+      }
+
       armAfterQuiet();
 
       if (lockedRef.current) {
@@ -328,8 +387,11 @@ export default function useLockedSceneSteps({
         const atBackwardExit = wheelDirection < 0 && stepRef.current <= 0;
 
         if (canAct && (atForwardExit || atBackwardExit)) {
+          preventEvent(event);
           event.__nhLockedSceneReleased = true;
+          event.__nhLockedSceneHandled = true;
           releaseScene(wheelDirection);
+          scrollAfterRelease(wheelDirection, metrics);
           return;
         }
 
@@ -343,8 +405,17 @@ export default function useLockedSceneSteps({
         return;
       }
 
-      if (shouldLockFromWheel(metrics, wheelDirection)) {
-        const didLock = lockScene(wheelDirection < 0, metrics);
+      const captureState = getCaptureState(metrics, wheelDirection, deltaY);
+      if (captureState === "blocked") {
+        preventEvent(event);
+        event.__nhLockedSceneHandled = true;
+        return;
+      }
+
+      if (captureState === "capture" || captureState === "projected") {
+        const didLock = lockScene(wheelDirection < 0, metrics, {
+          alignToEntry: captureState === "projected",
+        });
         if (didLock) {
           preventEvent(event);
           event.__nhLockedSceneHandled = true;
@@ -385,6 +456,15 @@ export default function useLockedSceneSteps({
         noteGlobalHandoffInput(quietMs);
       }
 
+      if (
+        directionFromTouch !== 0 &&
+        !lockedRef.current &&
+        isGlobalHandoffGuardActive()
+      ) {
+        preventEvent(event);
+        return;
+      }
+
       if (lockedRef.current) {
         const now = performance.now();
         const canAct =
@@ -395,8 +475,11 @@ export default function useLockedSceneSteps({
         const atBackwardExit = directionFromTouch < 0 && stepRef.current <= 0;
 
         if (canAct && (atForwardExit || atBackwardExit)) {
+          preventEvent(event);
           event.__nhLockedSceneReleased = true;
+          event.__nhLockedSceneHandled = true;
           releaseScene(directionFromTouch);
+          scrollAfterRelease(directionFromTouch, metrics);
           return;
         }
 
@@ -409,7 +492,14 @@ export default function useLockedSceneSteps({
         return;
       }
 
-      if (directionFromTouch !== 0 && shouldLockFromWheel(metrics, directionFromTouch)) {
+      const captureState =
+        directionFromTouch === 0 ? "none" : getCaptureState(metrics, directionFromTouch);
+      if (captureState === "blocked") {
+        preventEvent(event);
+        return;
+      }
+
+      if (captureState === "capture" || captureState === "projected") {
         const didLock = lockScene(directionFromTouch < 0, metrics);
         if (didLock) {
           preventEvent(event);
@@ -426,6 +516,9 @@ export default function useLockedSceneSteps({
 
     const onKeyDown = (event) => {
       if (!lockEnabledRef.current) return;
+      if (event.defaultPrevented || event.__nhLockedSceneReleased || event.__nhLockedSceneHandled) {
+        return;
+      }
 
       let keyDirection = 0;
       if (event.key === "ArrowDown" || event.key === "PageDown" || event.key === " " || event.key === "Spacebar") {
@@ -440,17 +533,28 @@ export default function useLockedSceneSteps({
       const now = performance.now();
       noteGlobalHandoffInput(quietMs);
 
+      if (!lockedRef.current && isGlobalHandoffGuardActive()) {
+        preventEvent(event);
+        event.__nhLockedSceneHandled = true;
+        return;
+      }
+
       if (lockedRef.current) {
         const canAct = now >= cooldownUntilRef.current;
         const atForwardExit = keyDirection > 0 && stepRef.current >= lastStep;
         const atBackwardExit = keyDirection < 0 && stepRef.current <= 0;
 
         if (canAct && (atForwardExit || atBackwardExit)) {
+          preventEvent(event);
+          event.__nhLockedSceneReleased = true;
+          event.__nhLockedSceneHandled = true;
           releaseScene(keyDirection);
+          scrollAfterRelease(keyDirection, metrics);
           return;
         }
 
         preventEvent(event);
+        event.__nhLockedSceneHandled = true;
         if (!canAct) return;
 
         cooldownUntilRef.current = now + wheelCooldownMs;
@@ -458,10 +562,23 @@ export default function useLockedSceneSteps({
         return;
       }
 
-      if (metrics && shouldLockFromWheel(metrics, keyDirection)) {
-        const didLock = lockScene(keyDirection < 0, metrics);
+      const keyProjectedDelta = metrics ? keyDirection * metrics.viewportHeight : 0;
+      const captureState = metrics
+        ? getCaptureState(metrics, keyDirection, keyProjectedDelta)
+        : "none";
+      if (captureState === "blocked") {
+        preventEvent(event);
+        event.__nhLockedSceneHandled = true;
+        return;
+      }
+
+      if (captureState === "capture" || captureState === "projected") {
+        const didLock = lockScene(keyDirection < 0, metrics, {
+          alignToEntry: captureState === "projected",
+        });
         if (didLock) {
           preventEvent(event);
+          event.__nhLockedSceneHandled = true;
         }
       }
     };
@@ -470,15 +587,7 @@ export default function useLockedSceneSteps({
       const metrics = getMetrics();
       if (!metrics) return;
 
-      if (lockedRef.current) {
-        if (
-          Math.abs((window.scrollY || window.pageYOffset || 0) - lockYRef.current) >
-          LOCK_MAINTAIN_TOLERANCE_PX
-        ) {
-          window.scrollTo({ top: lockYRef.current, left: 0, behavior: "auto" });
-        }
-        return;
-      }
+      if (lockedRef.current) return;
 
       if (!lockEnabledRef.current) {
         updateNativeProgress(metrics);
@@ -511,10 +620,7 @@ export default function useLockedSceneSteps({
       const metrics = getMetrics();
       if (!metrics) return;
 
-      if (lockedRef.current) {
-        lockYRef.current = metrics.lockY;
-        window.scrollTo({ top: metrics.lockY, left: 0, behavior: "auto" });
-      } else if (!lockEnabledRef.current) {
+      if (!lockedRef.current && !lockEnabledRef.current) {
         updateNativeProgress(metrics);
       }
     };

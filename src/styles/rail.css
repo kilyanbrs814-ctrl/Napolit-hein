@@ -2,8 +2,8 @@
 .nh-rail {
   position: relative;
   z-index: 22;
-  height: 100vh;
-  height: 100svh;
+  height: 180vh;
+  height: 180svh;
   background: var(--bg);
 }
 

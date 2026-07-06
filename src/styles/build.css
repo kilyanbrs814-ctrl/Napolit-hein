@@ -1,9 +1,9 @@
 /* ============ SCENE 03 - CONSTRUCTION DU PLAT ============ */
 .nh-build {
   position: relative;
-  /* Desktop : la scene est verrouillee, la progression vient du step interne. */
-  height: 100vh;
-  height: 100svh;
+  /* Desktop : runway de capture. Le lock bloque les steps, pas la geometrie. */
+  height: 180vh;
+  height: 180svh;
   background: linear-gradient(180deg, var(--bg), #0a1024, var(--bg));
 }
 
