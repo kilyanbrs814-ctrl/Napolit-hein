@@ -263,28 +263,32 @@ function createSceneEngine() {
         return;
       }
 
-      if (performance.now() < this.releasedScene.until) return;
-
       const top = this.sceneTop(scene);
-      const height = Math.min(this.sceneHeight(scene), this.viewportHeight());
-      const below = scrollY > top + height * 0.72;
-      const above = scrollY < top - height * 0.42;
+      const height = this.sceneHeight(scene);
+      const buffer = 24;
 
-      if (
-        (this.releasedScene.direction > 0 && below) ||
-        (this.releasedScene.direction < 0 && above)
-      ) {
+      const fullyBelow = scrollY >= top + height + buffer;
+      const fullyAbove = scrollY <= top - buffer;
+
+      const leftOnReleaseSide =
+        this.releasedScene.direction > 0 ? fullyBelow : fullyAbove;
+
+      if (leftOnReleaseSide) {
         this.releasedScene = null;
+        return;
       }
+
+      if (performance.now() < this.releasedScene.until) return;
     },
 
-    shouldIgnoreScene(scene, direction) {
-      if (!this.releasedScene || this.releasedScene.key !== scene.key) return false;
+    shouldIgnoreScene(scene, direction, currentY = window.scrollY || 0) {
+      this.clearReleasedSceneIfNeeded(currentY);
 
-      if (performance.now() < this.releasedScene.until) return true;
+      if (!this.releasedScene || this.releasedScene.key !== scene.key) {
+        return false;
+      }
 
-      this.clearReleasedSceneIfNeeded();
-      return this.releasedScene?.key === scene.key;
+      return true;
     },
 
     beginHandoff(direction) {
@@ -323,7 +327,7 @@ function createSceneEngine() {
         return currentY >= scene.top - 1 && currentY < bottom - 1;
       });
 
-      if (containing && !this.shouldIgnoreScene(containing, direction)) {
+      if (containing && !this.shouldIgnoreScene(containing, direction, currentY)) {
         return containing;
       }
 
@@ -331,19 +335,20 @@ function createSceneEngine() {
         return (
           scenes.find(
             (scene) =>
-              !this.shouldIgnoreScene(scene, direction) &&
+              !this.shouldIgnoreScene(scene, direction, currentY) &&
               scene.top > currentY + 1 &&
               scene.top <= projectedY + 1
           ) || null
         );
       }
 
-      const crossed = scenes.filter(
-        (scene) =>
-          !this.shouldIgnoreScene(scene, direction) &&
-          scene.top < currentY - 1 &&
-          scene.top >= projectedY - 1
-      );
+      const crossed = scenes.filter((scene) => {
+        if (this.shouldIgnoreScene(scene, direction, currentY)) return false;
+
+        const sceneEnd = scene.top + Math.min(scene.height, viewportHeight);
+
+        return sceneEnd < currentY - 1 && sceneEnd >= projectedY - 1;
+      });
 
       return crossed.length ? crossed[crossed.length - 1] : null;
     },
@@ -374,7 +379,7 @@ function createSceneEngine() {
       const key = this.activeScene;
       if (!key) return;
 
-      const targetY = this.getReleaseTargetY(direction);
+      const targetY = this.frozenY;
       const now = performance.now();
       this.setSceneProgress(key, direction > 0 ? 1 : 0, true);
       this.mode = "free";
