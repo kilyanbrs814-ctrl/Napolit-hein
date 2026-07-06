@@ -48,7 +48,6 @@ function createSceneEngine() {
     releasedScene: null,
     handoffDirection: 0,
     handoffUntil: 0,
-    bodyLock: null,
     scrollBehaviorRestore: null,
     rafId: null,
 
@@ -136,57 +135,6 @@ function createSceneEngine() {
       this.holdInstantScrollBehavior();
       window.scrollTo({ top: safeY, left: 0, behavior: "auto" });
       this.scheduleScrollBehaviorRestore();
-    },
-
-    lockBody(scrollY) {
-      if (this.bodyLock || typeof document === "undefined") return;
-
-      const body = document.body;
-      const html = document.documentElement;
-      this.bodyLock = {
-        scrollY,
-        maxScrollY: this.maxScrollY(),
-        bodyPosition: body.style.position,
-        bodyTop: body.style.top,
-        bodyLeft: body.style.left,
-        bodyRight: body.style.right,
-        bodyWidth: body.style.width,
-        bodyOverscrollBehavior: body.style.overscrollBehavior,
-        htmlOverscrollBehavior: html.style.overscrollBehavior,
-      };
-
-      html.style.overscrollBehavior = "none";
-      body.style.overscrollBehavior = "none";
-      body.style.position = "fixed";
-      body.style.top = `-${scrollY}px`;
-      body.style.left = "0";
-      body.style.right = "0";
-      body.style.width = "100%";
-      body.classList.add("nh-scene-hard-locked");
-    },
-
-    unlockBody(targetY) {
-      if (!this.bodyLock || typeof document === "undefined") {
-        this.instantScrollTo(this.clampY(targetY));
-        return;
-      }
-
-      const lock = this.bodyLock;
-      const safeY = clamp(targetY, 0, lock.maxScrollY);
-      const body = document.body;
-      const html = document.documentElement;
-
-      this.holdInstantScrollBehavior();
-      body.classList.remove("nh-scene-hard-locked");
-      body.style.position = lock.bodyPosition;
-      body.style.top = lock.bodyTop;
-      body.style.left = lock.bodyLeft;
-      body.style.right = lock.bodyRight;
-      body.style.width = lock.bodyWidth;
-      body.style.overscrollBehavior = lock.bodyOverscrollBehavior;
-      html.style.overscrollBehavior = lock.htmlOverscrollBehavior;
-      this.bodyLock = null;
-      this.instantScrollTo(safeY, lock.maxScrollY);
     },
 
     orderedScenes() {
@@ -307,7 +255,7 @@ function createSceneEngine() {
     getReleaseTargetY(direction) {
       const scene = this.sceneByKey(this.activeScene);
       const top = this.frozenY;
-      const maxScrollY = this.bodyLock?.maxScrollY ?? this.maxScrollY();
+      const maxScrollY = this.maxScrollY();
       const targetY =
         direction > 0
           ? top + this.sceneHeight(scene) + 1
@@ -401,10 +349,17 @@ function createSceneEngine() {
       if (this.releasedScene?.key === key) this.releasedScene = null;
       this.handoffDirection = 0;
       this.setSceneProgress(key, fromBelow ? 1 : 0, true);
+      /* Verrou "scroll-pin" : PAS de body position:fixed. Basculer le body en
+         fixed créait un nouveau stacking context → Chrome reconstruisait les
+         couches et re-rastérisait le contenu ; les scènes lourdes (rail 300vw
+         + blurs) disparaissaient 1-2 frames au lock. Il collapsait aussi
+         scrollY à 0 (Header, Framer useScroll). Ici on aligne simplement le
+         scroll dans la zone épinglée — le stage sticky y affiche le même
+         écran pour tout Y — puis les handlers preventDefault neutralisent
+         les inputs et onNativeScroll ré-épingle les résidus d'inertie. */
       if (Math.abs((window.scrollY || 0) - frozenY) > 1) {
         this.instantScrollTo(frozenY);
       }
-      this.lockBody(frozenY);
       this.armAfterQuiet();
     },
 
@@ -428,7 +383,9 @@ function createSceneEngine() {
       this.armed = false;
       this.touchConsumed = true;
       this.beginHandoff(direction);
-      this.unlockBody(targetY);
+      /* Le scroll est déjà épinglé à frozenY : la sortie ne déplace rien,
+         le scroll natif reprend simplement d'ici. */
+      this.instantScrollTo(targetY);
       this.armAfterQuiet();
     },
 
@@ -470,7 +427,6 @@ function createSceneEngine() {
         this.activeScene = null;
         this.releasedScene = null;
         this.handoffDirection = 0;
-        if (this.bodyLock) this.unlockBody(this.bodyLock.scrollY);
       }
 
       this.updateProgressFromNativeScroll();
@@ -597,7 +553,7 @@ function createSceneEngine() {
         this.activeScene = null;
         this.releasedScene = null;
         this.handoffDirection = 0;
-        this.unlockBody(targetY);
+        this.instantScrollTo(targetY);
         return;
       }
 
@@ -664,6 +620,31 @@ function createSceneEngine() {
 
     onNativeScroll() {
       if (this.enabled && this.mode === "locked") {
+        /* Pin du scroll pendant le lock (remplace le body position:fixed).
+           Les inputs sont déjà preventDefault ; ne restent que les résidus
+           d'inertie du smooth-scroll navigateur et les sauts programmatiques. */
+        const scene = this.sceneByKey(this.activeScene);
+        if (!scene?.ref?.current) return;
+
+        const y = window.scrollY || 0;
+        const top = this.sceneTop(scene);
+        const end = top + Math.max(0, this.sceneHeight(scene) - this.viewportHeight());
+        const pinned = clamp(y, top, end);
+
+        /* Saut programmatique (ancre, navigation...) très loin de la zone :
+           on libère la scène au lieu de se battre contre ce scroll. */
+        if (Math.abs(y - pinned) > this.viewportHeight() / 2) {
+          this.mode = "free";
+          this.activeScene = null;
+          this.handoffDirection = 0;
+          return;
+        }
+
+        /* Dans la zone épinglée, tout Y affiche exactement le même écran
+           (stage sticky) : on absorbe l'inertie sans aucun scrollTo. Hors
+           zone, on re-cale au bord — recalage invisible pour la même raison. */
+        this.frozenY = pinned;
+        if (y !== pinned) this.instantScrollTo(pinned);
         return;
       }
 
@@ -746,7 +727,6 @@ function createSceneEngine() {
       this.activeScene = null;
       this.releasedScene = null;
       this.handoffDirection = 0;
-      if (this.bodyLock) this.unlockBody(this.bodyLock.scrollY);
     },
 
     registerScene(scene) {
@@ -771,7 +751,6 @@ function createSceneEngine() {
         if (this.activeScene === scene.key) {
           this.mode = "free";
           this.activeScene = null;
-          if (this.bodyLock) this.unlockBody(this.bodyLock.scrollY);
         }
 
         if (this.releasedScene?.key === scene.key) this.releasedScene = null;
