@@ -27,8 +27,8 @@
 }
 
 /* ---- Annule le margin-top de .nh-menu DANS la scène ----
-   C'est .nh-mds lui-même qui reprend ce rôle (margin-top: -100svh ci-dessous),
-   ce qui permet de garder un calcul sticky propre à l'intérieur.           */
+   La scène 05 démarre dans le flux après le rail : le chevauchement négatif
+   est réservé à la transition 05 → 06, pas à l'entrée depuis la section 04. */
 .nh-mds .nh-menu {
   margin-top: 0;
   /* Garantit que le menu couvre toujours au moins un viewport entier.
@@ -41,8 +41,7 @@
 .nh-mds {
   position: relative;
   z-index: 20;
-  /* Reprend le margin-top: -100svh du menu (overlap 04 → 05 préservé) */
-  margin-top: -100svh;
+  margin-top: 0;
   /* height réelle injectée par JS via --menu-h ;
      = hauteur du menu + zone de transition               */
   height: calc(var(--menu-h, 800px) + var(--mds-size));

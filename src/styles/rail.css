@@ -2,7 +2,7 @@
 .nh-rail {
   --nh-step-capture: clamp(96px, 14svh, 160px);
   position: relative;
-  z-index: 22;
+  z-index: 18;
   height: calc(100vh + var(--nh-step-capture));
   height: calc(100svh + var(--nh-step-capture));
   overflow: clip;

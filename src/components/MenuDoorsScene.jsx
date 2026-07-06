@@ -20,6 +20,8 @@ import "../styles/menuDoorsScene.css";
 export default function MenuDoorsScene() {
   const menuRef = useRef(null);
   const sceneRef = useRef(null);
+  const maxMenuHeightRef = useRef(0);
+  const lastWidthRef = useRef(0);
 
   useLayoutEffect(() => {
     const wrapper = menuRef.current;
@@ -29,9 +31,10 @@ export default function MenuDoorsScene() {
     const update = () => {
       const menu = wrapper.querySelector(".nh-menu");
       const viewportH = window.innerHeight || 800;
-      const minDesktopH = viewportH * 1.35;
+      const viewportW = window.innerWidth || 0;
+      const minDesktopH = viewportH * 1.7;
       const minMobileH = viewportH;
-      const minSceneH = window.innerWidth > 860 ? minDesktopH : minMobileH;
+      const minSceneH = viewportW > 860 ? minDesktopH : minMobileH;
       const measuredH = Math.max(
         wrapper.offsetHeight,
         wrapper.scrollHeight,
@@ -42,7 +45,13 @@ export default function MenuDoorsScene() {
         minSceneH
       );
 
-      scene.style.setProperty("--menu-h", `${Math.ceil(measuredH)}px`);
+      if (Math.abs(viewportW - lastWidthRef.current) > 16) {
+        maxMenuHeightRef.current = 0;
+        lastWidthRef.current = viewportW;
+      }
+
+      maxMenuHeightRef.current = Math.max(maxMenuHeightRef.current, measuredH);
+      scene.style.setProperty("--menu-h", `${Math.ceil(maxMenuHeightRef.current)}px`);
     };
 
     const ro = new ResizeObserver(update);
