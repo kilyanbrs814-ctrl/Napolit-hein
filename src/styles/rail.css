@@ -1,9 +1,9 @@
 /* ============ SCENE 04 - LES INCONTOURNABLES (RAIL) ============ */
 .nh-rail {
-  /* Zone élargie : avec softCapture, le lock n'arrive que lorsqu'un event de
-     scroll tombe DANS la zone épinglée (freeze sur place, zéro recalage).
-     Elle doit donc dépasser le plus gros delta molette (~200px/event). */
-  --nh-step-capture: clamp(240px, 30svh, 380px);
+  /* Même zone de capture que la section 03 (build.css) : le lock arrive par
+     projection dès que le scroll franchit la frontière sticky — entrée/sortie
+     identiques à la section 03, sans zone morte à traverser. */
+  --nh-step-capture: clamp(96px, 14svh, 160px);
   position: relative;
   z-index: 18;
   height: calc(100vh + var(--nh-step-capture));

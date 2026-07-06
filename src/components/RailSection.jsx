@@ -107,9 +107,11 @@ function RailDesktop() {
     sceneKey: "railScene",
     sectionRef,
     steps: count,
-    /* Capture uniquement quand le scroll est déjà dans la zone sticky :
-       freeze à la position courante, aucun recalage visible à l'entrée. */
-    softCapture: true,
+    /* Même capture que la section 03 (buildScene) : lock par projection au
+       franchissement de la frontière sticky. Le stage étant épinglé sur toute
+       la zone de capture, le clamp dans la zone ne produit aucun décalage
+       visuel, et la projection garantit qu'un gros coup de molette ne peut
+       pas sauter la section. */
   });
 
   /* Cible brute pilotée par le scroll : le lock la fait atterrir pile sur 0/1/2. */
