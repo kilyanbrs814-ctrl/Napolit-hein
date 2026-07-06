@@ -222,10 +222,11 @@
    JS pixel-par-pixel, aucune saccade. */
 @media (max-width: 860px) {
   .nh-rail {
-    /* 100lvh d'écran épinglé + 100lvh de course de scroll pour les 3 plats
-       (changements à 25lvh et 75lvh de progression). */
-    height: 200vh;
-    height: 200lvh;
+    /* 100lvh d'écran épinglé + 160lvh de course de scroll pour les 3 plats :
+       chaque plat dispose d'une vraie zone stable (le plat 2 occupe ~80lvh
+       au centre de la course, impossible à traverser d'un seul swipe normal). */
+    height: 260vh;
+    height: 260lvh;
     z-index: auto;
     overflow: clip;
   }

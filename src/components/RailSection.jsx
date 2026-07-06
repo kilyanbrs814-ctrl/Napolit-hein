@@ -162,6 +162,42 @@ function RailDesktop() {
    Plus aucun body position:fixed ni scrollTo : c'est ce hard-lock custom qui
    basculait le système de scroll au moment du lock, reconstruisait le rendu
    (flash / disparition de la section) et recalait la page. */
+
+/* Marche d'escalier côté RENDU uniquement (le scroll reste libre) : l'index
+   affiché avance d'un plat maximum à la fois, avec un palier minimal entre
+   deux changements. Un fling qui traverse toute la course affiche donc
+   1 → 2 (arrêt réel) → 3, jamais 1 → 3 direct. L'hystérésis évite le
+   scintillement quand le scroll s'arrête pile sur une frontière. */
+const STEP_DWELL_MS = 650;
+const STEP_HYSTERESIS = 0.08;
+
+function useSteppedIndex(target, lastIndex) {
+  const [index, setIndex] = useState(() => clamp(Math.round(target), 0, lastIndex));
+  const stRef = useRef({ index, lastChange: 0 });
+
+  useEffect(() => {
+    const st = stRef.current;
+    const direction =
+      target > st.index + 0.5 + STEP_HYSTERESIS
+        ? 1
+        : target < st.index - 0.5 - STEP_HYSTERESIS
+          ? -1
+          : 0;
+    if (direction === 0) return undefined;
+
+    const wait = Math.max(0, st.lastChange + STEP_DWELL_MS - performance.now());
+    const timer = setTimeout(() => {
+      st.index = clamp(st.index + direction, 0, lastIndex);
+      st.lastChange = performance.now();
+      setIndex(st.index);
+    }, wait);
+
+    return () => clearTimeout(timer);
+  }, [target, lastIndex, index]);
+
+  return index;
+}
+
 function RailMobile() {
   const sectionRef = useRef(null);
   const count = RAIL_DISHES.length;
@@ -171,7 +207,7 @@ function RailMobile() {
     sectionRef,
     steps: count,
   });
-  const activeIndex = clamp(Math.round(progress * lastIndex), 0, lastIndex);
+  const activeIndex = useSteppedIndex(progress * lastIndex, lastIndex);
 
   return (
     <section
