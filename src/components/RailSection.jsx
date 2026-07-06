@@ -107,6 +107,9 @@ function RailDesktop() {
     sceneKey: "railScene",
     sectionRef,
     steps: count,
+    /* Capture uniquement quand le scroll est déjà dans la zone sticky :
+       freeze à la position courante, aucun recalage visible à l'entrée. */
+    softCapture: true,
   });
 
   /* Cible brute pilotée par le scroll : le lock la fait atterrir pile sur 0/1/2. */
@@ -197,16 +200,28 @@ function RailMobile() {
       body.style.scrollBehavior = prevBody;
     };
 
-    const lock = (startIndex) => {
+    /* Zone de verrouillage = plage où le stage sticky est épinglé :
+       n'importe quel Y dedans affiche exactement le même écran. */
+    const zoneBounds = () => {
+      const el = sectionRef.current;
+      if (!el) return null;
+      const top = el.getBoundingClientRect().top + (window.scrollY || 0);
+      const stage = el.firstElementChild;
+      const stageH = stage ? stage.offsetHeight : window.innerHeight || 1;
+      return { top, end: top + Math.max(0, el.offsetHeight - stageH) };
+    };
+
+    const lock = (startIndex, freezeY) => {
       if (st.locked) return;
       const el = sectionRef.current;
       if (!el) return;
 
-      const top = el.getBoundingClientRect().top + (window.scrollY || 0);
+      /* Freeze à la position visuelle ACTUELLE : le stage sticky rend tout Y
+         de la zone identique à l'écran → aucun scrollTo d'alignement. */
+      const top = freezeY;
       const body = document.body;
       const html = document.documentElement;
 
-      instantScrollTo(top);
       st.bodyRestore = {
         position: body.style.position,
         top: body.style.top,
@@ -256,27 +271,40 @@ function RailMobile() {
       st.lastScrollY = st.lockY;
     };
 
-    /* Capture : la section couvre la moitié centrale de l'écran → on verrouille.
-       Direction d'entrée : par le haut → plat 1, par le bas → plat 3. */
+    /* Capture : le scroll natif amène la section, le stage sticky s'épingle
+       tout seul ; dès qu'un event scroll tombe dans la zone épinglée, on gèle
+       sur place. Direction d'entrée : par le haut → plat 1, par le bas → plat 3. */
     const onScroll = () => {
       if (st.locked) return;
       const y = window.scrollY || 0;
-      const dir = y > st.lastScrollY ? 1 : y < st.lastScrollY ? -1 : 0;
+      const prev = st.lastScrollY;
       st.lastScrollY = y;
-      const el = sectionRef.current;
-      if (!el || dir === 0) return;
+      const dir = y > prev ? 1 : y < prev ? -1 : 0;
+      if (dir === 0) return;
 
-      const rect = el.getBoundingClientRect();
-      const vph = window.innerHeight || 1;
-      const covering = rect.top <= vph * 0.25 && rect.bottom >= vph * 0.75;
+      const bounds = zoneBounds();
+      if (!bounds) return;
 
-      if (!covering) {
-        st.released = false;
-        return;
-      }
+      /* Le flag anti-recapture se lève une fois la zone vraiment quittée. */
+      if (y < bounds.top - 50 || y > bounds.end + 50) st.released = false;
       if (st.released) return;
 
-      lock(dir > 0 ? 0 : lastIndex);
+      if (y >= bounds.top && y <= bounds.end) {
+        lock(dir > 0 ? 0 : lastIndex, y);
+        return;
+      }
+
+      /* Flick extrême : toute la zone sautée entre deux events (rare).
+         Petite correction technique vers le bord le plus proche. */
+      if (dir > 0 && prev < bounds.top && y > bounds.end && y - bounds.end < 200) {
+        instantScrollTo(bounds.end);
+        st.lastScrollY = bounds.end;
+        lock(0, bounds.end);
+      } else if (dir < 0 && prev > bounds.end && y < bounds.top && bounds.top - y < 200) {
+        instantScrollTo(bounds.top);
+        st.lastScrollY = bounds.top;
+        lock(lastIndex, bounds.top);
+      }
     };
 
     const onTouchStart = (event) => {

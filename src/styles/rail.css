@@ -1,6 +1,9 @@
 /* ============ SCENE 04 - LES INCONTOURNABLES (RAIL) ============ */
 .nh-rail {
-  --nh-step-capture: clamp(96px, 14svh, 160px);
+  /* Zone élargie : avec softCapture, le lock n'arrive que lorsqu'un event de
+     scroll tombe DANS la zone épinglée (freeze sur place, zéro recalage).
+     Elle doit donc dépasser le plus gros delta molette (~200px/event). */
+  --nh-step-capture: clamp(240px, 30svh, 380px);
   position: relative;
   z-index: 18;
   height: calc(100vh + var(--nh-step-capture));
@@ -217,15 +220,20 @@
    par le GPU — aucun recalcul JS pixel-par-pixel, aucune saccade. */
 @media (max-width: 860px) {
   .nh-rail {
-    height: 100vh;
-    height: 100lvh;
+    /* Section = un écran + une zone de capture : le stage sticky s'épingle
+       naturellement au scroll, et le lock gèle sur place n'importe où dans
+       la zone → entrée/sortie sans aucun recalage visible. */
+    --nh-rail-capture-m: clamp(180px, 26svh, 300px);
+    height: calc(100vh + var(--nh-rail-capture-m));
+    height: calc(100lvh + var(--nh-rail-capture-m));
     z-index: auto;
     overflow: clip;
   }
   .nh-rail__stage {
-    position: relative;
-    top: auto;
-    height: 100%;
+    position: sticky;
+    top: 0;
+    height: 100vh;
+    height: 100lvh;
     overflow: clip;
   }
   .nh-rail__track {

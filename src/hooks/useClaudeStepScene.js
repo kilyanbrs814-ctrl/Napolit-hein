@@ -345,6 +345,10 @@ function createSceneEngine() {
 
       if (direction > 0) {
         const crossed = scenes.find((scene) => {
+          /* softCapture : la scène ne se verrouille que lorsque le scroll est
+             DÉJÀ dans sa zone (branche "containing", freeze sans recalage).
+             Pas de capture par projection → pas de scrollTo visible. */
+          if (scene.softCapture) return false;
           if (this.shouldIgnoreScene(scene, direction, currentY)) return false;
 
           const { top } = this.captureBounds(scene, viewportHeight);
@@ -362,6 +366,7 @@ function createSceneEngine() {
       }
 
       const crossed = scenes.filter((scene) => {
+        if (scene.softCapture) return false;
         if (this.shouldIgnoreScene(scene, direction, currentY)) return false;
 
         const { end } = this.captureBounds(scene, viewportHeight);
@@ -797,7 +802,7 @@ function getEngine() {
   return engine;
 }
 
-export default function useClaudeStepScene({ sceneKey, sectionRef, steps }) {
+export default function useClaudeStepScene({ sceneKey, sectionRef, steps, softCapture = false }) {
   const [snapshot, setSnapshot] = useState(() => createSnapshot(0, steps, true));
 
   useEffect(() => {
@@ -806,7 +811,7 @@ export default function useClaudeStepScene({ sceneKey, sectionRef, steps }) {
     }
 
     const sceneEngine = getEngine();
-    const unregister = sceneEngine.registerScene({ key: sceneKey, ref: sectionRef, steps });
+    const unregister = sceneEngine.registerScene({ key: sceneKey, ref: sectionRef, steps, softCapture });
     const unsubscribe = sceneEngine.subscribe(sceneKey, setSnapshot);
 
     setSnapshot(sceneEngine.getSnapshot(sceneKey, steps));
@@ -815,7 +820,7 @@ export default function useClaudeStepScene({ sceneKey, sectionRef, steps }) {
       unsubscribe();
       unregister();
     };
-  }, [sceneKey, sectionRef, steps]);
+  }, [sceneKey, sectionRef, steps, softCapture]);
 
   return snapshot;
 }
