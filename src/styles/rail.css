@@ -210,33 +210,27 @@
   white-space: nowrap;
 }
 
-/* ============ MOBILE : carousel horizontal natif (scroll-snap) ============
-   Plus de sticky/progress/transform JS : le swipe est composé nativement par
-   Safari sur le thread GPU. Chaque plat est un vrai point d'arrêt centré. */
+/* ============ MOBILE : scène bloquante à steps discrets ============
+   La section fait un écran (100lvh) ; RailMobile la verrouille et pilote
+   activeIndex (0/1/2). Le rail ne reçoit qu'une position cible discrète
+   (0 / -100vw / -200vw) : c'est cette transition CSS qui anime, composée
+   par le GPU — aucun recalcul JS pixel-par-pixel, aucune saccade. */
 @media (max-width: 860px) {
   .nh-rail {
-    height: auto;
+    height: 100vh;
+    height: 100lvh;
     z-index: auto;
-    overflow: visible;
+    overflow: clip;
   }
   .nh-rail__stage {
     position: relative;
     top: auto;
-    height: auto;
-    overflow: visible;
+    height: 100%;
+    overflow: clip;
   }
   .nh-rail__track {
-    overflow-x: auto;
-    overflow-y: hidden;
-    scroll-snap-type: x mandatory;
-    -webkit-overflow-scrolling: touch;
-    overscroll-behavior-x: contain;
-    transform: none !important;
-    will-change: auto;
-    scrollbar-width: none;
-  }
-  .nh-rail__track::-webkit-scrollbar {
-    display: none;
+    transition: transform 0.9s cubic-bezier(0.16, 1, 0.3, 1);
+    will-change: transform;
   }
   .nh-rail__header {
     top: 74px;
@@ -248,16 +242,12 @@
   }
   .nh-rail__card,
   .nh-rail__card:nth-child(even) {
-    flex: 0 0 100%;
-    width: 100%;
-    height: auto;
-    min-height: min(82svh, 700px);
-    scroll-snap-align: center;
-    scroll-snap-stop: always;
-    will-change: auto;
     flex-direction: column;
     gap: 14px;
     padding: 76px 22px 44px;
+    will-change: auto;
+    transition: opacity 0.9s cubic-bezier(0.16, 1, 0.3, 1),
+      transform 0.9s cubic-bezier(0.16, 1, 0.3, 1);
   }
   /* Blobs sans blur : le radial-gradient fond déjà vers transparent, le
      filter: blur() coûtait une rastérisation GPU énorme pendant le scroll. */
@@ -313,6 +303,13 @@
   }
   .nh-rail__index {
     bottom: 16px;
+  }
+}
+
+@media (max-width: 860px) and (prefers-reduced-motion: reduce) {
+  .nh-rail__track,
+  .nh-rail__card {
+    transition: none;
   }
 }
 

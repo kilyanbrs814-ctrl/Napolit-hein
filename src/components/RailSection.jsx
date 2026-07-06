@@ -147,28 +147,217 @@ function RailDesktop() {
   );
 }
 
-/* ---- Mobile : carousel horizontal 100 % natif (CSS scroll-snap) ----
-   Aucun hook de scène, aucun progress, aucun transform JS pendant le swipe :
-   Safari compose le scroll sur le thread GPU → fluidité native.
-   floatingIndex = index → opacité/scale figées à 1 (rien de recalculé). */
+/* ---- Mobile : scène bloquante step-by-step, steps DISCRETS ----
+   Le scroll vertical amène la section, un mini-moteur local la verrouille
+   (body fixed, comme le scroll-lock desktop), puis chaque swipe vertical
+   = 1 plat max. Le rail ne bouge qu'au changement de step : la position
+   cible est discrète (0 / -100vw / -200vw) et c'est une transition CSS qui
+   anime — aucun recalcul JS pixel-par-pixel, donc aucune saccade.
+   Le hook global n'est pas utilisé ici : il est désactivé sur mobile et
+   le modifier impacterait la section 03. */
+const SWIPE_THRESHOLD_PX = 36;
+const STEP_COOLDOWN_MS = 520;
+
 function RailMobile() {
+  const sectionRef = useRef(null);
   const count = RAIL_DISHES.length;
+  const lastIndex = count - 1;
+  const [activeIndex, setActiveIndex] = useState(0);
+  const stateRef = useRef({
+    locked: false,
+    index: 0,
+    lockY: 0,
+    lastScrollY: 0,
+    coolAt: 0,
+    touchY: 0,
+    touchDelta: 0,
+    consumed: false,
+    released: false,
+    bodyRestore: null,
+  });
+
+  useEffect(() => {
+    const st = stateRef.current;
+    st.lastScrollY = window.scrollY || 0;
+
+    const setIndex = (i) => {
+      st.index = i;
+      setActiveIndex(i);
+    };
+
+    const instantScrollTo = (y) => {
+      const html = document.documentElement;
+      const body = document.body;
+      const prevHtml = html.style.scrollBehavior;
+      const prevBody = body.style.scrollBehavior;
+      html.style.scrollBehavior = "auto";
+      body.style.scrollBehavior = "auto";
+      window.scrollTo(0, y);
+      html.style.scrollBehavior = prevHtml;
+      body.style.scrollBehavior = prevBody;
+    };
+
+    const lock = (startIndex) => {
+      if (st.locked) return;
+      const el = sectionRef.current;
+      if (!el) return;
+
+      const top = el.getBoundingClientRect().top + (window.scrollY || 0);
+      const body = document.body;
+      const html = document.documentElement;
+
+      instantScrollTo(top);
+      st.bodyRestore = {
+        position: body.style.position,
+        top: body.style.top,
+        left: body.style.left,
+        right: body.style.right,
+        width: body.style.width,
+        bodyOverscroll: body.style.overscrollBehavior,
+        htmlOverscroll: html.style.overscrollBehavior,
+      };
+      html.style.overscrollBehavior = "none";
+      body.style.overscrollBehavior = "none";
+      body.style.position = "fixed";
+      body.style.top = `-${top}px`;
+      body.style.left = "0";
+      body.style.right = "0";
+      body.style.width = "100%";
+      body.classList.add("nh-scene-hard-locked");
+
+      st.locked = true;
+      st.lockY = top;
+      st.coolAt = performance.now();
+      st.touchDelta = 0;
+      st.consumed = true;
+      setIndex(startIndex);
+    };
+
+    const unlock = () => {
+      if (!st.locked) return;
+      const body = document.body;
+      const html = document.documentElement;
+      const restore = st.bodyRestore;
+
+      body.classList.remove("nh-scene-hard-locked");
+      if (restore) {
+        body.style.position = restore.position;
+        body.style.top = restore.top;
+        body.style.left = restore.left;
+        body.style.right = restore.right;
+        body.style.width = restore.width;
+        body.style.overscrollBehavior = restore.bodyOverscroll;
+        html.style.overscrollBehavior = restore.htmlOverscroll;
+      }
+      st.bodyRestore = null;
+      st.locked = false;
+      st.released = true;
+      instantScrollTo(st.lockY);
+      st.lastScrollY = st.lockY;
+    };
+
+    /* Capture : la section couvre la moitié centrale de l'écran → on verrouille.
+       Direction d'entrée : par le haut → plat 1, par le bas → plat 3. */
+    const onScroll = () => {
+      if (st.locked) return;
+      const y = window.scrollY || 0;
+      const dir = y > st.lastScrollY ? 1 : y < st.lastScrollY ? -1 : 0;
+      st.lastScrollY = y;
+      const el = sectionRef.current;
+      if (!el || dir === 0) return;
+
+      const rect = el.getBoundingClientRect();
+      const vph = window.innerHeight || 1;
+      const covering = rect.top <= vph * 0.25 && rect.bottom >= vph * 0.75;
+
+      if (!covering) {
+        st.released = false;
+        return;
+      }
+      if (st.released) return;
+
+      lock(dir > 0 ? 0 : lastIndex);
+    };
+
+    const onTouchStart = (event) => {
+      const touch = event.touches?.[0];
+      if (!touch) return;
+      st.touchY = touch.clientY;
+      st.touchDelta = 0;
+      st.consumed = false;
+    };
+
+    const onTouchMove = (event) => {
+      if (!st.locked) return;
+      if (event.cancelable) event.preventDefault();
+
+      const touch = event.touches?.[0];
+      if (!touch) return;
+      st.touchDelta += st.touchY - touch.clientY;
+      st.touchY = touch.clientY;
+
+      if (st.consumed || Math.abs(st.touchDelta) < SWIPE_THRESHOLD_PX) return;
+      const now = performance.now();
+      if (now - st.coolAt < STEP_COOLDOWN_MS) return;
+
+      /* 1 geste = 1 plat max (consumed), + cooldown entre deux gestes. */
+      st.consumed = true;
+      st.coolAt = now;
+
+      if (st.touchDelta > 0) {
+        if (st.index < lastIndex) setIndex(st.index + 1);
+        else unlock();
+      } else {
+        if (st.index > 0) setIndex(st.index - 1);
+        else unlock();
+      }
+    };
+
+    const onTouchEnd = () => {
+      st.touchDelta = 0;
+      st.consumed = false;
+    };
+
+    window.addEventListener("scroll", onScroll, { passive: true });
+    window.addEventListener("touchstart", onTouchStart, { passive: true });
+    window.addEventListener("touchmove", onTouchMove, { passive: false });
+    window.addEventListener("touchend", onTouchEnd, { passive: true });
+    window.addEventListener("touchcancel", onTouchEnd, { passive: true });
+
+    return () => {
+      window.removeEventListener("scroll", onScroll);
+      window.removeEventListener("touchstart", onTouchStart);
+      window.removeEventListener("touchmove", onTouchMove);
+      window.removeEventListener("touchend", onTouchEnd);
+      window.removeEventListener("touchcancel", onTouchEnd);
+      unlock();
+    };
+  }, [lastIndex]);
 
   return (
-    <section id="carte" className="nh-rail" data-screen-label="04 Incontournables">
+    <section
+      id="carte"
+      ref={sectionRef}
+      className="nh-rail"
+      data-screen-label="04 Incontournables"
+      data-active-index={activeIndex}
+    >
       <div className="nh-rail__stage">
         <div className="nh-rail__header">
           <div className="nh-eyebrow nh-rail__eyebrow">04 · Les incontournables</div>
-          <div className="nh-eyebrow nh-rail__hint">Swipe →</div>
+          <div className="nh-eyebrow nh-rail__hint">Scroll ↓</div>
         </div>
-        <div className="nh-rail__track">
+        <div
+          className="nh-rail__track"
+          style={{ transform: `translate3d(${-activeIndex * 100}vw, 0, 0)` }}
+        >
           {RAIL_DISHES.map((dish, index) => (
             <RailCard
               key={dish.name}
               dish={dish}
               index={index}
               count={count}
-              floatingIndex={index}
+              floatingIndex={activeIndex}
             />
           ))}
         </div>
