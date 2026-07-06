@@ -667,11 +667,12 @@
   }
 
   .nh-hero__stage {
-    /* iPhone/Safari : dvh suit la barre d'adresse quand elle se replie au scroll.
-       Sans ça (svh figé), une bande vide apparaît sous les widgets barre repliée. */
+    /* iPhone/Safari : lvh = hauteur plein écran STATIQUE (barre URL repliée).
+       Contrairement à dvh, elle ne change jamais pendant le scroll : l'image
+       est grande dès le départ et ne zoome pas quand la barre se replie —
+       la barre ne fait que révéler le bas du visuel déjà rendu. */
     height: 100vh;
-    height: 100dvh;
-    min-height: 100svh;
+    height: 100lvh;
     background-image:
       linear-gradient(180deg, rgba(4, 7, 16, 0.3) 0%, rgba(4, 7, 16, 0.44) 72%, rgba(4, 7, 16, 0.62) 100%),
       url("../assets/images/hero-bg-mobile.png");
@@ -705,6 +706,9 @@
     text-align: center;
     padding: 0 22px 130px;
     transform: translateY(-5svh);
+    /* Stage = 100lvh mais zone sûre = 100svh (barre URL visible) :
+       recentre le contenu sur la zone sûre → 45svh - 50lvh ≡ centre svh - 5svh. */
+    transform: translateY(calc(45svh - 50lvh));
   }
 
   .nh-hero__logo {
@@ -782,6 +786,9 @@
     left: 14px;
     right: 14px;
     bottom: max(12px, env(safe-area-inset-bottom));
+    /* Ancre les widgets au bas de la zone sûre (svh), pas du stage (lvh) :
+       jamais cachés par la barre URL, et immobiles quand elle se replie. */
+    bottom: calc(100lvh - 100svh + max(12px, env(safe-area-inset-bottom)));
     width: auto;
     max-width: none;
     gap: 6px;
@@ -898,6 +905,7 @@
     left: 10px;
     right: 10px;
     bottom: max(12px, env(safe-area-inset-bottom));
+    bottom: calc(100lvh - 100svh + max(12px, env(safe-area-inset-bottom)));
     width: auto;
   }
 
