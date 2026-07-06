@@ -7,16 +7,29 @@ const RAIL_DISHES = DISHES.slice(0, 3);
 
 const clamp = (value, min, max) => Math.min(Math.max(value, min), max);
 
-/* Lissage temporel local à la section 04 (copie volontaire de celui de la
-   section 03 : le hook partagé ne doit pas changer). Sur desktop, le hook
-   fait sauter progress d'un step entier d'un coup ; on glisse vers cette
-   cible avec une constante de temps tau, indépendante du framerate.
-   Sur mobile, ça interpole entre les événements de scroll natifs
-   (fini l'effet basse-FPS) au lieu de suivre chaque event brut. */
+/* Même breakpoint que rail.css et que le scroll-lock (MOBILE_BREAKPOINT = 860). */
+const MOBILE_QUERY = "(max-width: 860px)";
+
+function useIsMobile() {
+  const [isMobile, setIsMobile] = useState(
+    () => typeof window !== "undefined" && window.matchMedia(MOBILE_QUERY).matches
+  );
+
+  useEffect(() => {
+    const mq = window.matchMedia(MOBILE_QUERY);
+    const onChange = (event) => setIsMobile(event.matches);
+    mq.addEventListener("change", onChange);
+    return () => mq.removeEventListener("change", onChange);
+  }, []);
+
+  return isMobile;
+}
+
+/* Lissage temporel local à la section 04 desktop (copie volontaire de celui de
+   la section 03 : le hook partagé ne doit pas changer). Le hook fait sauter
+   progress d'un step entier d'un coup ; on glisse vers cette cible avec une
+   constante de temps tau, indépendante du framerate. */
 const SMOOTH_TAU_MS = 420;
-/* Mobile : après ce délai sans variation de scroll, le rail se recale
-   en douceur sur le plat le plus proche (jamais entre deux positions). */
-const SNAP_IDLE_MS = 160;
 
 function useSmoothedValue(target, tau = SMOOTH_TAU_MS) {
   const [value, setValue] = useState(target);
@@ -85,7 +98,8 @@ function RailCard({ dish, index, count, floatingIndex }) {
   );
 }
 
-export default function RailSection() {
+/* ---- Desktop : scène sticky + scroll-lock step-by-step (inchangé) ---- */
+function RailDesktop() {
   const sectionRef = useRef(null);
   const count = RAIL_DISHES.length;
   const lastIndex = count - 1;
@@ -94,23 +108,10 @@ export default function RailSection() {
     sectionRef,
     steps: count,
   });
-  /* Cible brute pilotée par le scroll. Sur desktop le lock la fait atterrir
-     pile sur 0 / 1 / 2 ; sur mobile elle est continue. */
+
+  /* Cible brute pilotée par le scroll : le lock la fait atterrir pile sur 0/1/2. */
   const rawTarget = progress * lastIndex;
-
-  /* Snap mobile : si le scroll se stabilise entre deux plats, on vise le
-     plat le plus proche. Sur desktop, round(rawTarget) == rawTarget → no-op. */
-  const [snapTarget, setSnapTarget] = useState(null);
-  useEffect(() => {
-    setSnapTarget(null);
-    const id = window.setTimeout(
-      () => setSnapTarget(clamp(Math.round(rawTarget), 0, lastIndex)),
-      SNAP_IDLE_MS
-    );
-    return () => window.clearTimeout(id);
-  }, [rawTarget, lastIndex]);
-
-  const floatingIndex = useSmoothedValue(snapTarget ?? rawTarget);
+  const floatingIndex = useSmoothedValue(rawTarget);
   const activeIndex = clamp(Math.round(floatingIndex), 0, lastIndex);
   const trackX = -floatingIndex * 100;
 
@@ -144,4 +145,39 @@ export default function RailSection() {
       </div>
     </section>
   );
+}
+
+/* ---- Mobile : carousel horizontal 100 % natif (CSS scroll-snap) ----
+   Aucun hook de scène, aucun progress, aucun transform JS pendant le swipe :
+   Safari compose le scroll sur le thread GPU → fluidité native.
+   floatingIndex = index → opacité/scale figées à 1 (rien de recalculé). */
+function RailMobile() {
+  const count = RAIL_DISHES.length;
+
+  return (
+    <section id="carte" className="nh-rail" data-screen-label="04 Incontournables">
+      <div className="nh-rail__stage">
+        <div className="nh-rail__header">
+          <div className="nh-eyebrow nh-rail__eyebrow">04 · Les incontournables</div>
+          <div className="nh-eyebrow nh-rail__hint">Swipe →</div>
+        </div>
+        <div className="nh-rail__track">
+          {RAIL_DISHES.map((dish, index) => (
+            <RailCard
+              key={dish.name}
+              dish={dish}
+              index={index}
+              count={count}
+              floatingIndex={index}
+            />
+          ))}
+        </div>
+      </div>
+    </section>
+  );
+}
+
+export default function RailSection() {
+  const isMobile = useIsMobile();
+  return isMobile ? <RailMobile /> : <RailDesktop />;
 }

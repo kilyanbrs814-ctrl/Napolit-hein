@@ -210,11 +210,33 @@
   white-space: nowrap;
 }
 
+/* ============ MOBILE : carousel horizontal natif (scroll-snap) ============
+   Plus de sticky/progress/transform JS : le swipe est composé nativement par
+   Safari sur le thread GPU. Chaque plat est un vrai point d'arrêt centré. */
 @media (max-width: 860px) {
   .nh-rail {
-    height: 245vh;
-    height: 245svh;
+    height: auto;
     z-index: auto;
+    overflow: visible;
+  }
+  .nh-rail__stage {
+    position: relative;
+    top: auto;
+    height: auto;
+    overflow: visible;
+  }
+  .nh-rail__track {
+    overflow-x: auto;
+    overflow-y: hidden;
+    scroll-snap-type: x mandatory;
+    -webkit-overflow-scrolling: touch;
+    overscroll-behavior-x: contain;
+    transform: none !important;
+    will-change: auto;
+    scrollbar-width: none;
+  }
+  .nh-rail__track::-webkit-scrollbar {
+    display: none;
   }
   .nh-rail__header {
     top: 74px;
@@ -226,16 +248,33 @@
   }
   .nh-rail__card,
   .nh-rail__card:nth-child(even) {
+    flex: 0 0 100%;
+    width: 100%;
+    height: auto;
+    min-height: min(82svh, 700px);
+    scroll-snap-align: center;
+    scroll-snap-stop: always;
+    will-change: auto;
     flex-direction: column;
     gap: 14px;
     padding: 76px 22px 44px;
   }
+  /* Blobs sans blur : le radial-gradient fond déjà vers transparent, le
+     filter: blur() coûtait une rastérisation GPU énorme pendant le scroll. */
   .nh-rail__card::before {
-    width: 112vw;
-    height: 46vh;
+    width: 100vw;
+    height: 42vh;
     left: 50%;
     top: 38%;
-    filter: blur(34px);
+    filter: none;
+    opacity: 0.8;
+  }
+  .nh-rail__media::before {
+    filter: none;
+    opacity: 0.75;
+  }
+  .nh-rail__dish {
+    filter: drop-shadow(0 16px 22px rgba(0, 0, 0, 0.4));
   }
   .nh-rail__media {
     width: min(58vw, 252px);
