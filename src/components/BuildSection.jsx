@@ -17,8 +17,6 @@ const smoothstep = (value) => value * value * (3 - 2 * value);
 function BuildImageLayer({ image, index, floatingIndex }) {
   const raw = clamp(1 - Math.abs(floatingIndex - index) * 1.05, 0, 1);
   const opacity = smoothstep(raw);
-  const scale = 0.965 + 0.035 * opacity;
-  const rotate = (index - floatingIndex) * 3;
 
   return (
     <div
@@ -26,7 +24,6 @@ function BuildImageLayer({ image, index, floatingIndex }) {
       style={{
         backgroundImage: `url(${image})`,
         opacity,
-        transform: `scale(${scale}) rotate(${rotate}deg)`,
         zIndex: index + 1,
       }}
       aria-hidden="true"

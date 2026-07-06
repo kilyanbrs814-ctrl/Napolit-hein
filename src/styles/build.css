@@ -72,7 +72,7 @@
   background-repeat: no-repeat;
   background-position: center;
   filter: drop-shadow(0 26px 42px rgba(0, 0, 0, 0.55));
-  will-change: transform, opacity;
+  will-change: opacity;
 }
 
 .nh-build__ring {
