@@ -5,6 +5,7 @@ const clamp = (value, min, max) => Math.min(Math.max(value, min), max);
 const COOL_MS = 450;
 const QUIET_MS = 130;
 const HANDOFF_MS = 340;
+const RELEASE_IGNORE_MS = 720;
 const STEP_EASE = 0.18;
 const MOBILE_BREAKPOINT = 860;
 
@@ -206,6 +207,8 @@ function createSceneEngine() {
         return;
       }
 
+      if (performance.now() < this.releasedScene.until) return;
+
       const top = this.sceneTop(scene);
       const height = Math.min(this.sceneHeight(scene), this.viewportHeight());
       const below = scrollY > top + height * 0.72;
@@ -220,11 +223,12 @@ function createSceneEngine() {
     },
 
     shouldIgnoreScene(scene, direction) {
-      return (
-        this.releasedScene &&
-        this.releasedScene.key === scene.key &&
-        this.releasedScene.direction === direction
-      );
+      if (!this.releasedScene || this.releasedScene.key !== scene.key) return false;
+
+      if (performance.now() < this.releasedScene.until) return true;
+
+      this.clearReleasedSceneIfNeeded();
+      return this.releasedScene?.key === scene.key;
     },
 
     beginHandoff(direction) {
@@ -232,8 +236,8 @@ function createSceneEngine() {
       this.handoffUntil = performance.now() + HANDOFF_MS;
     },
 
-    isHandoffActive(direction) {
-      if (this.handoffDirection !== direction) return false;
+    isHandoffActive() {
+      if (this.handoffDirection === 0) return false;
 
       const isActive = performance.now() < this.handoffUntil || !this.armed;
       if (!isActive) this.handoffDirection = 0;
@@ -300,7 +304,7 @@ function createSceneEngine() {
       this.armed = false;
       this.touchConsumed = true;
       this.coolAt = performance.now();
-      this.releasedScene = null;
+      if (this.releasedScene?.key === key) this.releasedScene = null;
       this.handoffDirection = 0;
       this.setSceneProgress(key, fromBelow ? 1 : 0, true);
       if (Math.abs((window.scrollY || 0) - top) > 1) {
@@ -315,11 +319,18 @@ function createSceneEngine() {
       if (!key) return;
 
       const targetY = this.getReleaseTargetY(direction);
+      const now = performance.now();
       this.setSceneProgress(key, direction > 0 ? 1 : 0, true);
       this.mode = "free";
       this.activeScene = null;
-      this.releasedScene = { key, direction };
-      this.coolAt = performance.now();
+      this.releasedScene = {
+        key,
+        direction,
+        releaseY: this.frozenY,
+        targetY,
+        until: now + RELEASE_IGNORE_MS,
+      };
+      this.coolAt = now;
       this.armed = false;
       this.touchConsumed = true;
       this.beginHandoff(direction);
@@ -382,7 +393,7 @@ function createSceneEngine() {
     },
 
     captureIfCrossing(deltaY, direction) {
-      if (this.isHandoffActive(direction)) {
+      if (this.isHandoffActive()) {
         this.armAfterQuiet();
         return false;
       }
@@ -418,7 +429,7 @@ function createSceneEngine() {
         return;
       }
 
-      if (this.isHandoffActive(direction)) {
+      if (this.isHandoffActive()) {
         this.preventEvent(event);
         return;
       }
@@ -467,7 +478,7 @@ function createSceneEngine() {
       if (Math.abs(delta) < 1) return;
 
       const direction = delta > 0 ? 1 : -1;
-      if (this.isHandoffActive(direction)) {
+      if (this.isHandoffActive()) {
         this.preventEvent(event);
         return;
       }
@@ -518,6 +529,11 @@ function createSceneEngine() {
 
         this.coolAt = now;
         this.moveStep(direction);
+        return;
+      }
+
+      if (this.isHandoffActive()) {
+        this.preventEvent(event);
         return;
       }
 
