@@ -49,6 +49,7 @@ function createSceneEngine() {
     handoffDirection: 0,
     handoffUntil: 0,
     bodyLock: null,
+    scrollBehaviorRestore: null,
     rafId: null,
 
     viewportHeight() {
@@ -83,6 +84,60 @@ function createSceneEngine() {
       if (event?.cancelable) event.preventDefault();
     },
 
+    holdInstantScrollBehavior() {
+      if (typeof document === "undefined") return;
+
+      const body = document.body;
+      const html = document.documentElement;
+      if (!body || !html) return;
+
+      if (!this.scrollBehaviorRestore) {
+        this.scrollBehaviorRestore = {
+          bodyScrollBehavior: body.style.scrollBehavior,
+          htmlScrollBehavior: html.style.scrollBehavior,
+          rafId: 0,
+          nextRafId: 0,
+        };
+      } else {
+        if (this.scrollBehaviorRestore.rafId) {
+          window.cancelAnimationFrame(this.scrollBehaviorRestore.rafId);
+        }
+        if (this.scrollBehaviorRestore.nextRafId) {
+          window.cancelAnimationFrame(this.scrollBehaviorRestore.nextRafId);
+        }
+      }
+
+      html.style.scrollBehavior = "auto";
+      body.style.scrollBehavior = "auto";
+    },
+
+    scheduleScrollBehaviorRestore() {
+      if (!this.scrollBehaviorRestore || typeof document === "undefined") return;
+
+      const restore = () => {
+        const snapshot = this.scrollBehaviorRestore;
+        if (!snapshot) return;
+
+        document.documentElement.style.scrollBehavior = snapshot.htmlScrollBehavior;
+        document.body.style.scrollBehavior = snapshot.bodyScrollBehavior;
+        this.scrollBehaviorRestore = null;
+      };
+
+      this.scrollBehaviorRestore.rafId = window.requestAnimationFrame(() => {
+        if (!this.scrollBehaviorRestore) return;
+        this.scrollBehaviorRestore.nextRafId = window.requestAnimationFrame(restore);
+      });
+    },
+
+    instantScrollTo(y, maxY = this.maxScrollY()) {
+      if (typeof window === "undefined") return;
+
+      const safeY = clamp(y, 0, maxY);
+      this.holdInstantScrollBehavior();
+      window.scrollTo({ top: safeY, left: 0, behavior: "auto" });
+      this.scheduleScrollBehaviorRestore();
+    },
+
     lockBody(scrollY) {
       if (this.bodyLock || typeof document === "undefined") return;
 
@@ -112,7 +167,7 @@ function createSceneEngine() {
 
     unlockBody(targetY) {
       if (!this.bodyLock || typeof document === "undefined") {
-        window.scrollTo(0, this.clampY(targetY));
+        this.instantScrollTo(this.clampY(targetY));
         return;
       }
 
@@ -121,6 +176,7 @@ function createSceneEngine() {
       const body = document.body;
       const html = document.documentElement;
 
+      this.holdInstantScrollBehavior();
       body.classList.remove("nh-scene-hard-locked");
       body.style.position = lock.bodyPosition;
       body.style.top = lock.bodyTop;
@@ -130,7 +186,7 @@ function createSceneEngine() {
       body.style.overscrollBehavior = lock.bodyOverscrollBehavior;
       html.style.overscrollBehavior = lock.htmlOverscrollBehavior;
       this.bodyLock = null;
-      window.scrollTo(0, safeY);
+      this.instantScrollTo(safeY, lock.maxScrollY);
     },
 
     orderedScenes() {
@@ -308,7 +364,7 @@ function createSceneEngine() {
       this.handoffDirection = 0;
       this.setSceneProgress(key, fromBelow ? 1 : 0, true);
       if (Math.abs((window.scrollY || 0) - top) > 1) {
-        window.scrollTo(0, top);
+        this.instantScrollTo(top);
       }
       this.lockBody(top);
       this.armAfterQuiet();
