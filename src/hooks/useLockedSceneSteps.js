@@ -1,6 +1,8 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 
 const clamp = (value, min, max) => Math.min(Math.max(value, min), max);
+const LOCK_ALIGNMENT_TOLERANCE_PX = 10;
+const LOCK_MAINTAIN_TOLERANCE_PX = 1;
 const GLOBAL_HANDOFF_GUARD_MS = 420;
 const GLOBAL_HANDOFF_QUIET_MS = 160;
 
@@ -232,6 +234,10 @@ export default function useLockedSceneSteps({
     const lockScene = (fromBelow, metrics = getMetrics()) => {
       if (!metrics || !lockEnabledRef.current || isGlobalHandoffGuardActive()) return false;
 
+      const currentScrollY = window.scrollY || window.pageYOffset || 0;
+      const distanceToLock = Math.abs(currentScrollY - metrics.lockY);
+      if (distanceToLock > LOCK_ALIGNMENT_TOLERANCE_PX) return false;
+
       releaseDirectionRef.current = 0;
       lockedRef.current = true;
       lockYRef.current = metrics.lockY;
@@ -241,7 +247,9 @@ export default function useLockedSceneSteps({
       setIsLocked(true);
       commitStep(fromBelow ? lastStep : 0, fromBelow ? -1 : 1);
 
-      window.scrollTo({ top: metrics.lockY, left: 0, behavior: "auto" });
+      if (distanceToLock > LOCK_MAINTAIN_TOLERANCE_PX) {
+        window.scrollTo({ top: metrics.lockY, left: 0, behavior: "auto" });
+      }
       lastScrollYRef.current = metrics.lockY;
       armAfterQuiet();
       return true;
@@ -285,7 +293,7 @@ export default function useLockedSceneSteps({
       if (event?.cancelable) event.preventDefault();
     };
 
-    const shouldLockFromWheel = (metrics, wheelDirection, deltaY) => {
+    const shouldLockFromWheel = (metrics, wheelDirection) => {
       if (!metrics) return false;
       if (isGlobalHandoffGuardActive()) return false;
 
@@ -294,20 +302,11 @@ export default function useLockedSceneSteps({
         releaseDirectionRef.current = 0;
       }
 
-      const currentY = metrics.scrollY;
-      const projectedY = clamp(currentY + deltaY, 0, getMaxScrollY());
-      const atLockLine = Math.abs(currentY - metrics.lockY) <= 2;
-      const crossesDown =
-        wheelDirection > 0 && currentY < metrics.lockY && projectedY >= metrics.lockY;
-      const crossesUp =
-        wheelDirection < 0 && currentY > metrics.lockY && projectedY <= metrics.lockY;
+      const nearLockY = Math.abs(metrics.scrollY - metrics.lockY) <= LOCK_ALIGNMENT_TOLERANCE_PX;
+      const nearEntryLine =
+        Math.abs(metrics.rect.top - lockOffset) <= LOCK_ALIGNMENT_TOLERANCE_PX;
 
-      if (crossesDown || crossesUp) return true;
-      if (!isInSceneBand(metrics)) return false;
-
-      const nearEntryLine = Math.abs(metrics.rect.top - lockOffset) <= 8;
-
-      return atLockLine || nearEntryLine;
+      return nearLockY && nearEntryLine;
     };
 
     const onWheel = (event) => {
@@ -344,10 +343,12 @@ export default function useLockedSceneSteps({
         return;
       }
 
-      if (shouldLockFromWheel(metrics, wheelDirection, deltaY)) {
-        preventEvent(event);
-        event.__nhLockedSceneHandled = true;
-        lockScene(wheelDirection < 0, metrics);
+      if (shouldLockFromWheel(metrics, wheelDirection)) {
+        const didLock = lockScene(wheelDirection < 0, metrics);
+        if (didLock) {
+          preventEvent(event);
+          event.__nhLockedSceneHandled = true;
+        }
       }
     };
 
@@ -408,10 +409,12 @@ export default function useLockedSceneSteps({
         return;
       }
 
-      if (directionFromTouch !== 0 && shouldLockFromWheel(metrics, directionFromTouch, directionFromTouch * touchThreshold * 2)) {
-        preventEvent(event);
-        touchConsumedRef.current = true;
-        lockScene(directionFromTouch < 0, metrics);
+      if (directionFromTouch !== 0 && shouldLockFromWheel(metrics, directionFromTouch)) {
+        const didLock = lockScene(directionFromTouch < 0, metrics);
+        if (didLock) {
+          preventEvent(event);
+          touchConsumedRef.current = true;
+        }
       }
     };
 
@@ -455,9 +458,11 @@ export default function useLockedSceneSteps({
         return;
       }
 
-      if (metrics && shouldLockFromWheel(metrics, keyDirection, keyDirection * metrics.viewportHeight * 0.85)) {
-        preventEvent(event);
-        lockScene(keyDirection < 0, metrics);
+      if (metrics && shouldLockFromWheel(metrics, keyDirection)) {
+        const didLock = lockScene(keyDirection < 0, metrics);
+        if (didLock) {
+          preventEvent(event);
+        }
       }
     };
 
@@ -466,7 +471,10 @@ export default function useLockedSceneSteps({
       if (!metrics) return;
 
       if (lockedRef.current) {
-        if (Math.abs((window.scrollY || window.pageYOffset || 0) - lockYRef.current) > 1) {
+        if (
+          Math.abs((window.scrollY || window.pageYOffset || 0) - lockYRef.current) >
+          LOCK_MAINTAIN_TOLERANCE_PX
+        ) {
           window.scrollTo({ top: lockYRef.current, left: 0, behavior: "auto" });
         }
         return;
@@ -496,14 +504,6 @@ export default function useLockedSceneSteps({
         if (scrollDirection !== 0 && scrollDirection !== releaseDirectionRef.current) {
           releaseDirectionRef.current = 0;
         }
-        return;
-      }
-
-      const nearEntryLine = Math.abs(metrics.rect.top - lockOffset) <= 2;
-      const nearLockY = Math.abs(metrics.scrollY - metrics.lockY) <= 2;
-
-      if (scrollDirection !== 0 && nearEntryLine && nearLockY) {
-        lockScene(scrollDirection < 0, metrics);
       }
     };
 
