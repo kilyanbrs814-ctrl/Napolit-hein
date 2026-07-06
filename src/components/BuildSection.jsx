@@ -1,4 +1,4 @@
-import { useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import { BUILD_STEPS } from "../data/content.js";
 import useClaudeStepScene from "../hooks/useClaudeStepScene.js";
 import logo from "../assets/images/logo-napolithein.png";
@@ -13,10 +13,50 @@ const LAST_BUILD_INDEX = IMAGES.length - 1;
 
 const clamp = (value, min, max) => Math.min(Math.max(value, min), max);
 const smoothstep = (value) => value * value * (3 - 2 * value);
+/* Quintique : dérivées 1re ET 2e nulles aux bords → départ/arrivée encore plus doux. */
+const smootherstep = (v) => v * v * v * (v * (v * 6 - 15) + 10);
+
+/* Lissage temporel local à la section 03 : le hook (partagé avec la section 04)
+   fait sauter progress d'un step entier d'un coup sur desktop ; on interpole ici
+   vers cette cible avec une constante de temps ~selon tau, indépendante du framerate.
+   Ne modifie pas useClaudeStepScene. */
+const SMOOTH_TAU_MS = 340;
+
+function useSmoothedValue(target, tau = SMOOTH_TAU_MS) {
+  const [value, setValue] = useState(target);
+  const stateRef = useRef({ value: target, target });
+  stateRef.current.target = target;
+
+  useEffect(() => {
+    let rafId;
+    let last = performance.now();
+    const tick = (now) => {
+      const dt = Math.min(now - last, 100);
+      last = now;
+      const st = stateRef.current;
+      if (st.value !== st.target) {
+        const k = 1 - Math.exp(-dt / tau);
+        const next = st.value + (st.target - st.value) * k;
+        st.value = Math.abs(st.target - next) < 0.0005 ? st.target : next;
+        setValue(st.value);
+      }
+      rafId = requestAnimationFrame(tick);
+    };
+    rafId = requestAnimationFrame(tick);
+    return () => cancelAnimationFrame(rafId);
+  }, [tau]);
+
+  return value;
+}
 
 function BuildImageLayer({ image, index, floatingIndex }) {
-  const raw = clamp(1 - Math.abs(floatingIndex - index) * 1.05, 0, 1);
-  const opacity = smoothstep(raw);
+  /* Fondu additif : la couche N apparaît lentement PAR-DESSUS la couche N-1,
+     qui reste pleinement visible dessous (zIndex croissant). Pas de crossfade
+     croisé → jamais de creux semi-transparent au milieu de la transition.
+     Fenêtre 1.0 : l'apparition occupe 100 % du trajet entre deux steps. */
+  const remaining = Math.max(index - floatingIndex, 0);
+  const raw = clamp(1 - remaining, 0, 1);
+  const opacity = smootherstep(raw);
 
   return (
     <div
@@ -63,9 +103,9 @@ export default function BuildSection() {
     steps: IMAGES.length,
   });
 
-  const floatingIndex = progress * LAST_BUILD_INDEX;
+  const floatingIndex = useSmoothedValue(progress * LAST_BUILD_INDEX);
   const displayIndex = clamp(Math.round(floatingIndex), 0, LAST_BUILD_INDEX);
-  const glowOpacity = 0.4 + 0.5 * Math.sin(progress * Math.PI);
+  const glowOpacity = 0.4 + 0.5 * Math.sin((floatingIndex / LAST_BUILD_INDEX) * Math.PI);
 
   return (
     <section id="couches" ref={sectionRef} className="nh-build" data-screen-label="03 Construction">
