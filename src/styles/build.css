@@ -169,8 +169,11 @@
 
 @media (max-width: 860px) {
   .nh-build {
-    height: 220vh;
-    height: 220svh;
+    /* 100 d'écran épinglé + 180 de course : l'animation occupe 75 % de la
+       course (≈135svh, rythme inchangé) et les ~45svh restants sont le
+       runway final où l'image 4, terminée, reste affichée avant la 04. */
+    height: 280vh;
+    height: 280svh;
   }
   /* On atteint la section 03 en scrollant → barre Safari repliée → écran = lvh.
      Le stage doit couvrir lvh (statique) pour que le flex-center existant centre

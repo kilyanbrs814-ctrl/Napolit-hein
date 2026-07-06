@@ -95,15 +95,30 @@ function TextStep({ index, step, floatingIndex, activeIndex }) {
   );
 }
 
+/* Part de la course mobile réservée en fin de section : l'animation se
+   termine à 75 % du scroll, les 25 % restants sont un runway où le bowl
+   complet reste épinglé — la section 04 ne peut apparaître qu'après. */
+const NATIVE_END_RUNWAY = 0.25;
+
 export default function BuildSection() {
   const sectionRef = useRef(null);
-  const { progress } = useClaudeStepScene({
+  const { progress, isNative } = useClaudeStepScene({
     sceneKey: "buildScene",
     sectionRef,
     steps: IMAGES.length,
   });
 
-  const floatingIndex = useSmoothedValue(progress * LAST_BUILD_INDEX);
+  /* Mode natif (mobile) : l'animation est liée DIRECTEMENT à la position de
+     scroll (fonction pure, aucun retard), et compressée sur les 75 premiers
+     pour cent de la course. Garantie géométrique : l'image 4 est entièrement
+     apparue avant le runway final, quelle que soit la vitesse du swipe — le
+     lissage temporel, lui, prendrait du retard proportionnel à la vitesse.
+     Desktop : progress saute d'un step entier au scroll-lock → on garde le
+     lissage temporel existant, inchangé. */
+  const nativeTarget =
+    Math.min(progress / (1 - NATIVE_END_RUNWAY), 1) * LAST_BUILD_INDEX;
+  const smoothedIndex = useSmoothedValue(progress * LAST_BUILD_INDEX);
+  const floatingIndex = isNative ? nativeTarget : smoothedIndex;
   const displayIndex = clamp(Math.round(floatingIndex), 0, LAST_BUILD_INDEX);
   const glowOpacity = 0.4 + 0.5 * Math.sin((floatingIndex / LAST_BUILD_INDEX) * Math.PI);
 
