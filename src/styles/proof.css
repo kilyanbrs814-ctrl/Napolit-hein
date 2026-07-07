@@ -259,6 +259,9 @@
   font-weight: 800;
   font-size: 13px;
   color: var(--gold);
+  /* Le nom texte de l'enseigne (flex:1) n'est plus rendu quand il y a un
+     logo : la note reste calée à droite du header. */
+  margin-left: auto;
 }
 .nh-proof__ticket-body {
   font-family: var(--body);
@@ -360,12 +363,31 @@
   .nh-proof__platform-rev {
     font-size: 10.5px;
   }
-  /* Tickets un peu plus étroits : le décalage de couloir gauche/droite
-     (±50-94px, cf ProofSection) reste lisible sans sortir de l'écran. */
+  /* Tickets compacts : on gagne la place sur la largeur, le padding, le
+     header et les badges — JAMAIS sur .nh-proof__ticket-body (le texte du
+     commentaire garde sa taille). La trajectoire (ProofSection) ne change
+     pas : carte plus étroite = encore moins de rognage aux bords. */
   .nh-proof__ticket {
-    width: min(248px, 74vw);
-    left: calc(50% - min(124px, 37vw));
-    padding: 14px 16px;
+    width: min(224px, 68vw);
+    left: calc(50% - min(112px, 34vw));
+    padding: 12px 13px;
+    border-radius: 12px;
+  }
+  .nh-proof__ticket-top {
+    gap: 7px;
+    margin-bottom: 8px;
+  }
+  .nh-proof__ticket-badge.is-logo {
+    width: 52px;
+  }
+  .nh-proof__ticket-badge.is-google {
+    width: 56px;
+  }
+  .nh-proof__ticket-badge-logo {
+    height: 14px;
+  }
+  .nh-proof__ticket-rate {
+    font-size: 12px;
   }
   .nh-proof__ticket-body {
     font-size: 13px;

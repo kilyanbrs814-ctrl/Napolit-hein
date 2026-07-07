@@ -50,13 +50,15 @@ function AnimatedTicket({ ticket, progress, compact }) {
    */
 
   // --- X : déviation couloir (-20 % par rapport à la session précédente).
-  // Mobile (compact) : mêmes couloirs gauche/droite mais en dizaines de px —
-  // les ±656px+ desktop éjectaient la carte d'un écran de 390px avant même
-  // son entrée verticale dans la vue. Ici la carte traverse l'écran en
-  // restant visible, avec un léger décalage de couloir puis une dérive
-  // douce vers son bord au moment où l'opacité retombe.
+  // Mobile (compact) : mêmes couloirs gauche/droite mais à l'échelle d'un
+  // écran de 390-430px — les ±656px+ desktop éjectaient la carte avant même
+  // son entrée verticale dans la vue. Amplitude volontairement expressive :
+  // la carte monte en s'écartant franchement vers son bord (±84 au passage
+  // du centre ≈ elle affleure le bord sur 390px, rognage ≤ ~13px), puis
+  // dérive jusqu'à ±148 pendant que l'opacité retombe. Le overflow:hidden
+  // du stage garantit zéro scroll horizontal.
   const xVals = compact
-    ? (left ? [-14, -14, -50, -68, -94] : [14, 14, 50, 68, 94])
+    ? (left ? [-24, -24, -84, -112, -148] : [24, 24, 84, 112, 148])
     : (left ? [-80, -80, -656, -832, -1120] : [80, 80, 656, 832, 1120]);
   const xKeys = [
     c(d + 0.04), c(d + 0.10), c(d + 0.24), c(d + 0.46), c(d + 0.58),
@@ -109,7 +111,9 @@ function AnimatedTicket({ ticket, progress, compact }) {
             ticket.mono
           )}
         </span>
-        <span className="nh-proof__ticket-src">{ticket.src}</span>
+        {/* Le logo porte déjà le nom (alt) : pas de doublon texte visible.
+            Le texte ne subsiste que pour un éventuel ticket sans logo. */}
+        {!ticketLogo && <span className="nh-proof__ticket-src">{ticket.src}</span>}
         <span className="nh-proof__ticket-rate">{ticket.rate}</span>
       </div>
       <div className="nh-proof__ticket-body">{ticket.body}</div>
