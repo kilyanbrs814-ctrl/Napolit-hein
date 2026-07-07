@@ -9,7 +9,26 @@
   align-items: center;
   padding: 14px 40px;
   background: linear-gradient(180deg, rgba(7, 11, 22, 0.92), rgba(7, 11, 22, 0));
-  transition: background 0.3s ease, padding 0.3s ease;
+  /* Cachée par défaut : la navbar n'existe visuellement qu'après le hero +
+     la bannière rouge (voir Header.jsx). Cachée aussi au premier paint
+     (état CSS par défaut) → aucun flash au chargement. visibility retardée
+     de la durée du fade pour sortir la nav de l'ordre de tabulation sans
+     couper la transition de disparition. */
+  opacity: 0;
+  transform: translateY(-14px);
+  visibility: hidden;
+  pointer-events: none;
+  transition: background 0.3s ease, padding 0.3s ease, opacity 0.35s ease,
+    transform 0.35s ease, visibility 0s linear 0.35s;
+}
+
+.nh-header.is-visible {
+  opacity: 1;
+  transform: none;
+  visibility: visible;
+  pointer-events: auto;
+  transition: background 0.3s ease, padding 0.3s ease, opacity 0.35s ease,
+    transform 0.35s ease, visibility 0s;
 }
 
 .nh-header.is-scrolled {

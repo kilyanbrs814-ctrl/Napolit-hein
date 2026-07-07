@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { DISHES, LINKS } from "../data/content.js";
+import { DISHES } from "../data/content.js";
 import useClaudeStepScene from "../hooks/useClaudeStepScene.js";
 import "../styles/rail.css";
 
@@ -81,14 +81,6 @@ function RailCard({ dish, index, count, floatingIndex }) {
         <p className="nh-rail__desc">{dish.desc}</p>
         <div className="nh-rail__row">
           <span className="nh-rail__price">{dish.price}</span>
-          <a
-            href={LINKS.uber}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="nh-rail__btn"
-          >
-            Commander <span aria-hidden>→</span>
-          </a>
         </div>
       </div>
       <div className="nh-rail__index">

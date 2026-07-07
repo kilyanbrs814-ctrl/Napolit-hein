@@ -6,7 +6,7 @@
   --nh-step-capture: clamp(96px, 14svh, 160px);
   position: relative;
   z-index: 18;
-  /* + --rail-menu-overlap (défini dans menuDoorsScene.css, 60svh sur mobile) :
+  /* + --rail-menu-overlap (défini dans menuDoorsScene.css, 100lvh sur mobile) :
      piste sticky supplémentaire APRÈS la zone de lock, pendant laquelle le
      stage reste épinglé tandis que la section 05 (z-index 20) remonte
      par-dessus et le recouvre — handoff 04 → 05, même principe que 05 → 06.
@@ -200,25 +200,6 @@
   color: var(--dish-color);
   white-space: nowrap;
 }
-.nh-rail__btn {
-  font-family: var(--body);
-  font-weight: 800;
-  font-size: 15px;
-  color: #fff;
-  background: var(--orange);
-  padding: 14px 26px;
-  border-radius: 999px;
-  text-decoration: none;
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  box-shadow: 0 16px 38px -16px var(--orange);
-  transition: transform 0.2s ease, filter 0.2s ease;
-}
-.nh-rail__btn:hover {
-  transform: translateY(-2px);
-  filter: brightness(1.08);
-}
 .nh-rail__index {
   position: absolute;
   bottom: 34px;
@@ -245,10 +226,12 @@
     /* 100lvh d'écran épinglé + 160lvh de course de scroll pour les 3 plats :
        chaque plat dispose d'une vraie zone stable (le plat 2 occupe ~80lvh
        au centre de la course, impossible à traverser d'un seul swipe normal).
-       + --rail-menu-overlap (60svh mobile) : piste sticky supplémentaire
-       APRÈS la course des plats, pendant laquelle le stage reste épinglé
-       tandis que la scène 05 (z-index 20) remonte par-dessus et le recouvre
-       depuis le bas — même handoff 04 → 05 que sur desktop. La progression
+       + --rail-menu-overlap (100lvh mobile = hauteur du stage) : piste sticky
+       supplémentaire APRÈS la course des plats, pendant laquelle le stage
+       reste épinglé tandis que la scène 05 (z-index 20) remonte par-dessus
+       et le recouvre depuis le bas, jusqu'en HAUT du viewport pile au moment
+       où le sticky se dépingle — même handoff 04 → 05 que sur desktop
+       (overlap desktop = 100svh = hauteur du stage desktop). La progression
        des plats reste mesurée sur .nh-rail__bounds (260lvh, ci-dessous),
        donc le dernier plat est atteint AVANT le début du recouvrement. */
     height: calc(260vh + var(--rail-menu-overlap, 0px));
@@ -338,11 +321,6 @@
     flex-direction: column;
     gap: 10px;
     margin-top: 2px;
-  }
-  .nh-rail__btn {
-    min-height: 46px;
-    padding: 13px 22px;
-    font-size: 14px;
   }
   .nh-rail__index {
     bottom: 16px;

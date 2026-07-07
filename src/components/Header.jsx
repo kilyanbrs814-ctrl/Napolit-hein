@@ -4,15 +4,43 @@ import { LINKS } from "../data/content.js";
 import "../styles/header.css";
 
 export default function Header({ onCavemanTrigger }) {
-  const [scrolled, setScrolled] = useState(false);
+  const [visible, setVisible] = useState(false);
   const clickCountRef = useRef(0);
   const clickTimerRef = useRef(null);
 
+  /* La navbar reste cachée pendant le hero ET la bannière rouge (Marquee) :
+     elle n'apparaît que lorsque le BAS de .nh-marquee est sorti par le haut
+     du viewport — l'instant exact où la section 03 arrive en haut d'écran.
+     On mesure la position réelle à l'écran (getBoundingClientRect) plutôt
+     qu'un seuil scrollY figé : le hero handoff (margin-top négatif + sticky)
+     rend tout offset précalculé faux, alors que la position viewport est
+     toujours juste, dans les deux sens de scroll, PC comme mobile. */
   useEffect(() => {
-    const onScroll = () => setScrolled(window.scrollY > 40);
-    onScroll();
-    window.addEventListener("scroll", onScroll, { passive: true });
-    return () => window.removeEventListener("scroll", onScroll);
+    let frame = 0;
+
+    const update = () => {
+      frame = 0;
+      const marquee = document.querySelector(".nh-marquee");
+      if (marquee) {
+        setVisible(marquee.getBoundingClientRect().bottom <= 1);
+      } else {
+        /* Filet de sécurité si la bannière disparaît du DOM. */
+        setVisible(window.scrollY > 40);
+      }
+    };
+
+    const schedule = () => {
+      if (!frame) frame = window.requestAnimationFrame(update);
+    };
+
+    update();
+    window.addEventListener("scroll", schedule, { passive: true });
+    window.addEventListener("resize", schedule, { passive: true });
+    return () => {
+      window.removeEventListener("scroll", schedule);
+      window.removeEventListener("resize", schedule);
+      if (frame) window.cancelAnimationFrame(frame);
+    };
   }, []);
 
   function handleLogoClick(e) {
@@ -31,7 +59,7 @@ export default function Header({ onCavemanTrigger }) {
   }
 
   return (
-    <header className={`nh-header${scrolled ? " is-scrolled" : ""}`}>
+    <header className={`nh-header${visible ? " is-visible is-scrolled" : ""}`}>
       <a href="#top" className="nh-header__mark" aria-label="Napolit'hein Crousty - accueil" onClick={handleLogoClick}>
         <img src={logo} alt="Napolit'hein Crousty" className="nh-header__logo" />
       </a>

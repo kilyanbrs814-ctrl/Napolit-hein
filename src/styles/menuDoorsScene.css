@@ -28,13 +28,18 @@
 @media (max-width: 860px) {
   :root {
     --mds-size: 60svh;
-    /* Mobile : overlap d'entrée raccourci (60svh au lieu de 100svh desktop).
+    /* Mobile : overlap d'entrée = 100lvh, la hauteur EXACTE du stage sticky
+       mobile (rail.css). Au moment où le stage se dépingle, le haut du menu
+       est à (100lvh − overlap) du haut du viewport : avec 100lvh il arrive
+       pile en haut — le menu mange la 04 jusqu'au bout, puis reprend le
+       scroll normal sans aucun recalage. (100svh laisserait une bande
+       résiduelle lvh−svh de la 04, poussée après coup → recalage visible.)
        La piste de progression des plats reste bornée à .nh-rail__bounds
        (260lvh, rail.css) : progress atteint 1 pile quand le menu entre par
        le bas, donc le dernier plat est déjà stable quand le recouvrement
        commence. Le rail mobile s'allonge d'autant (rail.css), la scène 05
        remonte d'autant : la position des sections suivantes ne bouge pas. */
-    --rail-menu-overlap: 60svh;
+    --rail-menu-overlap: 100lvh;
   }
 }
 @media (prefers-reduced-motion: reduce) {
