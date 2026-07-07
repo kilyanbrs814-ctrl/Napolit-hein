@@ -22,6 +22,16 @@ const smootherstep = (v) => v * v * v * (v * (v * 6 - 15) + 10);
    Ne modifie pas useClaudeStepScene. */
 const SMOOTH_TAU_MS = 340;
 
+/* MOBILE uniquement (mode natif du hook, sans scroll-lock) : le scroll pilote
+   progress linéairement sur toute la hauteur de la section. On fait atteindre
+   la cible d'animation à 70 % du parcours ; les 30 % restants (le runway rendu
+   possible par la hauteur mobile 280svh dans build.css) gardent le stage
+   sticky à l'écran pendant que le lissage finit réellement les fondus des
+   images 3 et 4 — même sur un swipe rapide, la page ne descend vers la
+   section 04 qu'après. Sur desktop, isNative est false (scroll-lock actif) et
+   ce remap ne s'applique pas. */
+const NATIVE_END_RUNWAY = 0.3;
+
 function useSmoothedValue(target, tau = SMOOTH_TAU_MS) {
   const [value, setValue] = useState(target);
   const stateRef = useRef({ value: target, target });
@@ -95,11 +105,6 @@ function TextStep({ index, step, floatingIndex, activeIndex }) {
   );
 }
 
-/* Part de la course mobile réservée en fin de section : l'animation se
-   termine à 75 % du scroll, les 25 % restants sont un runway où le bowl
-   complet reste épinglé — la section 04 ne peut apparaître qu'après. */
-const NATIVE_END_RUNWAY = 0.25;
-
 export default function BuildSection() {
   const sectionRef = useRef(null);
   const { progress, isNative } = useClaudeStepScene({
@@ -108,17 +113,10 @@ export default function BuildSection() {
     steps: IMAGES.length,
   });
 
-  /* Mode natif (mobile) : l'animation est liée DIRECTEMENT à la position de
-     scroll (fonction pure, aucun retard), et compressée sur les 75 premiers
-     pour cent de la course. Garantie géométrique : l'image 4 est entièrement
-     apparue avant le runway final, quelle que soit la vitesse du swipe — le
-     lissage temporel, lui, prendrait du retard proportionnel à la vitesse.
-     Desktop : progress saute d'un step entier au scroll-lock → on garde le
-     lissage temporel existant, inchangé. */
-  const nativeTarget =
-    Math.min(progress / (1 - NATIVE_END_RUNWAY), 1) * LAST_BUILD_INDEX;
-  const smoothedIndex = useSmoothedValue(progress * LAST_BUILD_INDEX);
-  const floatingIndex = isNative ? nativeTarget : smoothedIndex;
+  const sceneProgress = isNative
+    ? clamp(progress / (1 - NATIVE_END_RUNWAY), 0, 1)
+    : progress;
+  const floatingIndex = useSmoothedValue(sceneProgress * LAST_BUILD_INDEX);
   const displayIndex = clamp(Math.round(floatingIndex), 0, LAST_BUILD_INDEX);
   const glowOpacity = 0.4 + 0.5 * Math.sin((floatingIndex / LAST_BUILD_INDEX) * Math.PI);
 

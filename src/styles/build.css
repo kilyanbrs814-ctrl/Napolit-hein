@@ -1,6 +1,14 @@
 /* ============ SCENE 03 - CONSTRUCTION DU PLAT ============ */
 .nh-build {
-  --nh-step-capture: clamp(96px, 14svh, 160px);
+  /* Bande de capture DESKTOP : tampon invisible (le stage sticky affiche le
+     même écran sur toute la bande) où le pin du scroll-lock absorbe le scroll
+     natif résiduel. Chrome/Edge livrent en cancelable:false les wheel events
+     d'une séquence continue : le compositeur fait défiler la page avant que le
+     snap-back JS s'exécute. Avec ~150px, un coup de molette rapide sortait de
+     la bande le temps d'une frame → sautillement visible. 60vh absorbe tout
+     l'overshoot sans jamais montrer un pixel hors bande. Sans effet mobile :
+     la media query ci-dessous impose sa propre hauteur. */
+  --nh-step-capture: 60vh;
   position: relative;
   height: calc(100vh + var(--nh-step-capture));
   height: calc(100svh + var(--nh-step-capture));
@@ -168,10 +176,13 @@
 }
 
 @media (max-width: 860px) {
+  /* 280svh : la cible d'animation se termine à ~70 % du parcours (cf
+     NATIVE_END_RUNWAY dans BuildSection) — le rythme au scroll reste celui
+     d'avant (0.7 × 180svh ≈ l'ancien span de 120svh) — et les ~54svh
+     restants forment une piste d'arrivée où le stage reste épinglé le temps
+     que les fondus des images 3 et 4 se terminent réellement, même après un
+     swipe rapide. La section 04 n'apparaît qu'après. */
   .nh-build {
-    /* 100 d'écran épinglé + 180 de course : l'animation occupe 75 % de la
-       course (≈135svh, rythme inchangé) et les ~45svh restants sont le
-       runway final où l'image 4, terminée, reste affichée avant la 04. */
     height: 280vh;
     height: 280svh;
   }

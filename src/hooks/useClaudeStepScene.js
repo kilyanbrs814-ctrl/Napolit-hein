@@ -5,8 +5,16 @@ const clamp = (value, min, max) => Math.min(Math.max(value, min), max);
 const COOL_MS = 450;
 const QUIET_MS = 130;
 const HANDOFF_MS = 340;
-const RELEASE_IGNORE_MS = 720;
 const STEP_EASE = 0.18;
+/* Détection de "geste frais" à la molette (desktop, mode locked) : on entretient
+   une enveloppe des |delta| récents qui décroît exponentiellement. Un event dont
+   le delta dépasse nettement l'enveloppe est un nouveau geste (nouveau cran de
+   molette, nouveau swipe de trackpad) ; la traîne d'inertie d'un trackpad ou
+   d'une molette libre reste sous l'enveloppe et ne peut jamais déclencher
+   l'étape suivante. Remplace l'ancien armement par arrêt complet (armed +
+   QUIET_MS) qui obligeait à marquer une vraie pause entre deux étapes. */
+const WHEEL_ENVELOPE_TAU_MS = 250;
+const WHEEL_FRESH_FACTOR = 1.3;
 const MOBILE_BREAKPOINT = 860;
 
 function normalizeWheelDelta(event, viewportHeight) {
@@ -40,7 +48,8 @@ function createSceneEngine() {
     step: 0,
     frozenY: 0,
     coolAt: 0,
-    armed: true,
+    lastWheelAt: 0,
+    wheelEnvelope: 0,
     quietTimer: null,
     touchY: 0,
     touchDeltaY: 0,
@@ -218,15 +227,21 @@ function createSceneEngine() {
       const fullyBelow = scrollY >= top + height + buffer;
       const fullyAbove = scrollY <= top - buffer;
 
-      const leftOnReleaseSide =
-        this.releasedScene.direction > 0 ? fullyBelow : fullyAbove;
-
-      if (leftOnReleaseSide) {
+      /* Sortie de la zone par N'IMPORTE quel côté : le "ne pas re-capturer
+         juste après release" n'a plus de raison d'être — la prochaine
+         traversée doit re-verrouiller. Ne tester que le côté de la sortie
+         laissait releasedScene actif pour toujours quand on remontait
+         au-dessus de la scène après une sortie vers le bas : la descente
+         suivante traversait la section sans aucun lock. */
+      if (fullyBelow || fullyAbove) {
         this.releasedScene = null;
         return;
       }
 
-      if (performance.now() < this.releasedScene.until) return;
+      /* Toujours dans la zone : on continue d'ignorer la scène (pas de
+         nettoyage au temps écoulé), sinon une pause au bord de sortie
+         re-capturerait la scène sur place et rejouerait l'animation
+         depuis le début. */
     },
 
     shouldIgnoreScene(scene, direction, currentY = window.scrollY || 0) {
@@ -236,7 +251,12 @@ function createSceneEngine() {
         return false;
       }
 
-      return true;
+      /* N'ignorer la scène QUE dans le sens de sa sortie : parqué au bord aval
+         après un release, re-scroller dans le même sens ne doit pas la
+         re-capturer sur place ; mais revenir en sens inverse doit la
+         re-verrouiller depuis ce bord (remonter de la 04 vers la 03 rejoue
+         4 → 3 → 2 → 1, comme sur mobile). */
+      return direction === this.releasedScene.direction;
     },
 
     beginHandoff(direction) {
@@ -247,21 +267,15 @@ function createSceneEngine() {
     isHandoffActive() {
       if (this.handoffDirection === 0) return false;
 
-      const isActive = performance.now() < this.handoffUntil || !this.armed;
+      /* Fenêtre STRICTEMENT bornée à HANDOFF_MS. L'ancienne extension par
+         "!armed" prolongeait le handoff tant que des events arrivaient à
+         moins de QUIET_MS d'écart : toute la traîne d'inertie d'un trackpad
+         bloquait la capture, et remonter de la 04 traversait la 03 sans
+         jamais la verrouiller. La protection anti re-capture immédiate est
+         assurée par releasedScene, pas par le handoff. */
+      const isActive = performance.now() < this.handoffUntil;
       if (!isActive) this.handoffDirection = 0;
       return isActive;
-    },
-
-    getReleaseTargetY(direction) {
-      const scene = this.sceneByKey(this.activeScene);
-      const top = this.frozenY;
-      const maxScrollY = this.maxScrollY();
-      const targetY =
-        direction > 0
-          ? top + this.sceneHeight(scene) + 1
-          : top - this.viewportHeight() + 1;
-
-      return clamp(targetY, 0, maxScrollY);
     },
 
     captureBounds(scene, viewportHeight = this.viewportHeight()) {
@@ -284,18 +298,15 @@ function createSceneEngine() {
       });
 
       if (containing && !this.shouldIgnoreScene(containing, direction, currentY)) {
-        const { top, end } = this.captureBounds(containing, viewportHeight);
-        return {
-          scene: containing,
-          lockY: clamp(currentY, top, end),
-        };
+        return { scene: containing };
       }
 
       if (direction > 0) {
         const crossed = scenes.find((scene) => {
           /* softCapture : la scène ne se verrouille que lorsque le scroll est
-             DÉJÀ dans sa zone (branche "containing", freeze sans recalage).
-             Pas de capture par projection → pas de scrollTo visible. */
+             DÉJÀ dans sa zone (branche "containing", recalage dans la bande
+             donc invisible). Pas de capture par projection → pas de scrollTo
+             visible. */
           if (scene.softCapture) return false;
           if (this.shouldIgnoreScene(scene, direction, currentY)) return false;
 
@@ -306,11 +317,7 @@ function createSceneEngine() {
 
         if (!crossed) return null;
 
-        const { top, end } = this.captureBounds(crossed, viewportHeight);
-        return {
-          scene: crossed,
-          lockY: clamp(projectedY, top, end),
-        };
+        return { scene: crossed };
       }
 
       const crossed = scenes.filter((scene) => {
@@ -324,29 +331,36 @@ function createSceneEngine() {
 
       if (!crossed.length) return null;
 
-      const scene = crossed[crossed.length - 1];
-      const { top, end } = this.captureBounds(scene, viewportHeight);
-      return {
-        scene,
-        lockY: clamp(projectedY, top, end),
-      };
+      return { scene: crossed[crossed.length - 1] };
     },
 
-    lockScene(key, fromBelow, lockY) {
+    lockScene(key, fromBelow) {
       const scene = this.sceneByKey(key);
       if (!scene || !this.enabled) return;
 
       const top = this.sceneTop(scene);
       const end = top + Math.max(0, this.sceneHeight(scene) - this.viewportHeight());
-      const frozenY = Number.isFinite(lockY) ? clamp(lockY, top, end) : top;
+      /* Épingle au bord AMONT de la bande sticky (top en descendant, end en
+         remontant) : tout Y de [top, end] affiche le même écran, donc ce
+         recalage est invisible, et il laisse toute la bande comme tampon dans
+         le sens du scroll. Nécessaire sur PC : Chrome/Edge livrent en
+         cancelable:false les wheel events d'une séquence continue dont le
+         premier n'a pas été preventDefault-é — le scroll natif résiduel doit
+         pouvoir être absorbé dans la bande (re-épinglé par onNativeScroll)
+         sans jamais afficher un pixel hors bande. */
+      const frozenY = fromBelow ? end : top;
       this.mode = "locked";
       this.activeScene = key;
       this.frozenY = frozenY;
       this.step = fromBelow ? scene.steps - 1 : 0;
-      this.armed = false;
       this.touchConsumed = true;
       this.coolAt = performance.now();
-      if (this.releasedScene?.key === key) this.releasedScene = null;
+      /* Verrouiller une scène (quelle qu'elle soit) clôt l'épisode de release
+         précédent. Ne purger que la même clé laissait la 03 marquée "à
+         ignorer" pendant tout le lock de la 04 — qui s'épingle pile à sa
+         frontière, donc la purge "un écran plus bas" n'arrivait jamais — et
+         la remontée 04 → 03 traversait la section sans capture. */
+      this.releasedScene = null;
       this.handoffDirection = 0;
       this.setSceneProgress(key, fromBelow ? 1 : 0, true);
       /* Verrou "scroll-pin" : PAS de body position:fixed. Basculer le body en
@@ -367,24 +381,25 @@ function createSceneEngine() {
       const key = this.activeScene;
       if (!key) return;
 
-      const targetY = this.frozenY;
+      /* Sortie au bord AVAL de la bande : recalage invisible (stage sticky),
+         et le scroll natif reprend pile au seuil où la section commence à
+         glisser — pas de zone morte à re-scroller après la dernière étape. */
+      const scene = this.sceneByKey(key);
+      const top = scene ? this.sceneTop(scene) : this.frozenY;
+      const end = scene
+        ? top + Math.max(0, this.sceneHeight(scene) - this.viewportHeight())
+        : this.frozenY;
+      const targetY = this.clampY(direction > 0 ? end : top);
       const now = performance.now();
       this.setSceneProgress(key, direction > 0 ? 1 : 0, true);
       this.mode = "free";
       this.activeScene = null;
-      this.releasedScene = {
-        key,
-        direction,
-        releaseY: this.frozenY,
-        targetY,
-        until: now + RELEASE_IGNORE_MS,
-      };
+      this.releasedScene = { key, direction };
       this.coolAt = now;
-      this.armed = false;
       this.touchConsumed = true;
       this.beginHandoff(direction);
-      /* Le scroll est déjà épinglé à frozenY : la sortie ne déplace rien,
-         le scroll natif reprend simplement d'ici. */
+      /* targetY est dans la bande épinglée : ce scrollTo ne change pas
+         l'écran affiché, le scroll natif reprend simplement d'ici. */
       this.instantScrollTo(targetY);
       this.armAfterQuiet();
     },
@@ -436,7 +451,6 @@ function createSceneEngine() {
     armAfterQuiet() {
       if (this.quietTimer) window.clearTimeout(this.quietTimer);
       this.quietTimer = window.setTimeout(() => {
-        this.armed = true;
         this.touchConsumed = false;
         this.quietTimer = null;
       }, QUIET_MS);
@@ -454,7 +468,7 @@ function createSceneEngine() {
 
       if (!capture) return false;
 
-      this.lockScene(capture.scene.key, direction < 0, capture.lockY);
+      this.lockScene(capture.scene.key, direction < 0);
       return true;
     },
 
@@ -466,14 +480,26 @@ function createSceneEngine() {
 
       const direction = deltaY > 0 ? 1 : -1;
 
+      /* Enveloppe entretenue sur TOUS les events (mode libre compris) : ainsi,
+         au moment d'un lock en pleine traîne d'inertie, l'enveloppe connaît
+         déjà le geste en cours et la traîne ne compte pas comme geste frais. */
+      const now = performance.now();
+      const absDelta = Math.abs(deltaY);
+      const decayedEnvelope =
+        this.wheelEnvelope * Math.exp((this.lastWheelAt - now) / WHEEL_ENVELOPE_TAU_MS);
+      const isFreshGesture = absDelta > decayedEnvelope * WHEEL_FRESH_FACTOR;
+      this.wheelEnvelope = Math.max(absDelta, decayedEnvelope);
+      this.lastWheelAt = now;
+
       if (this.mode === "locked") {
         this.preventEvent(event);
-        this.armAfterQuiet();
 
-        const now = performance.now();
-        if (!this.armed || now - this.coolAt < COOL_MS) return;
+        /* Une étape max par geste : cooldown depuis la dernière étape + le
+           geste doit être frais (pas la traîne du geste précédent). Plus
+           d'arrêt obligatoire : dès que le cooldown est passé, le cran de
+           molette suivant répond immédiatement. */
+        if (!isFreshGesture || now - this.coolAt < COOL_MS) return;
 
-        this.armed = false;
         this.coolAt = now;
         this.moveStep(direction);
         return;
@@ -640,11 +666,16 @@ function createSceneEngine() {
           return;
         }
 
-        /* Dans la zone épinglée, tout Y affiche exactement le même écran
-           (stage sticky) : on absorbe l'inertie sans aucun scrollTo. Hors
-           zone, on re-cale au bord — recalage invisible pour la même raison. */
-        this.frozenY = pinned;
-        if (y !== pinned) this.instantScrollTo(pinned);
+        /* Pin DUR sur frozenY, qui reste constant pendant tout le lock. Ne
+           plus laisser Y dériver dans la bande : les wheel events
+           cancelable:false (séquence continue Chrome/Edge) et l'inertie du
+           smooth-scroll le faisaient camper au bord, où chaque pixel de
+           dépassement est peint par le compositeur avant le snap-back
+           (sautillement) et où un gros delta franchissait l'échappatoire
+           ci-dessus (sortie avant la dernière étape). Le recalage dans la
+           bande est invisible : le stage sticky y affiche le même écran. */
+        this.frozenY = clamp(this.frozenY, top, end);
+        if (Math.abs(y - this.frozenY) > 1) this.instantScrollTo(this.frozenY);
         return;
       }
 
