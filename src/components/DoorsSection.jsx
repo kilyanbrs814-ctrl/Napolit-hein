@@ -30,19 +30,30 @@ export default function DoorsSection() {
                     href={a.href}
                     target={a.target}
                     rel="noopener noreferrer"
-                    className={`nh-door__action${a.emph ? " is-emph" : ""}`}
+                    className={`nh-door__action${a.emph ? " is-emph" : ""}${
+                      !a.emph && a.col ? " is-brand" : ""
+                    }${a.logo ? " is-logo-only" : ""}${
+                      a.label === "Uber Eats" ? " is-uber" : ""
+                    }`}
+                    style={!a.emph && a.col ? { "--door-col": a.col } : undefined}
+                    aria-label={a.logo ? a.label : undefined}
                   >
                     {a.logo ? (
-                      <img src={a.logo} alt={a.label} className="nh-door__action-logo" />
+                      /* Logo seul : le nom est déjà dans le logo, le label ne
+                         vit plus qu'en aria-label (alt vide → pas de doublon
+                         pour les lecteurs d'écran). */
+                      <img src={a.logo} alt="" className="nh-door__action-logo" />
                     ) : (
-                      <span
-                        className="nh-door__action-ico"
-                        style={a.emph ? undefined : { background: a.col }}
-                      >
-                        {a.ico}
-                      </span>
+                      <>
+                        <span
+                          className="nh-door__action-ico"
+                          style={a.emph ? undefined : { background: a.col }}
+                        >
+                          {a.ico}
+                        </span>
+                        {a.label}
+                      </>
                     )}
-                    {a.label}
                   </a>
                 ))}
               </div>

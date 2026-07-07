@@ -129,6 +129,19 @@
 .nh-door__action.is-emph:hover {
   background: var(--orange-hi);
 }
+/* Capsules aux couleurs des enseignes (Uber Eats / Deliveroo) : même
+   traitement premium que is-emph, mais la couleur vient des données
+   (--door-col injectée par DoorsSection depuis CHANNELS). */
+.nh-door__action.is-brand {
+  background: var(--door-col);
+  border-color: var(--door-col);
+  box-shadow: 0 16px 38px -16px var(--door-col);
+}
+.nh-door__action.is-brand:hover {
+  /* Fallback sans color-mix : la couleur pleine reste correcte au hover. */
+  background: var(--door-col);
+  background: color-mix(in srgb, var(--door-col) 84%, #fff);
+}
 .nh-door__action-ico {
   width: 22px;
   height: 22px;
@@ -154,6 +167,31 @@
   object-fit: contain;
   flex-shrink: 0;
   filter: brightness(0) invert(1);
+}
+/* Capsule "logo seul" (Uber Eats / Deliveroo) : le logo porte le nom, on
+   l'agrandit un peu et on équilibre le padding pour une pastille centrée. */
+.nh-door__action.is-logo-only {
+  justify-content: center;
+  padding: 12px 24px;
+}
+.nh-door__action.is-logo-only .nh-door__action-logo {
+  height: 21px;
+  max-width: 116px;
+}
+/* Uber Eats : logo d'origine ("Uber" noir + "Eats" vert), exactement comme le
+   widget du hero — donc PAS de filtre blanchissant, et pastille blanche
+   (badge officiel Uber Eats) pour que le noir et le vert restent lisibles.
+   Le glow reste vert enseigne. Placé après is-brand : il gagne la cascade. */
+.nh-door__action.is-uber {
+  background: #fff;
+  border-color: #fff;
+  box-shadow: 0 16px 38px -16px var(--uber);
+}
+.nh-door__action.is-uber:hover {
+  background: #eef4f0;
+}
+.nh-door__action.is-uber .nh-door__action-logo {
+  filter: none;
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -214,6 +252,10 @@
   .nh-door__action-logo {
     height: 17px;
     max-width: 90px;
+  }
+  .nh-door__action.is-logo-only .nh-door__action-logo {
+    height: 20px;
+    max-width: 108px;
   }
 }
 

@@ -19,16 +19,32 @@
 /* Durée de la transition (hauteur d'overlap) */
 :root {
   --mds-size: 100svh;
+  /* Overlap d'ENTRÉE 04 → 05 : pendant ce span, le stage sticky de la
+     section 04 reste épinglé (rail.css allonge .nh-rail d'autant) et la
+     scène 05 remonte par-dessus depuis le bas et le "mange" — exactement
+     le principe de la sortie 05 → 06 (les portes sur le menu). */
+  --rail-menu-overlap: 100svh;
 }
 @media (max-width: 860px) {
   :root {
     --mds-size: 60svh;
+    /* Mobile : PAS d'overlap d'entrée. La 04 mobile (260svh, scroll natif)
+       joue son animation jusqu'à son dernier viewport : un overlap la
+       recouvrirait pendant qu'elle tourne encore. Jonction mobile inchangée. */
+    --rail-menu-overlap: 0px;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  :root {
+    --rail-menu-overlap: 0px;
   }
 }
 
 /* ---- Annule le margin-top de .nh-menu DANS la scène ----
-   La scène 05 démarre dans le flux après le rail : le chevauchement négatif
-   est réservé à la transition 05 → 06, pas à l'entrée depuis la section 04. */
+   Le chevauchement d'entrée 04 → 05 est porté par .nh-mds lui-même
+   (margin-top négatif ci-dessous), calé sur la piste sticky ajoutée au rail :
+   le -100svh historique de .nh-menu, lui, ne correspond à aucune piste et
+   recouvrirait la 04 pendant son animation. On le neutralise donc ici. */
 .nh-mds .nh-menu {
   margin-top: 0;
   /* Garantit que le menu couvre toujours au moins un viewport entier.
@@ -41,7 +57,9 @@
 .nh-mds {
   position: relative;
   z-index: 20;
-  margin-top: 0;
+  /* Entrée 04 → 05 : la scène remonte sur la piste sticky du rail (z 18) et
+     le recouvre progressivement. 0px sur mobile et en reduced-motion. */
+  margin-top: calc(-1 * var(--rail-menu-overlap, 0px));
   /* height réelle injectée par JS via --menu-h ;
      = hauteur du menu + zone de transition               */
   height: calc(var(--menu-h, 100svh) + var(--mds-size));

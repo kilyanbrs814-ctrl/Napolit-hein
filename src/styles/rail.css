@@ -6,10 +6,30 @@
   --nh-step-capture: clamp(96px, 14svh, 160px);
   position: relative;
   z-index: 18;
-  height: calc(100vh + var(--nh-step-capture));
-  height: calc(100svh + var(--nh-step-capture));
+  /* + --rail-menu-overlap (défini dans menuDoorsScene.css, 0 sur mobile) :
+     piste sticky supplémentaire APRÈS la zone de lock, pendant laquelle le
+     stage reste épinglé tandis que la section 05 (z-index 20) remonte
+     par-dessus et le recouvre — handoff 04 → 05, même principe que 05 → 06.
+     La scène 05 se remonte d'autant (margin-top négatif sur .nh-mds), donc
+     la position des sections suivantes ne change pas. */
+  height: calc(100vh + var(--nh-step-capture) + var(--rail-menu-overlap, 0px));
+  height: calc(100svh + var(--nh-step-capture) + var(--rail-menu-overlap, 0px));
   overflow: clip;
   background: var(--bg);
+}
+
+/* Bornes de la scène scroll-lock desktop : le hook mesure CET élément, pas la
+   section. La zone de lock s'arrête donc avant la piste d'overlap : le release
+   dépose le scroll pile au seuil où le menu commence à monter, au lieu de
+   sauter par-dessus tout le handoff. Aucune modification du moteur partagé. */
+.nh-rail__bounds {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: calc(100vh + var(--nh-step-capture));
+  height: calc(100svh + var(--nh-step-capture));
+  pointer-events: none;
 }
 
 .nh-rail__stage {

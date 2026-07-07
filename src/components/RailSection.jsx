@@ -111,7 +111,11 @@ function RailDesktop() {
        franchissement de la frontière sticky. Le stage étant épinglé sur toute
        la zone de capture, le clamp dans la zone ne produit aucun décalage
        visuel, et la projection garantit qu'un gros coup de molette ne peut
-       pas sauter la section. */
+       pas sauter la section.
+       sectionRef pointe sur .nh-rail__bounds (et non sur la section) : la
+       section inclut désormais la piste d'overlap 04 → 05 (rail.css), qui
+       doit rester HORS de la zone de lock pour que le release dépose le
+       scroll au seuil du handoff au lieu de sauter par-dessus. */
   });
 
   /* Cible brute pilotée par le scroll : le lock la fait atterrir pile sur 0/1/2. */
@@ -123,11 +127,11 @@ function RailDesktop() {
   return (
     <section
       id="carte"
-      ref={sectionRef}
       className="nh-rail"
       data-screen-label="04 Incontournables"
       data-active-index={activeIndex}
     >
+      <div ref={sectionRef} className="nh-rail__bounds" aria-hidden="true" />
       <div className="nh-rail__stage">
         <div className="nh-rail__header">
           <div className="nh-eyebrow nh-rail__eyebrow">04 · Les incontournables</div>

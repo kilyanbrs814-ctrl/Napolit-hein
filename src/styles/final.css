@@ -83,6 +83,19 @@
 .nh-final__btn.is-emph:hover {
   background: var(--orange-hi);
 }
+/* Boutons aux couleurs des enseignes (Uber Eats / Deliveroo) : même
+   traitement premium que is-emph, couleur injectée par FinalCTA
+   (--btn-col, depuis FINAL_BUTTONS). Le téléphone reste is-emph orange. */
+.nh-final__btn.is-brand {
+  background: var(--btn-col);
+  border-color: var(--btn-col);
+  box-shadow: 0 20px 46px -18px var(--btn-col);
+}
+.nh-final__btn.is-brand:hover {
+  /* Fallback sans color-mix : la couleur pleine reste correcte au hover. */
+  background: var(--btn-col);
+  background: color-mix(in srgb, var(--btn-col) 84%, #fff);
+}
 .nh-final__btn-ico {
   width: 26px;
   height: 26px;
@@ -107,6 +120,34 @@
   object-fit: contain;
   flex-shrink: 0;
   filter: brightness(0) invert(1);
+}
+/* Bouton "logo seul" (Uber Eats / Deliveroo) : le logo porte le nom, on
+   l'agrandit un peu et on équilibre le padding pour un bouton centré. */
+.nh-final__btn.is-logo-only {
+  justify-content: center;
+  padding: 17px 32px;
+}
+.nh-final__btn.is-logo-only .nh-final__btn-logo {
+  height: 25px;
+  max-width: 126px;
+}
+/* Uber Eats : logo d'origine ("Uber" noir + "Eats" vert), exactement comme le
+   widget du hero — donc PAS de filtre blanchissant, et bouton blanc (badge
+   officiel Uber Eats) pour que le noir et le vert restent lisibles. La flèche
+   passe en sombre sur fond blanc. Placé après is-brand : gagne la cascade. */
+.nh-final__btn.is-uber {
+  background: #fff;
+  border-color: #fff;
+  box-shadow: 0 20px 46px -18px var(--uber);
+}
+.nh-final__btn.is-uber:hover {
+  background: #eef4f0;
+}
+.nh-final__btn.is-uber .nh-final__btn-logo {
+  filter: none;
+}
+.nh-final__btn.is-uber .nh-final__btn-arrow {
+  color: rgba(13, 13, 13, 0.75);
 }
 .nh-final__btn-label {
   font-family: var(--body);
@@ -154,6 +195,9 @@
   }
   .nh-final__btn-logo {
     height: 19px;
+  }
+  .nh-final__btn.is-logo-only .nh-final__btn-logo {
+    height: 22px;
   }
 }
 
