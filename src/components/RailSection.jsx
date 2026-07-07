@@ -210,17 +210,22 @@ function RailMobile() {
     sceneKey: "railScene",
     sectionRef,
     steps: count,
+    /* sectionRef pointe sur .nh-rail__bounds (260lvh, rail.css) et non sur la
+       section : celle-ci inclut désormais la piste d'overlap 04 → 05 mobile
+       (--rail-menu-overlap), qui doit rester HORS de la course de progression
+       des plats. Ainsi progress atteint 1 pile quand la scène 05 commence à
+       entrer par le bas — le dernier plat est stable avant le recouvrement. */
   });
   const activeIndex = useSteppedIndex(progress * lastIndex, lastIndex);
 
   return (
     <section
       id="carte"
-      ref={sectionRef}
       className="nh-rail"
       data-screen-label="04 Incontournables"
       data-active-index={activeIndex}
     >
+      <div ref={sectionRef} className="nh-rail__bounds" aria-hidden="true" />
       <div className="nh-rail__stage">
         <div className="nh-rail__header">
           <div className="nh-eyebrow nh-rail__eyebrow">04 · Les incontournables</div>

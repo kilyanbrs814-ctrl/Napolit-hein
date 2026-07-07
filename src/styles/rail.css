@@ -6,7 +6,7 @@
   --nh-step-capture: clamp(96px, 14svh, 160px);
   position: relative;
   z-index: 18;
-  /* + --rail-menu-overlap (défini dans menuDoorsScene.css, 0 sur mobile) :
+  /* + --rail-menu-overlap (défini dans menuDoorsScene.css, 60svh sur mobile) :
      piste sticky supplémentaire APRÈS la zone de lock, pendant laquelle le
      stage reste épinglé tandis que la section 05 (z-index 20) remonte
      par-dessus et le recouvre — handoff 04 → 05, même principe que 05 → 06.
@@ -244,11 +244,25 @@
   .nh-rail {
     /* 100lvh d'écran épinglé + 160lvh de course de scroll pour les 3 plats :
        chaque plat dispose d'une vraie zone stable (le plat 2 occupe ~80lvh
-       au centre de la course, impossible à traverser d'un seul swipe normal). */
-    height: 260vh;
-    height: 260lvh;
+       au centre de la course, impossible à traverser d'un seul swipe normal).
+       + --rail-menu-overlap (60svh mobile) : piste sticky supplémentaire
+       APRÈS la course des plats, pendant laquelle le stage reste épinglé
+       tandis que la scène 05 (z-index 20) remonte par-dessus et le recouvre
+       depuis le bas — même handoff 04 → 05 que sur desktop. La progression
+       des plats reste mesurée sur .nh-rail__bounds (260lvh, ci-dessous),
+       donc le dernier plat est atteint AVANT le début du recouvrement. */
+    height: calc(260vh + var(--rail-menu-overlap, 0px));
+    height: calc(260lvh + var(--rail-menu-overlap, 0px));
     z-index: auto;
     overflow: clip;
+  }
+  /* Bounds mobile : piste de progression des plats UNIQUEMENT (sans la piste
+     d'overlap). Le hook (mode natif sous 860px) mesure CET élément : progress
+     atteint 1 pile au seuil où le menu entre dans le viewport, exactement
+     comme le desktop sépare zone de lock et zone d'overlap. */
+  .nh-rail__bounds {
+    height: 260vh;
+    height: 260lvh;
   }
   .nh-rail__stage {
     position: sticky;
