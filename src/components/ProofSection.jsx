@@ -1,10 +1,30 @@
-import { useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import { motion, useScroll, useTransform } from "framer-motion";
 import { DELIVERY_LOGOS, PLATFORMS, TICKETS } from "../data/content.js";
 import "../styles/proof.css";
 
 // Clamp scroll progress to [0, 1] after applying per-ticket delay offset.
 function c(v) { return Math.min(1, Math.max(0, v)); }
+
+/* Largeur seule — pas de (pointer: coarse), contrairement au hook partagé
+   useIsMobile : les trajectoires doivent suivre le layout CSS (breakpoint
+   860px), pas le type de pointeur. Un PC tactile garde le rendu desktop. */
+const MOBILE_QUERY = "(max-width: 860px)";
+
+function useIsNarrow() {
+  const [narrow, setNarrow] = useState(
+    () => typeof window !== "undefined" && window.matchMedia(MOBILE_QUERY).matches
+  );
+
+  useEffect(() => {
+    const mq = window.matchMedia(MOBILE_QUERY);
+    const onChange = (event) => setNarrow(event.matches);
+    mq.addEventListener("change", onChange);
+    return () => mq.removeEventListener("change", onChange);
+  }, []);
+
+  return narrow;
+}
 
 /*
  * Trajectoire par couloir (vérifiée de 390px à 1920px de largeur) :
@@ -19,7 +39,7 @@ function c(v) { return Math.min(1, Math.max(0, v)); }
  *   −200  → card a passé le bloc central (zone y:27-73% du viewport)
  *   −800  → card sort hors écran par le haut
  */
-function AnimatedTicket({ ticket, progress }) {
+function AnimatedTicket({ ticket, progress, compact }) {
   const d = ticket.delay;
   const left = ticket.lane === "left";
 
@@ -29,10 +49,15 @@ function AnimatedTicket({ ticket, progress }) {
    * Spread horizontal élargi (±820px au centre) pour plus de respiration.
    */
 
-  // --- X : déviation couloir (-20 % par rapport à la session précédente) ---
-  const xVals = left
-    ? [-80, -80, -656, -832, -1120]
-    : [ 80,  80,  656,  832,  1120];
+  // --- X : déviation couloir (-20 % par rapport à la session précédente).
+  // Mobile (compact) : mêmes couloirs gauche/droite mais en dizaines de px —
+  // les ±656px+ desktop éjectaient la carte d'un écran de 390px avant même
+  // son entrée verticale dans la vue. Ici la carte traverse l'écran en
+  // restant visible, avec un léger décalage de couloir puis une dérive
+  // douce vers son bord au moment où l'opacité retombe.
+  const xVals = compact
+    ? (left ? [-14, -14, -50, -68, -94] : [14, 14, 50, 68, 94])
+    : (left ? [-80, -80, -656, -832, -1120] : [80, 80, 656, 832, 1120]);
   const xKeys = [
     c(d + 0.04), c(d + 0.10), c(d + 0.24), c(d + 0.46), c(d + 0.58),
   ];
@@ -40,7 +65,8 @@ function AnimatedTicket({ ticket, progress }) {
   // --- Y : montée depuis le bas.
   // y=60 au keyframe central : la carte reste visible près du haut du viewport
   // jusqu'à ce que l'opacité atteigne 0, éliminant le scroll vide final.
-  const yVals = [960, 576, 60, -200];
+  // Mobile : course raccourcie pour un viewport de ~660-850px.
+  const yVals = compact ? [780, 460, 44, -216] : [960, 576, 60, -200];
   const yKeys = [c(d + 0.04), c(d + 0.18), c(d + 0.44), c(d + 0.58)];
 
   // --- Opacity : invisible → visible → invisible ---
@@ -93,6 +119,7 @@ function AnimatedTicket({ ticket, progress }) {
 
 export default function ProofSection() {
   const sectionRef = useRef(null);
+  const compact = useIsNarrow();
   const { scrollYProgress } = useScroll({
     target: sectionRef,
     offset: ["start start", "end end"],
@@ -131,7 +158,7 @@ export default function ProofSection() {
 
         <div className="nh-proof__field">
           {TICKETS.map((t, i) => (
-            <AnimatedTicket key={i} ticket={t} progress={scrollYProgress} />
+            <AnimatedTicket key={i} ticket={t} progress={scrollYProgress} compact={compact} />
           ))}
         </div>
       </div>

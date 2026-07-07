@@ -309,23 +309,26 @@
     top: 78px;
     left: 22px;
   }
+  /* Bloc central compact : il libère l'écran pour les tickets, et son
+     backdrop est allégé pour que les cartes qui passent derrière restent
+     devinables au lieu de disparaître. */
   .nh-proof__center {
-    width: min(100% - 28px, 380px);
-    gap: 12px;
-    padding: 18px 16px;
+    width: min(100% - 48px, 330px);
+    gap: 10px;
+    padding: 14px 14px 16px;
     border-radius: 18px;
-    background: radial-gradient(ellipse 84% 94% at 50% 50%, rgba(7, 11, 22, 0.78) 0%, rgba(7, 11, 22, 0.24) 72%, transparent 100%);
+    background: radial-gradient(ellipse 80% 92% at 50% 50%, rgba(7, 11, 22, 0.66) 0%, rgba(7, 11, 22, 0.18) 72%, transparent 100%);
   }
   .nh-proof__big {
-    font-size: clamp(128px, 35vw, 176px);
+    font-size: clamp(96px, 27vw, 132px);
   }
   .nh-proof__stars {
-    font-size: clamp(22px, 7vw, 30px);
-    margin-top: 8px;
+    font-size: clamp(18px, 5.5vw, 24px);
+    margin-top: 6px;
     letter-spacing: 0.06em;
   }
   .nh-proof__big-sub {
-    max-width: 280px;
+    max-width: 250px;
     font-size: 11px;
     line-height: 1.45;
   }
@@ -333,23 +336,35 @@
     width: 100%;
     display: grid;
     grid-template-columns: 1fr;
-    gap: 8px;
-    margin-top: 12px;
+    gap: 6px;
+    margin-top: 8px;
   }
   .nh-proof__platform {
-    min-height: 42px;
+    min-height: 36px;
     justify-content: center;
-    padding: 8px 12px;
+    gap: 8px;
+    padding: 6px 10px;
   }
-  .nh-proof__platform-logo {
-    max-width: 86px;
+  /* Sélecteurs (0,2,0) : doivent battre les tailles par plateforme
+     (--google/--uber-eats/--deliveroo) définies plus haut en (0,2,0). */
+  .nh-proof__platform .nh-proof__platform-logo {
+    height: 16px;
+    max-width: 74px;
+  }
+  .nh-proof__platform .nh-proof__platform-rate {
+    font-size: 17px;
+  }
+  .nh-proof__platform .nh-proof__platform-star {
+    font-size: 13px;
   }
   .nh-proof__platform-rev {
-    font-size: 11px;
+    font-size: 10.5px;
   }
+  /* Tickets un peu plus étroits : le décalage de couloir gauche/droite
+     (±50-94px, cf ProofSection) reste lisible sans sortir de l'écran. */
   .nh-proof__ticket {
-    width: min(264px, 78vw);
-    left: calc(50% - min(132px, 39vw));
+    width: min(248px, 74vw);
+    left: calc(50% - min(124px, 37vw));
     padding: 14px 16px;
   }
   .nh-proof__ticket-body {
