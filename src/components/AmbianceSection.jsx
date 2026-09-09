@@ -11,8 +11,8 @@ export default function AmbianceSection() {
           <div className="nh-eyebrow nh-amb__eyebrow">08 · Le spot</div>
           <h2 className="nh-amb__title">Un coin de rue qui sent bon Albi.</h2>
           <p className="nh-amb__p">
-            Tables hautes, murs noirs, neon orange et mur vegetal. On vient recuperer sa commande
-            chaude — ou on s'installe pour devorer sur place.
+            Tables hautes, murs noirs, néon orange et mur végétal. On vient récupérer sa commande
+            chaude — ou on s'installe pour dévorer sur place.
           </p>
           <div className="nh-amb__info-row">
             <div className="nh-amb__info">
@@ -24,7 +24,7 @@ export default function AmbianceSection() {
               </div>
             </div>
             <div className="nh-amb__info">
-              <div className="nh-amb__info-k">Telephone</div>
+              <div className="nh-amb__info-k">Téléphone</div>
               <div className="nh-amb__info-v">06 04 65 94 06</div>
             </div>
             <div className="nh-amb__info">

@@ -1,7 +1,7 @@
 import { useRef, useState, useEffect } from "react";
 import { motion, useScroll, useTransform, useReducedMotion } from "framer-motion";
 import logo from "../assets/images/logo-napolithein.png";
-import { HERO_WIDGETS, CROUSTY_CHIPS } from "../data/content.js";
+import { HERO_WIDGETS, LINKS } from "../data/content.js";
 import "../styles/hero.css";
 
 /* ---- Statut dynamique du restaurant (fuseau Europe/Paris) ---- */
@@ -79,20 +79,20 @@ function HeroContent() {
     <div className="nh-hero__content">
       <img src={logo} alt="Napolit'hein Crousty" className="nh-hero__logo" />
       <h1 className="nh-hero__h1">
-        <span>PATES.</span>
+        <span>PÂTES.</span>
         <span className="nh-hero__h1--accent">RIZ CROUSTY.</span>
         <span>SAUCE.</span>
       </h1>
       <p className="nh-hero__lede">
-        Recettes maison, portions qui rassasient, ce croustillant qui claque. Sur place, a emporter
-        ou livre chez toi.
+        Recettes maison, portions qui rassasient, ce croustillant qui claque. Sur place, à emporter
+        ou livré chez toi.
       </p>
       <div className="nh-hero__ctas">
-        <a href="#commander" className="nh-btn nh-btn--primary nh-hero__cta-desktop">
-          Commander maintenant
+        <a href="#menu" className="nh-btn nh-btn--primary nh-hero__cta-desktop">
+          Voir le menu
         </a>
-        <a href="#carte" className="nh-btn nh-btn--ghost nh-hero__cta-desktop">
-          Voir la carte
+        <a href={LINKS.maps} target="_blank" rel="noopener noreferrer" className="nh-btn nh-btn--ghost">
+          Nous trouver
         </a>
         <a href="#carte" className="nh-btn nh-btn--primary nh-hero__cta-mobile">
           Voir la carte
@@ -216,17 +216,7 @@ function DeliveryWidgets() {
 function CroustyContent() {
   return (
     <div className="nh-hero__cr-text">
-      <div className="nh-eyebrow nh-hero__cr-eyebrow">02 · Le croustillant</div>
       <h2 className="nh-hero__cr-h2">Le croustillant qui change tout.</h2>
-      <p className="nh-hero__cr-p">
-        Dore, genereux, sauce maison, servi chaud. Ce craquant a chaque bouchee, c'est notre
-        signature.
-      </p>
-      <div className="nh-hero__chips">
-        {CROUSTY_CHIPS.map((c) => (
-          <span key={c} className="nh-chip">{c}</span>
-        ))}
-      </div>
     </div>
   );
 }

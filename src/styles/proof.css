@@ -39,7 +39,7 @@
 }
 .nh-proof__big {
   font-family: var(--display);
-  font-size: 320px;
+  font-size: clamp(80px, 16vw, 220px);
   line-height: 0.8;
   color: var(--orange);
   -webkit-text-stroke: 0;
@@ -185,7 +185,7 @@
 .nh-proof__field {
   position: absolute;
   inset: 0;
-  z-index: 2;
+  z-index: 11;
   pointer-events: none;
 }
 .nh-proof__ticket {
@@ -282,7 +282,7 @@
     padding: 16px 20px;
   }
   .nh-proof__big {
-    font-size: 40vw;
+    font-size: 16vw;
   }
   .nh-proof__stars {
     font-size: 28px;
@@ -323,7 +323,7 @@
     background: radial-gradient(ellipse 80% 92% at 50% 50%, rgba(7, 11, 22, 0.66) 0%, rgba(7, 11, 22, 0.18) 72%, transparent 100%);
   }
   .nh-proof__big {
-    font-size: clamp(96px, 27vw, 132px);
+    font-size: clamp(48px, 14vw, 66px);
   }
   .nh-proof__stars {
     font-size: clamp(18px, 5.5vw, 24px);

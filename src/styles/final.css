@@ -50,8 +50,8 @@
   text-shadow: 0 10px 60px rgba(0, 0, 0, 0.6);
 }
 .nh-final__h2-accent {
-  color: var(--orange);
-  text-shadow: 0 0 50px rgba(255, 90, 31, 0.5);
+  color: #cf8869;
+  text-shadow: none;
 }
 .nh-final__btn-row {
   display: flex;

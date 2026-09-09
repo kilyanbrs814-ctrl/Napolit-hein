@@ -7,11 +7,11 @@ export default function DoorsSection() {
     <section id="commander" className="nh-doors" data-screen-label="06 Commander">
       <div className="nh-doors__inner">
         <Reveal className="nh-doors__head">
-          <div className="nh-eyebrow nh-doors__eyebrow">06 · Sans reflechir</div>
+          <div className="nh-eyebrow nh-doors__eyebrow">06 · Sans réfléchir</div>
           <h2 className="nh-doors__title">
-            Tu choisis. On prepare.
+            Tu choisis. On prépare.
             <br />
-            Tu te regales.
+            Tu te régales.
           </h2>
         </Reveal>
 

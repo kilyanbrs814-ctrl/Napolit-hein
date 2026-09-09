@@ -49,29 +49,29 @@ export const HERO_WIDGETS = [
   },
 ];
 
-export const CROUSTY_CHIPS = ["Dore", "Servi chaud", "Sauce maison", "Ca craque"];
+export const CROUSTY_CHIPS = ["Doré", "Servi chaud", "Sauce maison", "Ça craque"];
 
 export const MARQUEE_TEXT =
-  "PATES MAISON  ✦  RIZ CROUSTY  ✦  POULET CROUSTILLANT  ✦  SAUCE GENEREUSE  ✦  ALBI  ✦  LIVRAISON  ✦  ";
+  "PÂTES MAISON  ✦  RIZ CROUSTY  ✦  POULET CROUSTILLANT  ✦  SAUCE GÉNÉREUSE  ✦  ALBI  ✦  LIVRAISON  ✦  ";
 
 // ---- Etapes de construction du plat ----
 export const BUILD_STEPS = [
   {
     title: "Une base chaude.",
-    desc: "Riz parfume ou pates fraiches, tout juste sortis du feu.",
+    desc: "Riz parfumé ou pâtes fraîches, tout juste sortis du feu.",
   },
   {
     title: "Du croustillant.",
-    desc: "Poulet dore, tenders, ce craquant qui change tout.",
+    desc: "Poulet doré, tenders, ce craquant qui change tout.",
   },
   {
-    title: "Une sauce genereuse.",
-    desc: "Creme, curry, tandoori... nappe sans jamais compter.",
+    title: "Une sauce généreuse.",
+    desc: "Crème, curry, tandoori... nappe sans jamais compter.",
   },
   {
-    lead: "Et la, ca devient...",
+    lead: "Et là, ça devient...",
     isLogo: true,
-    desc: "Topping, herbes fraiches, et c'est pret a devorer.",
+    desc: "Topping, herbes fraîches, et c'est prêt à dévorer.",
   },
 ];
 
@@ -84,7 +84,7 @@ export const DISHES = [
     big: "CREAMY",
     img: newCreamy,
     glow: "#FF7A3C",
-    desc: "Riz crousty, creme onctueuse, poulet dore. Le reconfort qui croque.",
+    desc: "Riz crousty, crème onctueuse, poulet doré. Le réconfort qui croque.",
   },
   {
     name: "Crousty Curry",
@@ -93,7 +93,7 @@ export const DISHES = [
     big: "CURRY",
     img: newCurry,
     glow: "#FFB426",
-    desc: "Curry doux et parfume sur lit de riz crousty. Un classique qui rechauffe.",
+    desc: "Curry doux et parfumé sur lit de riz crousty. Un classique qui réchauffe.",
   },
   {
     name: "Crousty Tandoori",
@@ -102,25 +102,25 @@ export const DISHES = [
     big: "TANDOORI",
     img: newTandoori,
     glow: "#FF5A1F",
-    desc: "Epices tandoori, sauce genereuse, ce croustillant qui claque.",
+    desc: "Épices tandoori, sauce généreuse, ce croustillant qui claque.",
   },
   {
-    name: "Poulet Creme",
-    cat: "Les pates",
+    name: "Poulet Crème",
+    cat: "Les pâtes",
     price: "11,50 €",
     big: "POULET",
     img: newPoulet,
     glow: "#F0D9A8",
-    desc: "Creme, poulet tendre, parmesan. Le plat qu'on reprend les yeux fermes.",
+    desc: "Crème, poulet tendre, parmesan. Le plat qu'on reprend les yeux fermés.",
   },
   {
     name: "Carbonara",
-    cat: "Les pates",
+    cat: "Les pâtes",
     price: "10,90 €",
     big: "CARBO",
     img: newCarbonara,
     glow: "#FFD27A",
-    desc: "La vraie, cremeuse et genereuse. Aucune retenue.",
+    desc: "La vraie, crémeuse et généreuse. Aucune retenue.",
   },
   {
     name: "Croc'Cheese",
@@ -138,7 +138,7 @@ export const DISHES = [
     big: "DOLCE",
     img: newDolce,
     glow: "#FFB426",
-    desc: "La touche sucree croustillante pour finir en beaute.",
+    desc: "La touche sucrée croustillante pour finir en beauté.",
   },
 ];
 
@@ -147,10 +147,10 @@ export const MENU_GROUPS = [
   {
     id: "offers",
     emoji: "🌟",
-    title: "Offers",
+    title: "Offres",
     items: [
-      { name: "Dolce Crousty", price: "12,80", rating: "83", reviews: "12", badge: "Buy 1, get 1 free", desc: "Riz cremeux, poulet bien crousty, sauce maison sucree et legerement relevee, oignons frits et un filet de sauce thai. Un regal a chaque bouchee." },
-      { name: "Croc'Cheese", price: "3,20", rating: "70", reviews: "10", badge: "Free with €20 purchase", desc: "Du pain dore et croustillant qui fait crac sous la dent, et un fromage ultra fondant." },
+      { name: "Dolce Crousty", price: "12,80", rating: "83", reviews: "12", badge: "1 acheté = 1 offert", desc: "Riz crémeux, poulet bien crousty, sauce maison sucrée et légèrement relevée, oignons frits et un filet de sauce thaï. Un régal à chaque bouchée." },
+      { name: "Croc'Cheese", price: "3,20", rating: "70", reviews: "10", badge: "Offert dès 20 €", desc: "Du pain doré et croustillant qui fait crac sous la dent, et un fromage ultra fondant." },
     ],
   },
   {
@@ -158,11 +158,11 @@ export const MENU_GROUPS = [
     emoji: "🍚",
     title: "Riz Crousty",
     items: [
-      { name: "Curry Crousty", price: "12,80", rating: "94", reviews: "18", desc: "Riz cremeux, poulet bien crousty, oignons frits pour le crunch et une sauce curry envoutante. Un plat qui vous fera voyager." },
-      { name: "Dolce Crousty", price: "12,80", rating: "83", reviews: "12", badge: "Buy 1, get 1 free", desc: "Riz cremeux, poulet bien crousty, sauce maison sucree et legerement relevee, oignons frits et un filet de sauce thai. Un regal a chaque bouchee." },
-      { name: "Thai Crunch Crousty", price: "12,80", rating: "92", reviews: "14", desc: "Riz cremeux, poulet bien crousty, oignons frits pour le crunch et un filet de sauce thai pour la touche finale. Un vrai banger." },
-      { name: "Napo Crousty", price: "12,80", desc: "Riz cremeux, sauce maison cremeuse, poulet bien crousty et ses oignons frits. Pour finir, une touche gourmande de soja sucree." },
-      { name: "Champy Crousty", price: "12,80", desc: "Riz cremeux, champignons et touche bien crousty. Simple, efficace, ca regale." },
+      { name: "Curry Crousty", price: "12,80", rating: "94", reviews: "18", desc: "Riz crémeux, poulet bien crousty, oignons frits pour le crunch et une sauce curry envoûtante. Un plat qui vous fera voyager." },
+      { name: "Dolce Crousty", price: "12,80", rating: "83", reviews: "12", badge: "1 acheté = 1 offert", desc: "Riz crémeux, poulet bien crousty, sauce maison sucrée et légèrement relevée, oignons frits et un filet de sauce thaï. Un régal à chaque bouchée." },
+      { name: "Thaï Crunch Crousty", price: "12,80", rating: "92", reviews: "14", desc: "Riz crémeux, poulet bien crousty, oignons frits pour le crunch et un filet de sauce thaï pour la touche finale. Un vrai banger." },
+      { name: "Napo Crousty", price: "12,80", desc: "Riz crémeux, sauce maison crémeuse, poulet bien crousty et ses oignons frits. Pour finir, une touche gourmande de soja sucrée." },
+      { name: "Champy Crousty", price: "12,80", desc: "Riz crémeux, champignons et touche bien crousty. Simple, efficace, ça régale." },
     ],
   },
   {
@@ -170,30 +170,30 @@ export const MENU_GROUPS = [
     emoji: "🍝",
     title: "Pasta Crousty",
     items: [
-      { name: "Creamy Chicken", price: "12,80", badge: "Popular", desc: "Pates nappees de notre sauce maison cremeuse, blanc de poulet tendre, poulet crousty par-dessus et oignons frits pour le crunch. Gourmand et genereux." },
-      { name: "Creamy Cheese'n'Bacon", price: "12,80", desc: "Pates enrobees de notre sauce fumee au cheddar, bacon, poulet bien crousty et oignons frits. Un plat qui regale fort." },
-      { name: "Creamy Carbo", price: "12,80", desc: "Pates carbonara bien cremeuses, poulet crousty et oignons frits pour le crunch. Reconfortant du debut a la fin." },
+      { name: "Creamy Chicken", price: "12,80", badge: "Popular", desc: "Pâtes nappées de notre sauce maison crémeuse, blanc de poulet tendre, poulet crousty par-dessus et oignons frits pour le crunch. Gourmand et généreux." },
+      { name: "Creamy Cheese'n'Bacon", price: "12,80", desc: "Pâtes enrobées de notre sauce fumée au cheddar, bacon, poulet bien crousty et oignons frits. Un plat qui régale fort." },
+      { name: "Creamy Carbo", price: "12,80", desc: "Pâtes carbonara bien crémeuses, poulet crousty et oignons frits pour le crunch. Réconfortant du début à la fin." },
     ],
   },
   {
     id: "pates",
     emoji: "🍝",
-    title: "Pates",
+    title: "Pâtes",
     items: [
-      { name: "Carbonara", price: "9,40", rating: "79", reviews: "48", desc: "Une sauce creme toute douce, des lardons de veau dores, et des pates pretes a tout absorber. On oublie tout et on se regale." },
-      { name: "Poulet Creme", price: "9,40", rating: "97", reviews: "35", desc: "Des pates roulees dans une sauce creme toute douce et des morceaux de poulet tendres. La recette du bonheur en version cremeuse." },
-      { name: "America", price: "9,40", rating: "95", reviews: "21", desc: "Sauce au cheddar cremeuse et legerement fumee, bacon croustillant et oignons frits qui mettent tout le monde d'accord." },
-      { name: "Pesto Verde", price: "9,40", desc: "Des pates al dente enrobees d'un pesto maison frais, parfume au basilic et une pointe de parmesan. Impossible d'y resister." },
-      { name: "Forestiere", price: "9,40", desc: "Pates a la sauce forestiere aux champignons. Simple et gourmand, le plat qui fait plaisir du debut a la fin." },
+      { name: "Carbonara", price: "9,40", rating: "79", reviews: "48", desc: "Une sauce crème toute douce, des lardons de veau dorés, et des pâtes prêtes à tout absorber. On oublie tout et on se régale." },
+      { name: "Poulet Crème", price: "9,40", rating: "97", reviews: "35", desc: "Des pâtes roulées dans une sauce crème toute douce et des morceaux de poulet tendres. La recette du bonheur en version crémeuse." },
+      { name: "America", price: "9,40", rating: "95", reviews: "21", desc: "Sauce au cheddar crémeuse et légèrement fumée, bacon croustillant et oignons frits qui mettent tout le monde d'accord." },
+      { name: "Pesto Verde", price: "9,40", desc: "Des pâtes al dente enrobées d'un pesto maison frais, parfumé au basilic et une pointe de parmesan. Impossible d'y résister." },
+      { name: "Forestière", price: "9,40", desc: "Pâtes à la sauce forestière aux champignons. Simple et gourmand, le plat qui fait plaisir du début à la fin." },
     ],
   },
   {
     id: "gratin",
     emoji: "🧀",
-    title: "Pates Gratinees",
+    title: "Pâtes Gratinées",
     items: [
-      { name: "Pates Gratinees", price: "11,45", rating: "94", reviews: "17", desc: "Des pates bien genereuses, nappees de la sauce de ton choix, recouvertes de fromage fondant et croustillant. Cremeux, cheesy, reconfortant." },
-      { name: "Gnocchi'Flett", price: "14,90", rating: "100", reviews: "3", desc: "Gnocchis ultra fondants, oignons confits caramelises, lardons fumes, creme genereuse et fromage coulant gratine a la perfection. La street food version montagne." },
+      { name: "Pâtes Gratinées", price: "11,45", rating: "94", reviews: "17", desc: "Des pâtes bien généreuses, nappées de la sauce de ton choix, recouvertes de fromage fondant et croustillant. Crémeux, cheesy, réconfortant." },
+      { name: "Gnocchi'Flett", price: "14,90", rating: "100", reviews: "3", desc: "Gnocchis ultra fondants, oignons confits caramélisés, lardons fumés, crème généreuse et fromage coulant gratiné à la perfection. La street food version montagne." },
     ],
   },
   {
@@ -201,14 +201,14 @@ export const MENU_GROUPS = [
     emoji: "😋",
     title: "Une petite faim ?",
     items: [
-      { name: "Nems x5", price: "7,60", rating: "88", reviews: "34", desc: "5 nems de poulet bien croustillants, dores comme il faut, avec une farce savoureuse. Parfait a grignoter ou a partager." },
-      { name: "Jalapenos x5", price: "6,00", rating: "92", reviews: "13", desc: "Des jalapenos croustillants garnis de fromage fondant, juste ce qu'il faut de piquant pour reveiller les papilles. Hot & cheesy." },
-      { name: "Oignons Rings x6", price: "6,80", rating: "100", reviews: "10", desc: "6 oignons rings ultra crousty, le petit snack qui claque a chaque bouchee. Impossible de n'en manger qu'un." },
-      { name: "Bouchees Camembert x5", price: "6,85", rating: "100", reviews: "5", desc: "Du camembert coulant, une panure doree et croustillante, chaud a coeur et fondant a souhait. Le melange parfait croustillant & cheesy." },
-      { name: "Croc'Cheese", price: "3,20", rating: "70", reviews: "10", badge: "Free with €20 purchase", desc: "Du pain dore et croustillant qui fait crac sous la dent, et un fromage ultra fondant." },
-      { name: "Croc'Jambon", price: "3,95", desc: "Du pain bien dore, un morceau de jambon de dinde et un fromage fondant qui coule comme il faut." },
-      { name: "Crok'Crousty", price: "6,30", desc: "Version street food : sauce fumee qui claque, poulet crousty, cheddar coulant et dessus gratine. Un crok qui envoie du lourd." },
-      { name: "Toast'Bacon", price: "4,55", desc: "Du pain bien croustillant, du bacon grille et des tranches de cheddar fondantes. Du croquant, du fondant, du fume." },
+      { name: "Nems x5", price: "7,60", rating: "88", reviews: "34", desc: "5 nems de poulet bien croustillants, dorés comme il faut, avec une farce savoureuse. Parfait à grignoter ou à partager." },
+      { name: "Jalapeños x5", price: "6,00", rating: "92", reviews: "13", desc: "Des jalapeños croustillants garnis de fromage fondant, juste ce qu'il faut de piquant pour réveiller les papilles. Hot & cheesy." },
+      { name: "Oignons Rings x6", price: "6,80", rating: "100", reviews: "10", desc: "6 oignons rings ultra crousty, le petit snack qui claque à chaque bouchée. Impossible de n'en manger qu'un." },
+      { name: "Bouchées Camembert x5", price: "6,85", rating: "100", reviews: "5", desc: "Du camembert coulant, une panure dorée et croustillante, chaud à cœur et fondant à souhait. Le mélange parfait croustillant & cheesy." },
+      { name: "Croc'Cheese", price: "3,20", rating: "70", reviews: "10", badge: "Offert dès 20 €", desc: "Du pain doré et croustillant qui fait crac sous la dent, et un fromage ultra fondant." },
+      { name: "Croc'Jambon", price: "3,95", desc: "Du pain bien doré, un morceau de jambon de dinde et un fromage fondant qui coule comme il faut." },
+      { name: "Crok'Crousty", price: "6,30", desc: "Version street food : sauce fumée qui claque, poulet crousty, cheddar coulant et dessus gratiné. Un crok qui envoie du lourd." },
+      { name: "Toast'Bacon", price: "4,55", desc: "Du pain bien croustillant, du bacon grillé et des tranches de cheddar fondantes. Du croquant, du fondant, du fumé." },
     ],
   },
   {
@@ -216,9 +216,9 @@ export const MENU_GROUPS = [
     emoji: "😎",
     title: "Une gourmandise ?",
     items: [
-      { name: "Tarte au Daim", price: "4,50", rating: "100", reviews: "3", desc: "Couches biscuitees, creme onctueuse, nappage chocolat au lait et eclats croquants." },
+      { name: "Tarte au Daim", price: "4,50", rating: "100", reviews: "3", desc: "Couches biscuitées, crème onctueuse, nappage chocolat au lait et éclats croquants." },
       { name: "Tiramisu Nutella Maison", price: "6,25" },
-      { name: "Tiramisu Speculos Maison", price: "6,25" },
+      { name: "Tiramisu Spéculos Maison", price: "6,25" },
     ],
   },
   {
@@ -238,20 +238,20 @@ export const MENU_GROUPS = [
       { name: "Eau Cristalline Gazeuse 50cl", price: "2,40" },
       { name: "7Up Exotique 33cl", price: "2,40" },
       { name: "Coca Cola Vanille 33cl", price: "2,85" },
-      { name: "Coca Cola Zero 33cl", price: "2,40" },
+      { name: "Coca Cola Zéro 33cl", price: "2,40" },
     ],
   },
 ];
 
 export const BADGE_BG = {
   Popular: "var(--orange)",
-  "Buy 1, get 1 free": "var(--gold)",
-  "Free with €20 purchase": "var(--uber)",
+  "1 acheté = 1 offert": "var(--gold)",
+  "Offert dès 20 €": "var(--uber)",
 };
 export const BADGE_FG = {
   Popular: "#fff",
-  "Buy 1, get 1 free": "#1B1206",
-  "Free with €20 purchase": "#04130B",
+  "1 acheté = 1 offert": "#1B1206",
+  "Offert dès 20 €": "#04130B",
 };
 
 // ---- Canaux de commande (3 portes) ----
@@ -260,23 +260,23 @@ export const CHANNELS = [
     num: "01",
     kicker: "Le plus rapide",
     title: "Sur place",
-    desc: "On s'installe, on devore. Tables hautes, neon orange, ambiance du soir.",
+    desc: "On s'installe, on dévore. Tables hautes, néon orange, ambiance du soir.",
     glow: "var(--orange)",
     actions: [{ ico: "☎", label: "Appeler", href: LINKS.tel, target: "_self", emph: true }],
   },
   {
     num: "02",
     kicker: "Click & Collect",
-    title: "A emporter",
-    desc: "On commande, on passe recuperer chaud en 10-15 min. Zero attente.",
+    title: "À emporter",
+    desc: "On commande, on passe récupérer chaud en 10-15 min. Zéro attente.",
     glow: "var(--gold)",
-    actions: [{ ico: "☎", label: "Commander par telephone", href: LINKS.tel, target: "_self", emph: true }],
+    actions: [{ ico: "☎", label: "Commander par téléphone", href: LINKS.tel, target: "_self", emph: true }],
   },
   {
     num: "03",
     kicker: "Chez toi",
     title: "En livraison",
-    desc: "Livre chaud et croustillant dans tout Albi via tes apps preferees.",
+    desc: "Livré chaud et croustillant dans tout Albi via tes apps préférées.",
     glow: "var(--uber)",
     actions: [
       { label: "Uber Eats", href: LINKS.uber, target: "_blank", emph: false, col: "var(--uber)", logo: logoUber },

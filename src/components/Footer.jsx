@@ -9,7 +9,7 @@ export default function Footer() {
         <div className="nh-footer__brand">
           <img src={logo} alt="Napolit'hein Crousty" className="nh-footer__logo" />
           <p className="nh-footer__tag">
-            Pates &amp; riz crousty · La street food genereuse d'Albi depuis 2019.
+            Pâtes &amp; riz crousty · La street food généreuse d'Albi depuis 2019.
           </p>
         </div>
 
@@ -26,7 +26,7 @@ export default function Footer() {
           <div className="nh-footer__h">Commander</div>
           <a href={LINKS.uber} target="_blank" rel="noopener noreferrer" className="nh-footer__link">Uber Eats</a>
           <a href={LINKS.deliveroo} target="_blank" rel="noopener noreferrer" className="nh-footer__link">Deliveroo</a>
-          <a href={LINKS.tel} className="nh-footer__link">Sur place / A emporter</a>
+          <a href={LINKS.tel} className="nh-footer__link">Sur place / À emporter</a>
         </div>
 
         <div className="nh-footer__col">
