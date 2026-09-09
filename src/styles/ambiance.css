@@ -141,3 +141,18 @@
     font-size: 15px;
   }
 }
+
+.nh-amb__info {
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+}
+.nh-amb__actions {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  max-width: 100%;
+}
+@media (max-width: 380px) {
+  .nh-amb__actions .nh-btn { padding-inline: 14px; }
+}

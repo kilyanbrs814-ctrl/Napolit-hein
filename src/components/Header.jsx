@@ -5,6 +5,9 @@ import "../styles/header.css";
 
 export default function Header({ onCavemanTrigger }) {
   const [visible, setVisible] = useState(false);
+  const [menuOpen, setMenuOpen] = useState(false);
+  const burgerRef = useRef(null);
+  const headerRef = useRef(null);
   const clickCountRef = useRef(0);
   const clickTimerRef = useRef(null);
 
@@ -43,6 +46,29 @@ export default function Header({ onCavemanTrigger }) {
     };
   }, []);
 
+  useEffect(() => {
+    if (!visible) setMenuOpen(false);
+  }, [visible]);
+
+  useEffect(() => {
+    if (!menuOpen) return;
+    const onKeyDown = (event) => {
+      if (event.key === "Escape") {
+        setMenuOpen(false);
+        burgerRef.current?.focus();
+      }
+    };
+    const onPointerDown = (event) => {
+      if (!headerRef.current?.contains(event.target)) setMenuOpen(false);
+    };
+    document.addEventListener("keydown", onKeyDown);
+    document.addEventListener("pointerdown", onPointerDown);
+    return () => {
+      document.removeEventListener("keydown", onKeyDown);
+      document.removeEventListener("pointerdown", onPointerDown);
+    };
+  }, [menuOpen]);
+
   function handleLogoClick(e) {
     clickCountRef.current += 1;
     clearTimeout(clickTimerRef.current);
@@ -59,25 +85,23 @@ export default function Header({ onCavemanTrigger }) {
   }
 
   return (
-    <header className={`nh-header${visible ? " is-visible is-scrolled" : ""}`}>
+    <header ref={headerRef} className={`nh-header${visible ? " is-visible is-scrolled" : ""}`}>
       <a href="#top" className="nh-header__mark" aria-label="Napolit'hein Crousty - accueil" onClick={handleLogoClick}>
         <img src={logo} alt="Napolit'hein Crousty" className="nh-header__logo" />
       </a>
-      <nav className="nh-header__center" aria-label="Navigation principale">
-        <a href="#top" className="nh-header__link">Accueil</a>
-        <a href="#couches" className="nh-header__link">Couche par couche</a>
-        <a href="#carte" className="nh-header__link">Incontournables</a>
-        <a href="#menu" className="nh-header__link">Carte</a>
-        <a href="#commander" className="nh-header__link">Commander</a>
-        <a href="#avis" className="nh-header__link">Avis</a>
-        <a href="#ambiance" className="nh-header__link">Ambiance</a>
+      <button ref={burgerRef} type="button" className="nh-header__burger"
+        aria-label={menuOpen ? "Fermer le menu" : "Ouvrir le menu"}
+        aria-expanded={menuOpen} aria-controls="nh-header-navigation"
+        onClick={() => setMenuOpen((open) => !open)}>
+        <span /><span /><span />
+      </button>
+      <nav id="nh-header-navigation" className="nh-header__dropdown"
+        aria-label="Navigation principale" hidden={!menuOpen}>
+        <a href={LINKS.tel} className="nh-header__pill" onClick={() => setMenuOpen(false)}>Appeler</a>
+        <a href={LINKS.maps} target="_blank" rel="noopener noreferrer" className="nh-header__link" onClick={() => setMenuOpen(false)}>Nous trouver</a>
+        <a href="#menu" className="nh-header__link" onClick={() => setMenuOpen(false)}>Menu</a>
+        <a href="#avis" className="nh-header__link" onClick={() => setMenuOpen(false)}>Avis</a>
       </nav>
-      <div className="nh-header__end">
-        <a href={LINKS.tel} className="nh-header__pill">
-          <span className="nh-header__pill-label">06 04 65 94 06</span>
-          <span className="nh-header__pill-mobile">Appeler</span>
-        </a>
-      </div>
     </header>
   );
 }

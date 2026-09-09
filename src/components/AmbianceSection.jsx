@@ -9,7 +9,7 @@ export default function AmbianceSection() {
       <div className="nh-amb__inner">
         <Reveal className="nh-amb__text">
           <div className="nh-eyebrow nh-amb__eyebrow">08 · Le spot</div>
-          <h2 className="nh-amb__title">Un coin de rue qui sent bon Albi.</h2>
+          <h2 className="nh-amb__title">Un coin de rue qui sent bon à Albi.</h2>
           <p className="nh-amb__p">
             Tables hautes, murs noirs, néon orange et mur végétal. On vient récupérer sa commande
             chaude — ou on s'installe pour dévorer sur place.
@@ -28,7 +28,7 @@ export default function AmbianceSection() {
               <div className="nh-amb__info-v">06 04 65 94 06</div>
             </div>
             <div className="nh-amb__info">
-              <div className="nh-amb__info-k">Ouvert</div>
+              <div className="nh-amb__info-k">Horaires</div>
               <div className="nh-amb__info-v">
                 Tous les soirs
                 <br />
@@ -36,9 +36,12 @@ export default function AmbianceSection() {
               </div>
             </div>
           </div>
-          <a href={LINKS.maps} target="_blank" rel="noopener noreferrer" className="nh-btn nh-btn--primary">
-            Nous trouver <span aria-hidden>→</span>
-          </a>
+          <div className="nh-amb__actions">
+            <a href={LINKS.maps} target="_blank" rel="noopener noreferrer" className="nh-btn nh-btn--primary">
+              Nous trouver <span aria-hidden>→</span>
+            </a>
+            <a href={LINKS.tel} className="nh-btn nh-btn--ghost">Appeler</a>
+          </div>
         </Reveal>
 
         <Reveal className="nh-amb__visual" delay={0.1}>

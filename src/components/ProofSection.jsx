@@ -137,7 +137,7 @@ export default function ProofSection() {
         <div className="nh-proof__center">
           <div className="nh-proof__big">700+ AVIS</div>
           <div className="nh-proof__stars">★★★★★</div>
-          <div className="nh-eyebrow nh-proof__big-sub">Moyenne Google, Uber Eats &amp; Deliveroo · et ça continue</div>
+          <div className="nh-eyebrow nh-proof__big-sub">Vos avis sur Google, Uber Eats &amp; Deliveroo · et ça continue</div>
           <div className="nh-proof__platforms">
             {PLATFORMS.map((p) => (
               <div key={p.name} className={`nh-proof__platform nh-proof__platform--${p.name.toLowerCase().replace(/\s+/g, '-')}`}>

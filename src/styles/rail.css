@@ -58,7 +58,7 @@
   height: 100%;
   width: 100%;
   will-change: transform;
-  transition: transform 0.9s cubic-bezier(0.16, 1, 0.3, 1);
+  transition: transform 0.8s cubic-bezier(0.16, 1, 0.3, 1);
   touch-action: pan-y;
   user-select: none;
 }
@@ -220,7 +220,7 @@
     overflow: clip;
   }
   .nh-rail__track {
-    transition: transform 0.9s cubic-bezier(0.16, 1, 0.3, 1);
+    transition: transform 0.8s cubic-bezier(0.16, 1, 0.3, 1);
     will-change: transform;
   }
   .nh-rail__header {
@@ -237,8 +237,8 @@
     gap: 14px;
     padding: 76px 22px 44px;
     will-change: auto;
-    transition: opacity 0.9s cubic-bezier(0.16, 1, 0.3, 1),
-      transform 0.9s cubic-bezier(0.16, 1, 0.3, 1);
+    transition: opacity 0.8s cubic-bezier(0.16, 1, 0.3, 1),
+      transform 0.8s cubic-bezier(0.16, 1, 0.3, 1);
   }
   /* Blobs sans blur : le radial-gradient fond déjà vers transparent, le
      filter: blur() coûtait une rastérisation GPU énorme pendant le scroll. */

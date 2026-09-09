@@ -50,7 +50,7 @@
   text-shadow: 0 10px 60px rgba(0, 0, 0, 0.6);
 }
 .nh-final__h2-accent {
-  color: #cf8869;
+  color: var(--orange);
   text-shadow: none;
 }
 .nh-final__btn-row {
