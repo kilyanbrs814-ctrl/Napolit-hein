@@ -160,6 +160,7 @@
 
 /* ---- Couche 02 · Le croustillant (phase 2+3) — indépendante du cover ---- */
 .nh-hero__cr-layer {
+  pointer-events: none;
   position: absolute;
   inset: 0;
   z-index: 4;

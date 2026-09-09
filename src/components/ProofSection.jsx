@@ -135,7 +135,7 @@ export default function ProofSection() {
         <div className="nh-eyebrow nh-proof__eyebrow">07 · Tout le monde valide</div>
 
         <div className="nh-proof__center">
-          <div className="nh-proof__big">4,5</div>
+          <div className="nh-proof__big">700+ AVIS</div>
           <div className="nh-proof__stars">★★★★★</div>
           <div className="nh-eyebrow nh-proof__big-sub">Moyenne Google, Uber Eats &amp; Deliveroo · et ça continue</div>
           <div className="nh-proof__platforms">
