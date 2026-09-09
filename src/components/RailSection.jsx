@@ -46,7 +46,7 @@ export default function RailSection() {
 
   useEffect(() => {
     if (dragging) return;
-    const timer = setTimeout(() => setActiveIndex((index) => (index + 1) % count), 4000);
+    const timer = setTimeout(() => setActiveIndex((index) => (index + 1) % count), 3500);
     return () => clearTimeout(timer);
   }, [activeIndex, dragging, count]);
 

@@ -262,7 +262,7 @@ export const CHANNELS = [
     title: "Sur place",
     desc: "On s'installe, on dévore. Tables hautes, néon orange, ambiance du soir.",
     glow: "var(--orange)",
-    actions: [{ ico: "☎", label: "Appeler", href: LINKS.tel, target: "_self", emph: true }],
+    actions: [{ ico: "↗", label: "Nous trouver", href: LINKS.maps, target: "_blank", emph: true }],
   },
   {
     num: "02",

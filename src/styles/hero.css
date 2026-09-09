@@ -915,3 +915,21 @@
     font-size: 16px;
   }
 }
+
+/* Croustillant : titre centré sur exactement deux lignes. */
+.nh-hero__cr-text {
+  align-items: center;
+  text-align: center;
+}
+.nh-hero__cr-h2 {
+  max-width: none;
+  margin: 0;
+}
+.nh-hero__cr-h2 span {
+  display: block;
+  white-space: nowrap;
+}
+@media (max-width: 860px) {
+  .nh-hero__cr-text { transform: none; }
+  .nh-hero__cr-h2 { font-size: clamp(28px, 8.8vw, 52px); }
+}

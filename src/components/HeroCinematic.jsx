@@ -94,7 +94,7 @@ function HeroContent() {
         <a href={LINKS.maps} target="_blank" rel="noopener noreferrer" className="nh-btn nh-btn--ghost">
           Nous trouver
         </a>
-        <a href="#carte" className="nh-btn nh-btn--primary nh-hero__cta-mobile">
+        <a href="#menu" className="nh-btn nh-btn--primary nh-hero__cta-mobile">
           Voir la carte
         </a>
       </div>
@@ -216,7 +216,7 @@ function DeliveryWidgets() {
 function CroustyContent() {
   return (
     <div className="nh-hero__cr-text">
-      <h2 className="nh-hero__cr-h2">Le croustillant qui change tout.</h2>
+      <h2 className="nh-hero__cr-h2"><span>Le croustillant</span><span>qui change tout.</span></h2>
     </div>
   );
 }
