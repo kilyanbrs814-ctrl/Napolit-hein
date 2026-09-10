@@ -1,6 +1,6 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
-import { MENU_GROUPS, BADGE_BG, BADGE_FG, LINKS } from "../data/content.js";
+import { MENU_GROUPS, BADGE_BG, BADGE_FG, LINKS, DELIVERY_LOGOS } from "../data/content.js";
 import Reveal from "./Reveal.jsx";
 import newCreamy from "../assets/images/new-creamy.png";
 import newCurry from "../assets/images/new-curry.png";
@@ -118,12 +118,12 @@ function useMobileMenuLayout() {
 }
 
 const MOBILE_GROUP_DEFS = [
-  { id: "offers", title: "Offres", sourceIds: ["offers"] },
-  { id: "riz", title: "Riz crousty", sourceIds: ["riz"] },
-  { id: "pates-mobile", title: "Pâtes", sourceIds: ["pasta", "pates", "gratin"] },
-  { id: "cote", title: "À côté", sourceIds: ["faim"] },
-  { id: "desserts", title: "Desserts", sourceIds: ["gourm"] },
-  { id: "boissons", title: "Boissons", sourceIds: ["soif"] },
+  { id: "offers", emoji: "🌟", title: "Offres", sourceIds: ["offers"] },
+  { id: "riz", emoji: "🍚", title: "Riz crousty", sourceIds: ["riz"] },
+  { id: "pates-mobile", emoji: "🍝", title: "Pâtes", sourceIds: ["pasta", "pates", "gratin"] },
+  { id: "cote", emoji: "😋", title: "À côté", sourceIds: ["faim"] },
+  { id: "desserts", emoji: "😎", title: "Desserts", sourceIds: ["gourm"] },
+  { id: "boissons", emoji: "🥵", title: "Boissons", sourceIds: ["soif"] },
 ];
 
 const MOBILE_DESCRIPTIONS = {
@@ -142,10 +142,54 @@ function buildMobileGroups() {
   }));
 }
 
+function Chevron({ dir }) {
+  return (
+    <svg
+      width="17"
+      height="17"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2.6"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden="true"
+    >
+      {dir < 0 ? <polyline points="15 18 9 12 15 6" /> : <polyline points="9 18 15 12 9 6" />}
+    </svg>
+  );
+}
+
 function MobileCategoryRail({ groups, activeId, onSelect }) {
+  const scrollRef = useRef(null);
+
+  useEffect(() => {
+    const scroller = scrollRef.current;
+    const active = scroller?.querySelector(`[data-mobile-cat="${activeId}"]`);
+    if (!scroller || !active) return;
+
+    const targetLeft = active.offsetLeft - scroller.clientWidth / 2 + active.clientWidth / 2;
+    scroller.scrollTo({ left: targetLeft, behavior: "smooth" });
+  }, [activeId]);
+
+  const step = (dir) => {
+    const current = groups.findIndex((group) => group.id === activeId);
+    const next = groups[(current + dir + groups.length) % groups.length];
+    onSelect(next.id);
+  };
+
   return (
     <nav className="nh-menu__mnav" aria-label="Catégories du menu">
-      <div className="nh-menu__mnav-scroll">
+      <button
+        type="button"
+        className="nh-menu__mnav-arrow"
+        aria-label="Catégorie précédente"
+        onClick={() => step(-1)}
+      >
+        <Chevron dir={-1} />
+      </button>
+
+      <div className="nh-menu__mnav-scroll" ref={scrollRef}>
         <ul className="nh-menu__mnav-list" role="tablist">
           {groups.map((group) => {
             const isActive = group.id === activeId;
@@ -157,9 +201,11 @@ function MobileCategoryRail({ groups, activeId, onSelect }) {
                   id={`nh-menu-mobile-tab-${group.id}`}
                   aria-selected={isActive}
                   aria-controls="nh-menu-mobile-panel"
+                  data-mobile-cat={group.id}
                   className={`nh-menu__mnav-tab${isActive ? " is-active" : ""}`}
                   onClick={() => onSelect(group.id)}
                 >
+                  <span className="nh-menu__mnav-emoji" aria-hidden="true">{group.emoji}</span>
                   {group.title}
                 </button>
               </li>
@@ -167,6 +213,15 @@ function MobileCategoryRail({ groups, activeId, onSelect }) {
           })}
         </ul>
       </div>
+
+      <button
+        type="button"
+        className="nh-menu__mnav-arrow"
+        aria-label="Catégorie suivante"
+        onClick={() => step(1)}
+      >
+        <Chevron dir={1} />
+      </button>
     </nav>
   );
 }
@@ -211,14 +266,22 @@ function MobileMenuRow({ item, index, reduceMotion }) {
 
 function MobileOrderChooser() {
   const [open, setOpen] = useState(false);
+  const [step, setStep] = useState("mode");
+  const [selectedMode, setSelectedMode] = useState(null);
+
+  const openChooser = () => {
+    setStep("mode");
+    setSelectedMode(null);
+    setOpen(true);
+  };
 
   return (
     <>
       <div className="nh-menu__mobile-order-wrap">
-        <button type="button" className="nh-menu__mobile-order" onClick={() => setOpen(true)}>
+        <button type="button" className="nh-menu__mobile-order" onClick={openChooser}>
           Commander
         </button>
-        <p className="nh-menu__mobile-order-help">Choisis ensuite Uber Eats ou Deliveroo</p>
+        <p className="nh-menu__mobile-order-help">Sur place, à emporter ou en livraison</p>
       </div>
 
       {open && (
@@ -235,7 +298,21 @@ function MobileOrderChooser() {
             onClick={(event) => event.stopPropagation()}
           >
             <div className="nh-menu__chooser-head">
-              <h3 id="nh-menu-chooser-title" className="nh-menu__chooser-title">Commander</h3>
+              <div className="nh-menu__chooser-heading">
+                {step === "delivery" && (
+                  <button
+                    type="button"
+                    className="nh-menu__chooser-back"
+                    aria-label="Retour"
+                    onClick={() => setStep("mode")}
+                  >
+                    <Chevron dir={-1} />
+                  </button>
+                )}
+                <h3 id="nh-menu-chooser-title" className="nh-menu__chooser-title">
+                  {step === "delivery" ? "Livraison" : "Commander"}
+                </h3>
+              </div>
               <button
                 type="button"
                 className="nh-menu__chooser-close"
@@ -245,14 +322,55 @@ function MobileOrderChooser() {
                 ×
               </button>
             </div>
-            <div className="nh-menu__chooser-links">
-              <a className="nh-menu__chooser-link" href={LINKS.uber} target="_blank" rel="noopener noreferrer">
-                Uber Eats
-              </a>
-              <a className="nh-menu__chooser-link" href={LINKS.deliveroo} target="_blank" rel="noopener noreferrer">
-                Deliveroo
-              </a>
-            </div>
+
+            {step === "mode" ? (
+              <div className="nh-menu__chooser-modes">
+                <button
+                  type="button"
+                  className={`nh-menu__chooser-mode${selectedMode === "place" ? " is-selected" : ""}`}
+                  aria-pressed={selectedMode === "place"}
+                  onClick={() => setSelectedMode("place")}
+                >
+                  Sur place
+                </button>
+                <button
+                  type="button"
+                  className={`nh-menu__chooser-mode${selectedMode === "takeaway" ? " is-selected" : ""}`}
+                  aria-pressed={selectedMode === "takeaway"}
+                  onClick={() => setSelectedMode("takeaway")}
+                >
+                  À emporter
+                </button>
+                <button
+                  type="button"
+                  className="nh-menu__chooser-mode"
+                  onClick={() => setStep("delivery")}
+                >
+                  Livraison
+                </button>
+              </div>
+            ) : (
+              <div className="nh-menu__chooser-delivery">
+                <a
+                  className="nh-menu__chooser-logo-link"
+                  href={LINKS.uber}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  aria-label="Commander avec Uber Eats"
+                >
+                  <img src={DELIVERY_LOGOS.uber} alt="Uber Eats" className="nh-menu__chooser-logo" />
+                </a>
+                <a
+                  className="nh-menu__chooser-logo-link"
+                  href={LINKS.deliveroo}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  aria-label="Commander avec Deliveroo"
+                >
+                  <img src={DELIVERY_LOGOS.deliveroo} alt="Deliveroo" className="nh-menu__chooser-logo" />
+                </a>
+              </div>
+            )}
           </div>
         </div>
       )}
@@ -270,12 +388,15 @@ const MOBILE_SIMPLE_CSS = `
   .nh-menu__sub { max-width: none; font-size: clamp(16px, 4.5vw, 20px); line-height: 1.4; color: rgba(224,230,240,.76); }
   .nh-menu__content { display: block; }
 
-  .nh-menu__mnav { position: static; display: block; margin: 0 -18px 18px; padding: 0; background: none; min-width: 0; }
-  .nh-menu__mnav-scroll { overflow-x: auto; overflow-y: hidden; -webkit-overflow-scrolling: touch; scrollbar-width: none; overscroll-behavior-x: contain; scroll-snap-type: x proximity; -webkit-mask-image: none; mask-image: none; }
+  .nh-menu__mnav { position: static; display: flex; align-items: center; gap: 7px; margin: 0 -18px 18px; padding: 0 10px; background: none; min-width: 0; }
+  .nh-menu__mnav-arrow { flex: 0 0 auto; width: 42px; height: 42px; display: flex; align-items: center; justify-content: center; border-radius: 999px; border: 1px solid rgba(255,255,255,.15); background: rgba(255,255,255,.05); color: #fff; cursor: pointer; }
+  .nh-menu__mnav-arrow:active { transform: scale(.93); background: rgba(255,90,31,.18); border-color: rgba(255,90,31,.65); }
+  .nh-menu__mnav-scroll { flex: 1 1 auto; min-width: 0; overflow-x: auto; overflow-y: hidden; -webkit-overflow-scrolling: touch; scrollbar-width: none; overscroll-behavior-x: contain; scroll-snap-type: x proximity; -webkit-mask-image: linear-gradient(90deg, transparent, #000 14px, #000 calc(100% - 14px), transparent); mask-image: linear-gradient(90deg, transparent, #000 14px, #000 calc(100% - 14px), transparent); }
   .nh-menu__mnav-scroll::-webkit-scrollbar { display: none; }
-  .nh-menu__mnav-list { list-style: none; margin: 0; padding: 0 18px 10px; display: flex; gap: 10px; width: max-content; }
-  .nh-menu__mnav-tab { min-height: 48px; display: inline-flex; align-items: center; justify-content: center; border: 1px solid rgba(255,255,255,.16); border-radius: 999px; padding: 11px 22px; background: transparent; color: rgba(213,220,232,.72); font-family: var(--body); font-size: 15px; font-weight: 750; letter-spacing: 0; text-transform: none; line-height: 1; white-space: nowrap; scroll-snap-align: start; }
+  .nh-menu__mnav-list { list-style: none; margin: 0; padding: 0 12px 10px; display: flex; gap: 10px; width: max-content; }
+  .nh-menu__mnav-tab { min-height: 48px; display: inline-flex; align-items: center; justify-content: center; gap: 7px; border: 1px solid rgba(255,255,255,.16); border-radius: 999px; padding: 11px 20px; background: transparent; color: rgba(213,220,232,.72); font-family: var(--body); font-size: 15px; font-weight: 750; letter-spacing: 0; text-transform: none; line-height: 1; white-space: nowrap; scroll-snap-align: center; }
   .nh-menu__mnav-tab.is-active { border-color: var(--orange); background: var(--orange); color: #fff; box-shadow: none; }
+  .nh-menu__mnav-emoji { font-size: 16px; line-height: 1; flex-shrink: 0; }
 
   .nh-menu__mobile-list { border-top: 1px solid rgba(255,255,255,.13); }
   .nh-menu__mobile-row { min-height: 176px; display: grid; grid-template-columns: minmax(0,1fr) 132px; gap: 16px; align-items: center; padding: 18px 0; border-bottom: 1px solid rgba(255,255,255,.13); }
@@ -297,18 +418,27 @@ const MOBILE_SIMPLE_CSS = `
   .nh-menu__chooser-backdrop { position: fixed; inset: 0; z-index: 1000; display: flex; align-items: flex-end; justify-content: center; padding: 18px; background: rgba(2,6,12,.72); backdrop-filter: blur(7px); -webkit-backdrop-filter: blur(7px); }
   .nh-menu__chooser { width: min(100%,460px); border: 1px solid rgba(255,255,255,.14); border-radius: 24px; padding: 22px; background: #0b1220; box-shadow: 0 30px 70px rgba(0,0,0,.45); }
   .nh-menu__chooser-head { display: flex; align-items: center; justify-content: space-between; gap: 16px; margin-bottom: 16px; }
+  .nh-menu__chooser-heading { display: flex; align-items: center; gap: 10px; min-width: 0; }
   .nh-menu__chooser-title { margin: 0; font-family: var(--display); font-size: 30px; line-height: 1; color: #fff; text-transform: uppercase; }
-  .nh-menu__chooser-close { width: 40px; height: 40px; border: 1px solid rgba(255,255,255,.13); border-radius: 999px; background: rgba(255,255,255,.05); color: #fff; font-size: 22px; cursor: pointer; }
-  .nh-menu__chooser-links { display: grid; gap: 10px; }
-  .nh-menu__chooser-link { min-height: 54px; display: flex; align-items: center; justify-content: center; border-radius: 14px; background: #fff; color: #090d16; text-decoration: none; font-family: var(--body); font-size: 16px; font-weight: 900; }
+  .nh-menu__chooser-back, .nh-menu__chooser-close { width: 40px; height: 40px; flex: 0 0 auto; display: flex; align-items: center; justify-content: center; border: 1px solid rgba(255,255,255,.13); border-radius: 999px; background: rgba(255,255,255,.05); color: #fff; cursor: pointer; }
+  .nh-menu__chooser-close { font-size: 22px; }
+  .nh-menu__chooser-modes { display: grid; gap: 10px; }
+  .nh-menu__chooser-mode { width: 100%; min-height: 56px; border: 1px solid rgba(255,255,255,.13); border-radius: 14px; background: rgba(255,255,255,.055); color: #fff; font-family: var(--body); font-size: 16px; font-weight: 850; cursor: pointer; }
+  .nh-menu__chooser-mode:active, .nh-menu__chooser-mode.is-selected { border-color: var(--orange); background: rgba(255,90,31,.16); }
+  .nh-menu__chooser-delivery { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+  .nh-menu__chooser-logo-link { min-height: 88px; display: flex; align-items: center; justify-content: center; padding: 18px; border-radius: 16px; background: #fff; text-decoration: none; overflow: hidden; }
+  .nh-menu__chooser-logo { display: block; max-width: 100%; width: auto; max-height: 42px; height: auto; object-fit: contain; }
 }
+
 @media (max-width: 480px) {
   .nh-menu__mobile-row { grid-template-columns: minmax(0,1fr) 118px; gap: 13px; min-height: 162px; }
   .nh-menu__mobile-media { width: 118px; height: 118px; border-radius: 14px; }
   .nh-menu__mobile-name { font-size: clamp(25px, 7.7vw, 34px); }
   .nh-menu__mobile-desc { font-size: 14px; }
   .nh-menu__mobile-price { font-size: 28px; }
+  .nh-menu__chooser-delivery { grid-template-columns: 1fr; }
 }
+
 @media (max-width: 360px) {
   .nh-menu__mobile-row { grid-template-columns: minmax(0,1fr) 104px; }
   .nh-menu__mobile-media { width: 104px; height: 104px; }
