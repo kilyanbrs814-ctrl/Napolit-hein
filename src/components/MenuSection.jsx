@@ -1,7 +1,8 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
-import { MENU_GROUPS, BADGE_BG, BADGE_FG, LINKS, DELIVERY_LOGOS } from "../data/content.js";
+import { BADGE_BG, BADGE_FG, LINKS, DELIVERY_LOGOS } from "../data/content.js";
+import { UBER_MENU_GROUPS as MENU_GROUPS } from "../data/uberMenu.js";
 import Reveal from "./Reveal.jsx";
 import newCreamy from "../assets/images/new-creamy.png";
 import newCurry from "../assets/images/new-curry.png";
@@ -31,7 +32,7 @@ function getDishImage(name) {
 }
 
 function MenuCard({ item, index, compact, categoryTitle, reduceMotion }) {
-  const img = !compact ? getDishImage(item.name) : null;
+  const img = item.image || (!compact ? getDishImage(item.name) : null);
   const hasRating = !!item.rating;
   const hasBadge = !!item.badge;
   const hasBadges = hasRating || hasBadge;
@@ -116,21 +117,12 @@ function useMobileMenuLayout() {
   return isMobile;
 }
 
-const MOBILE_GROUP_DEFS = [
-  { id: "offers", emoji: "🌟", title: "Offres", sourceIds: ["offers"] },
-  { id: "riz", emoji: "🍚", title: "Riz crousty", sourceIds: ["riz"] },
-  { id: "pates-mobile", emoji: "🍝", title: "Pâtes", sourceIds: ["pasta", "pates", "gratin"] },
-  { id: "cote", emoji: "😋", title: "À côté", sourceIds: ["faim"] },
-  { id: "desserts", emoji: "😎", title: "Desserts", sourceIds: ["gourm"] },
-  { id: "boissons", emoji: "🥵", title: "Boissons", sourceIds: ["soif"] },
-];
-
-const MOBILE_DESCRIPTIONS = {
-  "Curry Crousty": "Poulet croustillant, riz et sauce curry.",
-  "Dolce Crousty": "Poulet croustillant, riz et sauce sucrée.",
-  "Thaï Crunch Crousty": "Riz, poulet croustillant et sauce thaï.",
-  "Napo Crousty": "Sauce crémeuse et oignons frits.",
-};
+const MOBILE_GROUP_DEFS = MENU_GROUPS.map((group) => ({
+  id: group.id,
+  emoji: group.emoji,
+  title: group.title,
+  sourceIds: [group.id],
+}));
 
 function buildMobileGroups() {
   return MOBILE_GROUP_DEFS.map((def) => ({
@@ -214,8 +206,8 @@ function MobileCategoryRail({ groups, activeId, onSelect }) {
 }
 
 function MobileMenuRow({ item, index, reduceMotion }) {
-  const image = getDishImage(item.name);
-  const description = MOBILE_DESCRIPTIONS[item.name] || item.desc || "";
+  const image = item.image || getDishImage(item.name);
+  const description = item.desc || "";
   const motionProps = reduceMotion
     ? {}
     : {
@@ -506,7 +498,7 @@ export default function MenuSection() {
 
   const mobileGroups = useMemo(() => buildMobileGroups(), []);
   const activeMobileGroup = useMemo(
-    () => mobileGroups.find((group) => group.id === mobileActiveId) || mobileGroups[1] || mobileGroups[0],
+    () => mobileGroups.find((group) => group.id === mobileActiveId) || mobileGroups[0],
     [mobileGroups, mobileActiveId]
   );
 
