@@ -130,6 +130,9 @@
   text-shadow: 0 10px 40px rgba(0, 0, 0, 0.55);
 }
 .nh-hero__h1--accent {
+  /* Keep neighbouring text shadows behind the solid orange lettering. */
+  position: relative;
+  z-index: 1;
   color: var(--orange) !important;
   text-shadow: none !important;
 }
