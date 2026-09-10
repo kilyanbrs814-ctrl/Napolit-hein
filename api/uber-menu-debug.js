@@ -17,54 +17,30 @@ export default async function handler(req, res) {
     });
     const data = await r.json();
     const root = data?.data || {};
+    const sectionUuid = root.sections?.[0]?.uuid;
+    const groupsRaw = sectionUuid ? (root.catalogSectionsMap?.[sectionUuid] || []) : [];
 
-    const hits = [];
-    const seen = new Set();
-    const walk = (value, path = 'data') => {
-      if (!value || typeof value !== 'object') return;
-      if (Array.isArray(value)) {
-        value.forEach((v, i) => walk(v, `${path}[${i}]`));
-        return;
-      }
-
-      const title = value.title || value.name || value.itemTitle || '';
-      const imageUrl = value.imageUrl || value.imageURL || value.image?.url || value.image?.imageUrl || value.image?.imageURL || null;
-      const uuid = value.uuid || value.itemUuid || value.itemUUID || value.id || null;
-      const price = value.price ?? value.priceTagline ?? value.displayPrice ?? value.itemPrice ?? null;
-      const desc = value.itemDescription || value.description || value.subtitle || '';
-      if (title && (imageUrl || price != null || desc)) {
-        const key = `${title}|${uuid || ''}|${imageUrl || ''}`;
-        if (!seen.has(key)) {
-          seen.add(key);
-          hits.push({ path, title, uuid, price, description: desc, imageUrl });
-        }
-      }
-      Object.entries(value).forEach(([k, v]) => walk(v, `${path}.${k}`));
-    };
-    walk(root);
-
-    const compactSections = (root.sections || []).map((s) => ({
-      title: s.title || '',
-      uuid: s.uuid || null,
-      subsectionUuids: s.subsectionUuids || s.subsectionUUIDs || s.subsections || null
-    }));
-
-    const subsectionSummary = Object.entries(root.subsectionsMap || {}).map(([k, s]) => ({
-      key: k,
-      title: s?.title || '',
-      uuid: s?.uuid || k,
-      itemUuids: s?.itemUuids || s?.itemUUIDs || s?.items || s?.itemEntities || null
-    }));
+    const groups = groupsRaw.map((entry, index) => {
+      const payload = entry?.payload?.standardItemsPayload || {};
+      const items = (payload.catalogItems || []).map((item) => ({
+        uuid: item.uuid || null,
+        title: item.title || '',
+        description: item.itemDescription || item.description || '',
+        price: item.price ?? null,
+        imageUrl: item.imageUrl || item.imageURL || item.image?.url || null,
+        badge: item.badge?.text || item.badge || null,
+        rating: item.rating || null
+      }));
+      return {
+        index,
+        title: payload.title || entry.title || entry?.payload?.title || '',
+        subtitle: payload.subtitle || '',
+        items
+      };
+    });
 
     res.setHeader('cache-control', 'no-store');
-    res.status(200).json({
-      status: r.status,
-      apiStatus: data.status,
-      store: { title: root.title, uuid: root.uuid },
-      sections: compactSections,
-      subsections: subsectionSummary,
-      hits
-    });
+    res.status(200).json({ status: r.status, apiStatus: data.status, store: root.title, groups });
   } catch (e) {
     res.status(500).json({ error: String(e?.stack || e) });
   }
