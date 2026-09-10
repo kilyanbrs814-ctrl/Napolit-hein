@@ -38,7 +38,7 @@ export default function AmbianceSection() {
           </div>
           <div className="nh-amb__actions">
             <a href={LINKS.maps} target="_blank" rel="noopener noreferrer" className="nh-btn nh-btn--primary">
-              Nous trouver <span aria-hidden>→</span>
+              Nous trouver
             </a>
             <a href={LINKS.tel} className="nh-btn nh-btn--ghost">Appeler</a>
           </div>

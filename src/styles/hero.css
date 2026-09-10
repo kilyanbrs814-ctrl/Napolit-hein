@@ -131,7 +131,7 @@
 }
 .nh-hero__h1--accent {
   color: var(--orange) !important;
-  text-shadow: 0 0 34px rgba(255, 90, 31, 0.4) !important;
+  text-shadow: none !important;
 }
 
 .nh-hero__lede {
@@ -924,6 +924,8 @@
 .nh-hero__cr-h2 {
   max-width: none;
   margin: 0;
+  font-size: clamp(80px, 7.5vw, 104px);
+  line-height: 1.08;
 }
 .nh-hero__cr-h2 span {
   display: block;
@@ -931,5 +933,5 @@
 }
 @media (max-width: 860px) {
   .nh-hero__cr-text { transform: none; }
-  .nh-hero__cr-h2 { font-size: clamp(28px, 8.8vw, 52px); }
+  .nh-hero__cr-h2 { font-size: clamp(32px, 10vw, 60px); }
 }
