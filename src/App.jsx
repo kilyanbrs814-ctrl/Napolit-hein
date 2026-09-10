@@ -10,6 +10,7 @@ import AmbianceSection from "./components/AmbianceSection.jsx";
 import FinalCTA from "./components/FinalCTA.jsx";
 import Footer from "./components/Footer.jsx";
 import CavemanMode from "./components/CavemanMode.jsx";
+import MenuOrderEnhancer from "./components/MenuOrderEnhancer.jsx";
 
 export default function App() {
   const [isCaveman, setIsCaveman] = useState(false);
@@ -41,6 +42,7 @@ export default function App() {
 
   return (
     <>
+      <MenuOrderEnhancer />
       <div className="nh-grain" />
       <Header onCavemanTrigger={() => setIsCaveman(true)} />
       <CavemanMode isActive={isCaveman} onDeactivate={() => setIsCaveman(false)} />
