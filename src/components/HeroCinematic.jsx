@@ -84,8 +84,8 @@ function HeroContent() {
         <span>SAUCE.</span>
       </h1>
       <p className="nh-hero__lede">
-        Recettes maison, portions qui rassasient, ce croustillant qui claque. Sur place, à emporter
-        ou livré chez toi.
+        Des recettes maison, des portions généreuses et du croustillant à chaque bouchée.
+        Sur place, à emporter ou en livraison.
       </p>
       <div className="nh-hero__ctas">
         <a href="#menu" className="nh-btn nh-btn--primary nh-hero__cta-desktop">
