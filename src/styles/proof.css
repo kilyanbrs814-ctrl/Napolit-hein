@@ -122,7 +122,10 @@
   -webkit-backdrop-filter: none;
 }
 .nh-proof__platform--google .nh-proof__platform-logo.is-google {
-  transform: scale(1.15);
+  height: 18px;
+  /* Compense les marges transparentes du fichier Google. */
+  transform: scale(1.8);
+  margin-inline: 8px;
 }
 .nh-proof__platform--google .nh-proof__platform-rate {
   font-size: 20px;
@@ -353,6 +356,9 @@
   .nh-proof__platform .nh-proof__platform-logo {
     height: 16px;
     max-width: 74px;
+  }
+  .nh-proof__platform--google .nh-proof__platform-logo.is-google {
+    height: 16px;
   }
   .nh-proof__platform .nh-proof__platform-rate {
     font-size: 17px;
