@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 import { MENU_GROUPS, BADGE_BG, BADGE_FG, LINKS, DELIVERY_LOGOS } from "../data/content.js";
 import Reveal from "./Reveal.jsx";
@@ -252,6 +253,57 @@ function MobileOrderChooser() {
   const [step, setStep] = useState("mode");
   const [selectedMode, setSelectedMode] = useState(null);
 
+  useEffect(() => {
+    if (!open || typeof document === "undefined") return undefined;
+
+    const body = document.body;
+    const html = document.documentElement;
+    const scrollY = window.scrollY;
+
+    const previous = {
+      bodyPosition: body.style.position,
+      bodyTop: body.style.top,
+      bodyLeft: body.style.left,
+      bodyRight: body.style.right,
+      bodyWidth: body.style.width,
+      bodyOverflow: body.style.overflow,
+      bodyTouchAction: body.style.touchAction,
+      htmlOverflow: html.style.overflow,
+      htmlOverscrollBehavior: html.style.overscrollBehavior,
+    };
+
+    body.style.position = "fixed";
+    body.style.top = `-${scrollY}px`;
+    body.style.left = "0";
+    body.style.right = "0";
+    body.style.width = "100%";
+    body.style.overflow = "hidden";
+    body.style.touchAction = "none";
+    html.style.overflow = "hidden";
+    html.style.overscrollBehavior = "none";
+
+    const preventScroll = (event) => event.preventDefault();
+    document.addEventListener("touchmove", preventScroll, { passive: false });
+    document.addEventListener("wheel", preventScroll, { passive: false });
+
+    return () => {
+      document.removeEventListener("touchmove", preventScroll);
+      document.removeEventListener("wheel", preventScroll);
+
+      body.style.position = previous.bodyPosition;
+      body.style.top = previous.bodyTop;
+      body.style.left = previous.bodyLeft;
+      body.style.right = previous.bodyRight;
+      body.style.width = previous.bodyWidth;
+      body.style.overflow = previous.bodyOverflow;
+      body.style.touchAction = previous.bodyTouchAction;
+      html.style.overflow = previous.htmlOverflow;
+      html.style.overscrollBehavior = previous.htmlOverscrollBehavior;
+
+      window.scrollTo(0, scrollY);
+    };
+  }, [open]);
+
   const openChooser = () => {
     setStep("mode");
     setSelectedMode(null);
@@ -272,6 +324,87 @@ function MobileOrderChooser() {
           : "À emporter"
         : "Commander";
 
+  const modal = open ? (
+    <div className="nh-menu__chooser-backdrop" role="presentation" onClick={() => setOpen(false)}>
+      <div
+        className="nh-menu__chooser"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="nh-menu-chooser-title"
+        onClick={(event) => event.stopPropagation()}
+      >
+        <div className="nh-menu__chooser-head">
+          <div className="nh-menu__chooser-heading">
+            {step !== "mode" && (
+              <button type="button" className="nh-menu__chooser-back" aria-label="Retour" onClick={() => setStep("mode")}>
+                <Chevron dir={-1} />
+              </button>
+            )}
+            <h3 id="nh-menu-chooser-title" className="nh-menu__chooser-title">{chooserTitle}</h3>
+          </div>
+          <button type="button" className="nh-menu__chooser-close" aria-label="Fermer" onClick={() => setOpen(false)}>
+            ×
+          </button>
+        </div>
+
+        {step === "mode" && (
+          <div className="nh-menu__chooser-modes">
+            <button type="button" className="nh-menu__chooser-mode" onClick={() => openContact("place")}>
+              Sur place
+            </button>
+            <button type="button" className="nh-menu__chooser-mode" onClick={() => openContact("takeaway")}>
+              À emporter
+            </button>
+            <button type="button" className="nh-menu__chooser-mode" onClick={() => setStep("delivery")}>
+              Livraison
+            </button>
+          </div>
+        )}
+
+        {step === "contact" && (
+          <div className="nh-menu__chooser-contact">
+            <a className="nh-menu__chooser-contact-row" href={LINKS.tel}>
+              <span className="nh-menu__chooser-contact-label">Téléphone</span>
+              <strong>06 04 65 94 06</strong>
+            </a>
+            <a
+              className="nh-menu__chooser-contact-row"
+              href={LINKS.maps}
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              <span className="nh-menu__chooser-contact-label">Adresse</span>
+              <strong>16 Avenue Colonel Teyssier, 81000 Albi</strong>
+            </a>
+          </div>
+        )}
+
+        {step === "delivery" && (
+          <div className="nh-menu__chooser-delivery">
+            <a
+              className="nh-menu__chooser-logo-link"
+              href={LINKS.uber}
+              target="_blank"
+              rel="noopener noreferrer"
+              aria-label="Commander avec Uber Eats"
+            >
+              <img src={DELIVERY_LOGOS.uber} alt="Uber Eats" className="nh-menu__chooser-logo" />
+            </a>
+            <a
+              className="nh-menu__chooser-logo-link"
+              href={LINKS.deliveroo}
+              target="_blank"
+              rel="noopener noreferrer"
+              aria-label="Commander avec Deliveroo"
+            >
+              <img src={DELIVERY_LOGOS.deliveroo} alt="Deliveroo" className="nh-menu__chooser-logo" />
+            </a>
+          </div>
+        )}
+      </div>
+    </div>
+  ) : null;
+
   return (
     <>
       <div className="nh-menu__mobile-order-wrap">
@@ -281,86 +414,7 @@ function MobileOrderChooser() {
         <p className="nh-menu__mobile-order-help">Sur place, à emporter ou en livraison</p>
       </div>
 
-      {open && (
-        <div className="nh-menu__chooser-backdrop" role="presentation" onClick={() => setOpen(false)}>
-          <div
-            className="nh-menu__chooser"
-            role="dialog"
-            aria-modal="true"
-            aria-labelledby="nh-menu-chooser-title"
-            onClick={(event) => event.stopPropagation()}
-          >
-            <div className="nh-menu__chooser-head">
-              <div className="nh-menu__chooser-heading">
-                {step !== "mode" && (
-                  <button type="button" className="nh-menu__chooser-back" aria-label="Retour" onClick={() => setStep("mode")}>
-                    <Chevron dir={-1} />
-                  </button>
-                )}
-                <h3 id="nh-menu-chooser-title" className="nh-menu__chooser-title">{chooserTitle}</h3>
-              </div>
-              <button type="button" className="nh-menu__chooser-close" aria-label="Fermer" onClick={() => setOpen(false)}>
-                ×
-              </button>
-            </div>
-
-            {step === "mode" && (
-              <div className="nh-menu__chooser-modes">
-                <button type="button" className="nh-menu__chooser-mode" onClick={() => openContact("place")}>
-                  Sur place
-                </button>
-                <button type="button" className="nh-menu__chooser-mode" onClick={() => openContact("takeaway")}>
-                  À emporter
-                </button>
-                <button type="button" className="nh-menu__chooser-mode" onClick={() => setStep("delivery")}>
-                  Livraison
-                </button>
-              </div>
-            )}
-
-            {step === "contact" && (
-              <div className="nh-menu__chooser-contact">
-                <a className="nh-menu__chooser-contact-row" href={LINKS.tel}>
-                  <span className="nh-menu__chooser-contact-label">Téléphone</span>
-                  <strong>06 04 65 94 06</strong>
-                </a>
-                <a
-                  className="nh-menu__chooser-contact-row"
-                  href={LINKS.maps}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                >
-                  <span className="nh-menu__chooser-contact-label">Adresse</span>
-                  <strong>16 Avenue Colonel Teyssier, 81000 Albi</strong>
-                </a>
-              </div>
-            )}
-
-            {step === "delivery" && (
-              <div className="nh-menu__chooser-delivery">
-                <a
-                  className="nh-menu__chooser-logo-link"
-                  href={LINKS.uber}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  aria-label="Commander avec Uber Eats"
-                >
-                  <img src={DELIVERY_LOGOS.uber} alt="Uber Eats" className="nh-menu__chooser-logo" />
-                </a>
-                <a
-                  className="nh-menu__chooser-logo-link"
-                  href={LINKS.deliveroo}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  aria-label="Commander avec Deliveroo"
-                >
-                  <img src={DELIVERY_LOGOS.deliveroo} alt="Deliveroo" className="nh-menu__chooser-logo" />
-                </a>
-              </div>
-            )}
-          </div>
-        </div>
-      )}
+      {modal && typeof document !== "undefined" ? createPortal(modal, document.body) : null}
     </>
   );
 }
@@ -402,8 +456,8 @@ const MOBILE_SIMPLE_CSS = `
   .nh-menu__mobile-order:active { transform: scale(.985); }
   .nh-menu__mobile-order-help { margin: 16px 0 0; text-align: center; color: rgba(216,222,233,.68); font-family: var(--body); font-size: 15px; line-height: 1.4; }
 
-  .nh-menu__chooser-backdrop { position: fixed; inset: 0; z-index: 1000; display: flex; align-items: flex-end; justify-content: center; padding: 18px; background: rgba(2,6,12,.72); backdrop-filter: blur(7px); -webkit-backdrop-filter: blur(7px); }
-  .nh-menu__chooser { width: min(100%,460px); border: 1px solid rgba(255,255,255,.14); border-radius: 24px; padding: 22px; background: #0b1220; box-shadow: 0 30px 70px rgba(0,0,0,.45); }
+  .nh-menu__chooser-backdrop { position: fixed; inset: 0; z-index: 2147483647; display: flex; align-items: flex-end; justify-content: center; padding: 18px; background: rgba(2,6,12,.72); backdrop-filter: blur(7px); -webkit-backdrop-filter: blur(7px); overscroll-behavior: none; touch-action: none; }
+  .nh-menu__chooser { width: min(100%,460px); border: 1px solid rgba(255,255,255,.14); border-radius: 24px; padding: 22px; background: #0b1220; box-shadow: 0 30px 70px rgba(0,0,0,.45); touch-action: manipulation; }
   .nh-menu__chooser-head { display: flex; align-items: center; justify-content: space-between; gap: 16px; margin-bottom: 16px; }
   .nh-menu__chooser-heading { display: flex; align-items: center; gap: 10px; min-width: 0; }
   .nh-menu__chooser-title { margin: 0; font-family: var(--display); font-size: 30px; line-height: 1; color: #fff; text-transform: uppercase; }
