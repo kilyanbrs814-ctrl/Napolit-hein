@@ -213,10 +213,24 @@ function DeliveryWidgets() {
   );
 }
 
-function CroustyContent() {
+function CroustyLine({ children, progress, start, isStatic, className }) {
+  const opacity = useTransform(progress, [start, start + 0.10], [0, 1]);
+  const y = useTransform(progress, [start, start + 0.10], [28, 0]);
+  return (
+    <motion.span className={className} style={isStatic ? undefined : { opacity, y }}>
+      {children}
+    </motion.span>
+  );
+}
+
+function CroustyContent({ progress, isStatic }) {
   return (
     <div className="nh-hero__cr-text">
-      <h2 className="nh-hero__cr-h2"><span>Le croustillant</span><span>qui change tout.</span></h2>
+      <h2 className="nh-hero__cr-h2" aria-label="Le croustillant qui change tout.">
+        <CroustyLine progress={progress} start={0.36} isStatic={isStatic}>Le croustillant</CroustyLine>
+        <CroustyLine progress={progress} start={0.40} isStatic={isStatic} className="nh-hero__cr-line">qui change</CroustyLine>
+        <CroustyLine progress={progress} start={0.44} isStatic={isStatic} className="nh-hero__cr-punch">tout.</CroustyLine>
+      </h2>
     </div>
   );
 }
@@ -281,7 +295,7 @@ export default function HeroCinematic() {
           className="nh-hero__cr-layer"
           style={s({ opacity: crOpacity, y: crY })}
         >
-          <CroustyContent />
+          <CroustyContent progress={scrollYProgress} isStatic={isStatic} />
         </motion.div>
 
       </div>
