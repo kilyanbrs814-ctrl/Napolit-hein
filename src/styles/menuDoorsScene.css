@@ -78,6 +78,28 @@
   background: linear-gradient(180deg, #090d1c, #060912);
 }
 
+/* Quand la fiche Commander est ouverte :
+   - la page ne peut plus défiler derrière la modale
+   - toute la scène menu passe au-dessus de la section des portes qui suit */
+html:has(.nh-menu__chooser-backdrop),
+body:has(.nh-menu__chooser-backdrop) {
+  overflow: hidden !important;
+  overscroll-behavior: none;
+}
+
+.nh-mds:has(.nh-menu__chooser-backdrop) {
+  z-index: 100000;
+}
+
+.nh-mds__menu:has(.nh-menu__chooser-backdrop),
+.nh-menu:has(.nh-menu__chooser-backdrop) {
+  z-index: 100001;
+}
+
+.nh-menu__chooser-backdrop {
+  z-index: 100002 !important;
+}
+
 /* ---- Wrapper sticky : reste pincé le temps que DoorsSection remonte ---- */
 .nh-mds__menu {
   position: sticky;
