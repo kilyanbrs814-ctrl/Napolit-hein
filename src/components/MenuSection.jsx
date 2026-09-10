@@ -71,9 +71,7 @@ function MenuCard({ item, index, compact, categoryTitle, reduceMotion }) {
                   {item.badge}
                 </span>
               )}
-              {hasRating && (
-                <span className="nh-menu__badge nh-menu__badge--rate">★ {item.rating}%</span>
-              )}
+              {hasRating && <span className="nh-menu__badge nh-menu__badge--rate">★ {item.rating}%</span>}
             </div>
           )}
         </div>
@@ -136,9 +134,7 @@ const MOBILE_DESCRIPTIONS = {
 function buildMobileGroups() {
   return MOBILE_GROUP_DEFS.map((def) => ({
     ...def,
-    items: def.sourceIds.flatMap(
-      (id) => MENU_GROUPS.find((group) => group.id === id)?.items || []
-    ),
+    items: def.sourceIds.flatMap((id) => MENU_GROUPS.find((group) => group.id === id)?.items || []),
   }));
 }
 
@@ -180,12 +176,7 @@ function MobileCategoryRail({ groups, activeId, onSelect }) {
 
   return (
     <nav className="nh-menu__mnav" aria-label="Catégories du menu">
-      <button
-        type="button"
-        className="nh-menu__mnav-arrow"
-        aria-label="Catégorie précédente"
-        onClick={() => step(-1)}
-      >
+      <button type="button" className="nh-menu__mnav-arrow" aria-label="Catégorie précédente" onClick={() => step(-1)}>
         <Chevron dir={-1} />
       </button>
 
@@ -214,12 +205,7 @@ function MobileCategoryRail({ groups, activeId, onSelect }) {
         </ul>
       </div>
 
-      <button
-        type="button"
-        className="nh-menu__mnav-arrow"
-        aria-label="Catégorie suivante"
-        onClick={() => step(1)}
-      >
+      <button type="button" className="nh-menu__mnav-arrow" aria-label="Catégorie suivante" onClick={() => step(1)}>
         <Chevron dir={1} />
       </button>
     </nav>
@@ -242,10 +228,7 @@ function MobileMenuRow({ item, index, reduceMotion }) {
       };
 
   return (
-    <motion.article
-      className={`nh-menu__mobile-row${image ? "" : " nh-menu__mobile-row--no-image"}`}
-      {...motionProps}
-    >
+    <motion.article className={`nh-menu__mobile-row${image ? "" : " nh-menu__mobile-row--no-image"}`} {...motionProps}>
       <div className="nh-menu__mobile-copy">
         <div className="nh-menu__mobile-titleline">
           <h3 className="nh-menu__mobile-name">{item.name}</h3>
@@ -275,6 +258,20 @@ function MobileOrderChooser() {
     setOpen(true);
   };
 
+  const openContact = (mode) => {
+    setSelectedMode(mode);
+    setStep("contact");
+  };
+
+  const chooserTitle =
+    step === "delivery"
+      ? "Livraison"
+      : step === "contact"
+        ? selectedMode === "place"
+          ? "Sur place"
+          : "À emporter"
+        : "Commander";
+
   return (
     <>
       <div className="nh-menu__mobile-order-wrap">
@@ -285,11 +282,7 @@ function MobileOrderChooser() {
       </div>
 
       {open && (
-        <div
-          className="nh-menu__chooser-backdrop"
-          role="presentation"
-          onClick={() => setOpen(false)}
-        >
+        <div className="nh-menu__chooser-backdrop" role="presentation" onClick={() => setOpen(false)}>
           <div
             className="nh-menu__chooser"
             role="dialog"
@@ -299,57 +292,51 @@ function MobileOrderChooser() {
           >
             <div className="nh-menu__chooser-head">
               <div className="nh-menu__chooser-heading">
-                {step === "delivery" && (
-                  <button
-                    type="button"
-                    className="nh-menu__chooser-back"
-                    aria-label="Retour"
-                    onClick={() => setStep("mode")}
-                  >
+                {step !== "mode" && (
+                  <button type="button" className="nh-menu__chooser-back" aria-label="Retour" onClick={() => setStep("mode")}>
                     <Chevron dir={-1} />
                   </button>
                 )}
-                <h3 id="nh-menu-chooser-title" className="nh-menu__chooser-title">
-                  {step === "delivery" ? "Livraison" : "Commander"}
-                </h3>
+                <h3 id="nh-menu-chooser-title" className="nh-menu__chooser-title">{chooserTitle}</h3>
               </div>
-              <button
-                type="button"
-                className="nh-menu__chooser-close"
-                aria-label="Fermer"
-                onClick={() => setOpen(false)}
-              >
+              <button type="button" className="nh-menu__chooser-close" aria-label="Fermer" onClick={() => setOpen(false)}>
                 ×
               </button>
             </div>
 
-            {step === "mode" ? (
+            {step === "mode" && (
               <div className="nh-menu__chooser-modes">
-                <button
-                  type="button"
-                  className={`nh-menu__chooser-mode${selectedMode === "place" ? " is-selected" : ""}`}
-                  aria-pressed={selectedMode === "place"}
-                  onClick={() => setSelectedMode("place")}
-                >
+                <button type="button" className="nh-menu__chooser-mode" onClick={() => openContact("place")}>
                   Sur place
                 </button>
-                <button
-                  type="button"
-                  className={`nh-menu__chooser-mode${selectedMode === "takeaway" ? " is-selected" : ""}`}
-                  aria-pressed={selectedMode === "takeaway"}
-                  onClick={() => setSelectedMode("takeaway")}
-                >
+                <button type="button" className="nh-menu__chooser-mode" onClick={() => openContact("takeaway")}>
                   À emporter
                 </button>
-                <button
-                  type="button"
-                  className="nh-menu__chooser-mode"
-                  onClick={() => setStep("delivery")}
-                >
+                <button type="button" className="nh-menu__chooser-mode" onClick={() => setStep("delivery")}>
                   Livraison
                 </button>
               </div>
-            ) : (
+            )}
+
+            {step === "contact" && (
+              <div className="nh-menu__chooser-contact">
+                <a className="nh-menu__chooser-contact-row" href={LINKS.tel}>
+                  <span className="nh-menu__chooser-contact-label">Téléphone</span>
+                  <strong>06 04 65 94 06</strong>
+                </a>
+                <a
+                  className="nh-menu__chooser-contact-row"
+                  href={LINKS.maps}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >
+                  <span className="nh-menu__chooser-contact-label">Adresse</span>
+                  <strong>16 Avenue Colonel Teyssier, 81000 Albi</strong>
+                </a>
+              </div>
+            )}
+
+            {step === "delivery" && (
               <div className="nh-menu__chooser-delivery">
                 <a
                   className="nh-menu__chooser-logo-link"
@@ -424,7 +411,13 @@ const MOBILE_SIMPLE_CSS = `
   .nh-menu__chooser-close { font-size: 22px; }
   .nh-menu__chooser-modes { display: grid; gap: 10px; }
   .nh-menu__chooser-mode { width: 100%; min-height: 56px; border: 1px solid rgba(255,255,255,.13); border-radius: 14px; background: rgba(255,255,255,.055); color: #fff; font-family: var(--body); font-size: 16px; font-weight: 850; cursor: pointer; }
-  .nh-menu__chooser-mode:active, .nh-menu__chooser-mode.is-selected { border-color: var(--orange); background: rgba(255,90,31,.16); }
+  .nh-menu__chooser-mode:active { border-color: var(--orange); background: rgba(255,90,31,.16); }
+
+  .nh-menu__chooser-contact { display: grid; gap: 10px; }
+  .nh-menu__chooser-contact-row { display: flex; flex-direction: column; gap: 5px; padding: 14px 16px; border: 1px solid rgba(255,255,255,.13); border-radius: 14px; background: rgba(255,255,255,.055); color: #fff; text-decoration: none; }
+  .nh-menu__chooser-contact-label { color: rgba(216,222,233,.62); font-family: var(--body); font-size: 12px; font-weight: 750; text-transform: uppercase; letter-spacing: .05em; }
+  .nh-menu__chooser-contact-row strong { font-family: var(--body); font-size: 15px; line-height: 1.35; }
+
   .nh-menu__chooser-delivery { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
   .nh-menu__chooser-logo-link { min-height: 88px; display: flex; align-items: center; justify-content: center; padding: 18px; border-radius: 16px; background: #fff; text-decoration: none; overflow: hidden; }
   .nh-menu__chooser-logo { display: block; max-width: 100%; width: auto; max-height: 42px; height: auto; object-fit: contain; }
@@ -483,25 +476,15 @@ export default function MenuSection() {
           <div className="nh-eyebrow nh-menu__eyebrow">05 · La carte complète</div>
           <h2 className="nh-menu__title">NOTRE MENU.</h2>
           <p className="nh-menu__sub">
-            {isMobileLayout
-              ? "Choisis ton plat, on s’occupe du reste."
-              : "Choisis ta catégorie, trouve ton crousty, commande direct."}
+            {isMobileLayout ? "Choisis ton plat, on s’occupe du reste." : "Choisis ta catégorie, trouve ton crousty, commande direct."}
           </p>
         </Reveal>
 
         {isMobileLayout ? (
           <div className="nh-menu__content">
-            <MobileCategoryRail
-              groups={mobileGroups}
-              activeId={mobileActiveId}
-              onSelect={setMobileActiveId}
-            />
+            <MobileCategoryRail groups={mobileGroups} activeId={mobileActiveId} onSelect={setMobileActiveId} />
 
-            <div
-              id="nh-menu-mobile-panel"
-              role="tabpanel"
-              aria-labelledby={`nh-menu-mobile-tab-${activeMobileGroup.id}`}
-            >
+            <div id="nh-menu-mobile-panel" role="tabpanel" aria-labelledby={`nh-menu-mobile-tab-${activeMobileGroup.id}`}>
               <AnimatePresence mode="wait" initial={false}>
                 <motion.div
                   key={activeMobileGroup.id}
@@ -548,11 +531,7 @@ export default function MenuSection() {
               </ul>
             </nav>
 
-            <div
-              id="nh-menu-panel"
-              role="tabpanel"
-              aria-labelledby={`nh-menu-tab-${activeDesktopGroup.id}`}
-            >
+            <div id="nh-menu-panel" role="tabpanel" aria-labelledby={`nh-menu-tab-${activeDesktopGroup.id}`}>
               <AnimatePresence mode="wait" initial={false}>
                 <GridWrap
                   key={activeDesktopGroup.id}
