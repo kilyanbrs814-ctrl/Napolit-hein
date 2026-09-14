@@ -1,6 +1,7 @@
 import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
 import App from "./App.jsx";
+import MobileLogoIntro from "./components/MobileLogoIntro.jsx";
 import "./styles/global.css";
 import "./styles/components.css";
 
@@ -25,6 +26,7 @@ window.addEventListener("pageshow", () => {
 
 createRoot(document.getElementById("root")).render(
   <StrictMode>
+    <MobileLogoIntro />
     <App />
   </StrictMode>
 );
