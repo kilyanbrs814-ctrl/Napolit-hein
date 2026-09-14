@@ -6,6 +6,7 @@ const INTRO_VIDEO_URL =
 export default function MobileLogoIntro() {
   const [isMobile, setIsMobile] = useState(false);
   const [isVisible, setIsVisible] = useState(true);
+  const [isLeaving, setIsLeaving] = useState(false);
 
   useEffect(() => {
     const media = window.matchMedia("(max-width: 768px)");
@@ -28,6 +29,11 @@ export default function MobileLogoIntro() {
     };
   }, [isMobile, isVisible]);
 
+  const finishIntro = () => {
+    setIsLeaving(true);
+    window.setTimeout(() => setIsVisible(false), 560);
+  };
+
   if (!isMobile || !isVisible) return null;
 
   return (
@@ -41,6 +47,12 @@ export default function MobileLogoIntro() {
         width: "100vw",
         height: "100dvh",
         overflow: "hidden",
+        opacity: isLeaving ? 0 : 1,
+        transform: isLeaving ? "scale(1.012)" : "scale(1)",
+        transition:
+          "opacity 520ms cubic-bezier(0.22, 1, 0.36, 1), transform 520ms cubic-bezier(0.22, 1, 0.36, 1)",
+        pointerEvents: isLeaving ? "none" : "auto",
+        willChange: "opacity, transform",
       }}
     >
       <video
@@ -49,7 +61,7 @@ export default function MobileLogoIntro() {
         muted
         playsInline
         preload="auto"
-        onEnded={() => setIsVisible(false)}
+        onEnded={finishIntro}
         onError={() => setIsVisible(false)}
         style={{
           display: "block",
