@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 
 const INTRO_VIDEO_URL =
-  "https://d2ol7oe51mr4n9.cloudfront.net/user_3EqFLTgGrEqfcX6D4PlpZJ7PV26/0314ee50-6005-4cba-b4a9-2f32364c77a1.mp4";
+  "https://d2ol7oe51mr4n9.cloudfront.net/user_3EqFLTgGrEqfcX6D4PlpZJ7PV26/a39d21f2-6c22-49b1-840a-86cd6b045d2c.mp4";
 
 export default function MobileLogoIntro() {
   const [isMobile, setIsMobile] = useState(false);
